@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="instagram_detection_service_label">Daylock Instagram detection</string>
+    <string name="instagram_detection_service_description">Recognises Instagram window openings. Optional Instagram blocking returns Home and shows a branded Daylock lock screen until Freedom is earned. Window package changes are compared only to cancel actions after you switch apps; other app names are not retained. Keeps only the latest Instagram detection and restriction result on this device. Does not read screen content, collect browsing history, draw overlays or control other apps. Disable blocking in Daylock Settings or revoke this service here at any time.</string>
+</resources>

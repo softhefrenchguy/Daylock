@@ -1,0 +1,98 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Local editor launch configuration can contain credentials and absolute paths.
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Widget Preview related
+.widget_preview/
+
+# Local SDK paths, OAuth configuration and credentials
+**/local.properties
+.env
+.env.*
+!.env.example
+!.env.template
+**/key.properties
+**/signing.properties
+**/gradle-local.properties
+google-services.json
+GoogleService-Info.plist
+client_secret*.json
+client-secret*.json
+service-account*.json
+service_account*.json
+credentials.json
+**/secrets/
+
+# Signing material and private keys (never needed to build the debug app)
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+
+# Device exports, local planner/calendar data and databases
+**/shared_prefs/
+**/datastore/
+/local_data/
+/device_data/
+daylock.state.*
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+
+# Generated caches, binaries, profiles and diagnostic exports
+**/.gradle/
+**/.kotlin/
+**/.cxx/
+**/build/
+*.apk
+*.aab
+*.hprof
+*.heapdump
+*.jfr
+*.dmp

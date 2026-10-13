@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Keystore-backed credentials must not be restored without their keys. -->
+    <!-- Ephemeral eligibility and latest detection must not transfer to another device. -->
+    <exclude domain="sharedpref" path="daylock.instagram_detection.v1.xml" />
+    <exclude domain="sharedpref" path="daylock_calendar_credentials.xml" />
+    <exclude domain="sharedpref" path="FlutterSecureKeyStorage:daylock_calendar_credentials.xml" />
+    <exclude domain="sharedpref" path="FlutterSecureStorageConfiguration:daylock_calendar_credentials.xml" />
+</full-backup-content>
