@@ -35,10 +35,10 @@ class TodayScreen extends StatefulWidget {
   });
 
   @override
-  State<TodayScreen> createState() => _TodayScreenState();
+  State<TodayScreen> createState() => TodayScreenState();
 }
 
-class _TodayScreenState extends State<TodayScreen> {
+class TodayScreenState extends State<TodayScreen> {
   final Set<ModalRoute<dynamic>> _ownedModals = {};
   bool _openingModal = false;
   DailyPlan get plan => widget.plan;
@@ -47,6 +47,12 @@ class _TodayScreenState extends State<TodayScreen> {
   ValueChanged<Task> get onFocusToggled => widget.onFocusToggled;
   VoidCallback? get onPlanRequested => widget.onPlanRequested;
   VoidCallback? get onSettingsRequested => widget.onSettingsRequested;
+
+  void openNotificationTask(int index, String name) {
+    if (index < 0 || index >= plan.tasks.length) return;
+    final task = plan.tasks[index];
+    if (task.name == name) _showActions(task);
+  }
 
   bool _canChange(DailyPlan source, Task task) =>
       mounted && identical(source, widget.plan) && source.tasks.contains(task);

@@ -7,6 +7,9 @@ import '../design/daylock_widgets.dart';
 import '../models/freedom_settings.dart';
 import '../services/instagram_detection_bridge.dart';
 import 'instagram_detection_section.dart';
+import '../models/notification_preferences.dart';
+import '../services/notifications/notification_service.dart';
+import 'notification_settings_section.dart';
 
 class SettingsScreen extends StatelessWidget {
   final AppearancePreferences preferences;
@@ -16,6 +19,9 @@ class SettingsScreen extends StatelessWidget {
   final VoidCallback? onRoutinesRequested;
   final int routineCount;
   final InstagramDetectionBridge? detectionBridge;
+  final NotificationPreferences notificationPreferences;
+  final ValueChanged<NotificationPreferences>? onNotificationsChanged;
+  final NotificationService? notificationService;
   const SettingsScreen({
     super.key,
     required this.preferences,
@@ -25,6 +31,9 @@ class SettingsScreen extends StatelessWidget {
     this.onRoutinesRequested,
     this.routineCount = 0,
     this.detectionBridge,
+    this.notificationPreferences = const NotificationPreferences(),
+    this.onNotificationsChanged,
+    this.notificationService,
   });
 
   Future<void> _chooseFreedomTime(BuildContext context) async {
@@ -182,6 +191,15 @@ class SettingsScreen extends StatelessWidget {
                   if (detectionBridge != null) ...[
                     const SizedBox(height: DaylockSpace.xl),
                     InstagramDetectionSection(bridge: detectionBridge!),
+                  ],
+                  if (notificationService != null &&
+                      onNotificationsChanged != null) ...[
+                    const SizedBox(height: DaylockSpace.xl),
+                    NotificationSettingsSection(
+                      preferences: notificationPreferences,
+                      onChanged: onNotificationsChanged!,
+                      service: notificationService!,
+                    ),
                   ],
                 ],
               ),

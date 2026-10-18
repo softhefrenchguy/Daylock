@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <data-extraction-rules>
     <cloud-backup>
+        <exclude domain="sharedpref" path="daylock.notifications.v1.xml" />
         <exclude domain="sharedpref" path="daylock.instagram_detection.v1.xml" />
         <exclude domain="sharedpref" path="daylock_calendar_credentials.xml" />
         <exclude domain="sharedpref" path="FlutterSecureKeyStorage:daylock_calendar_credentials.xml" />
         <exclude domain="sharedpref" path="FlutterSecureStorageConfiguration:daylock_calendar_credentials.xml" />
     </cloud-backup>
     <device-transfer>
+        <exclude domain="sharedpref" path="daylock.notifications.v1.xml" />
         <exclude domain="sharedpref" path="daylock.instagram_detection.v1.xml" />
         <exclude domain="sharedpref" path="daylock_calendar_credentials.xml" />
         <exclude domain="sharedpref" path="FlutterSecureKeyStorage:daylock_calendar_credentials.xml" />

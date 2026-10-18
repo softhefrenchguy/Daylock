@@ -63,6 +63,19 @@ The existing Android application ID is **com.example.daylock**. Keep it and the
 existing signing configuration when updating an installed app. Debug builds use
 the normal local Android debug key, which is never committed.
 
+## Local notifications
+
+Settings now includes Plan Tomorrow (20:00), Commitment Reminder (14:00),
+Freedom and Focus completion preferences. Android evaluates current saved state
+in a native receiver, so completed/excused tasks and committed plans suppress
+obsolete reminders even without Flutter running. Permission is requested only
+from the Settings button. Web/PWA shows unavailable scheduling controls.
+
+See [local notification architecture and physical-device tests](docs/local-notifications.md).
+Background delivery still requires physical-device verification; inexact alarms
+can be delayed by Android battery restrictions. Test prereleases are available
+from [GitHub Releases](https://github.com/softhefrenchguy/Daylock/releases).
+
 ## Calendar OAuth configuration
 
 Local planning and local events work without OAuth registration. External account

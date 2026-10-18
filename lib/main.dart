@@ -28,6 +28,9 @@ import 'services/freedom_service.dart';
 import 'services/routine_service.dart';
 import 'screens/routines_screen.dart';
 import 'services/instagram_detection_bridge.dart';
+import 'models/notification_preferences.dart';
+import 'services/notifications/notification_service.dart';
+import 'services/notifications/default_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,6 +48,7 @@ class MainApp extends StatefulWidget {
   final CalendarService? calendarService;
   final AppearanceStorage? appearanceStorage;
   final InstagramDetectionBridge? detectionBridge;
+  final NotificationService? notificationService;
 
   const MainApp({
     super.key,
@@ -53,6 +57,7 @@ class MainApp extends StatefulWidget {
     this.calendarService,
     this.appearanceStorage,
     this.detectionBridge,
+    this.notificationService,
   });
 
   @override
@@ -66,6 +71,11 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   final _navigatorKey = GlobalKey<NavigatorState>();
   final _appearance = ValueNotifier(const AppearancePreferences());
   final _planningChanges = ValueNotifier(0);
+  final _todayScreenKey = GlobalKey<TodayScreenState>();
+  late final NotificationService _notifications;
+  NotificationTarget? _pendingNotificationTap;
+  NotificationPreferences notificationPreferences =
+      const NotificationPreferences();
   FreedomSettings freedomSettings = const FreedomSettings();
   RoutineBook routines = RoutineBook.empty;
   late final AppearanceStorage _appearanceStorage;
@@ -90,6 +100,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     _now = widget.now ?? DateTime.now;
+    _notifications = widget.notificationService ?? defaultNotificationService();
+    _notifications.onTap = _notificationTapped;
+    unawaited(_notifications.start());
     _detectionBridge = widget.detectionBridge ?? InstagramDetectionBridge();
     unawaited(_detectionBridge.start());
     _calendarService =
@@ -115,10 +128,12 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     history: history,
     freedomSettings: freedomSettings,
     routines: routines,
+    notificationPreferences: notificationPreferences,
   );
 
   @override
   void dispose() {
+    _notifications.dispose();
     unawaited(_detectionBridge.close());
     _clockRefreshTimer?.cancel();
     _appearance.dispose();
@@ -140,6 +155,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       _refreshClock();
       _publishNativeFreedom(force: true);
       unawaited(_detectionBridge.refresh());
+      unawaited(_notifications.refresh());
     } else {
       if (wasForeground) _publishNativeFreedom(force: true);
       _clockRefreshTimer?.cancel();
@@ -293,6 +309,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         history = current.history;
         freedomSettings = current.freedomSettings;
         routines = current.routines;
+        notificationPreferences = current.notificationPreferences;
         _isLoading = false;
         _loadFailed = false;
         _nativePersistedReady = true;
@@ -300,10 +317,17 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       });
       // Also catch a date change while the initial read/write was pending.
       _refreshClock();
+      _publishNotifications();
+      if (_pendingNotificationTap != null) {
+        final target = _pendingNotificationTap!;
+        _pendingNotificationTap = null;
+        _notificationTapped(target);
+      }
     } catch (_) {
       if (!mounted) return;
       _nativePersistedReady = false;
       unawaited(_detectionBridge.invalidateSnapshot());
+      unawaited(_notifications.invalidate());
       // Keep existing saved data intact rather than replacing it with defaults.
       setState(() {
         _isLoading = false;
@@ -360,6 +384,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             routineCount: routines.routines.length,
             onRoutinesRequested: _openRoutines,
             detectionBridge: _detectionBridge,
+            notificationService: _notifications,
+            notificationPreferences: notificationPreferences,
+            onNotificationsChanged: _changeNotifications,
           ),
         ),
       ),
@@ -371,6 +398,54 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     setState(() => freedomSettings = settings);
     _planningChanges.value++;
     unawaited(_saveState());
+  }
+
+  void _changeNotifications(NotificationPreferences preferences) {
+    preferences.toJson();
+    setState(() => notificationPreferences = preferences);
+    _planningChanges.value++;
+    unawaited(_saveState());
+  }
+
+  void _publishNotifications() {
+    if (!mounted ||
+        _isLoading ||
+        _loadFailed ||
+        !_nativePersistedReady ||
+        _nativePendingSaves != 0 ||
+        _nativeSaveFailed) {
+      return;
+    }
+    unawaited(_notifications.synchronize(_snapshot(), _now()));
+  }
+
+  void _notificationTapped(NotificationTarget target) {
+    if (!mounted) return;
+    if (_isLoading || _loadFailed) {
+      _pendingNotificationTap = target;
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _refreshClock();
+      _navigatorKey.currentState?.popUntil((route) => route.isFirst);
+      setState(() => selectedPage = target.screen == 'plan' ? 1 : 0);
+      if (target.screen != 'plan' &&
+          target.date == notificationDate(todayPlan.date) &&
+          target.taskIndex != null &&
+          target.taskName != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || target.date != notificationDate(todayPlan.date)) {
+            return;
+          }
+          _todayScreenKey.currentState?.openNotificationTask(
+            target.taskIndex!,
+            target.taskName!,
+          );
+        });
+      }
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
   }
 
   void _openRoutines() => _navigatorKey.currentState!.push(
@@ -432,12 +507,18 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   }
 
   Future<void> _saveState() async {
+    // Freeze mutable tasks before any await, preserving the order of rapid edits.
+    final snapshot = DaylockState.fromJson(_snapshot().toJson());
     final revision = ++_nativeSaveRevision;
     _nativePendingSaves++;
     // Invalidate before publishing changes; never bless an unsaved planner state.
     unawaited(_detectionBridge.invalidateSnapshot());
+    // Fail closed before persisting changes. Notification failures are isolated
+    // by the service and must never prevent saving the user's planner data.
+    final notificationInvalidation = _notifications.invalidate();
     try {
-      await _storage.save(_snapshot());
+      await notificationInvalidation;
+      await _storage.save(snapshot);
       if (revision == _nativeSaveRevision) _nativeSaveFailed = false;
     } catch (_) {
       if (revision == _nativeSaveRevision) _nativeSaveFailed = true;
@@ -455,6 +536,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       _nativePendingSaves--;
       if (mounted && _nativePendingSaves == 0) {
         _publishNativeFreedom(force: true);
+        _publishNotifications();
       }
     }
   }
@@ -506,6 +588,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     final displayedEvents = [...events, ...calendarCache.visibleEvents];
     final pages = [
       TodayScreen(
+        key: _todayScreenKey,
         plan: planForToday,
         freedomEligibility: const FreedomService().evaluate(
           now: _now(),

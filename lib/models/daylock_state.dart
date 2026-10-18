@@ -5,6 +5,7 @@ import 'calendar_cache.dart';
 import 'plan_history.dart';
 import 'freedom_settings.dart';
 import 'routine.dart';
+import 'notification_preferences.dart';
 
 // A snapshot for storage. MainApp still owns the live plans.
 class DaylockState {
@@ -15,6 +16,7 @@ class DaylockState {
   final PlanHistory history;
   final FreedomSettings freedomSettings;
   final RoutineBook routines;
+  final NotificationPreferences notificationPreferences;
 
   const DaylockState({
     required this.todayPlan,
@@ -24,6 +26,7 @@ class DaylockState {
     this.history = PlanHistory.empty,
     this.freedomSettings = const FreedomSettings(),
     this.routines = RoutineBook.empty,
+    this.notificationPreferences = const NotificationPreferences(),
   });
 
   DaylockState rollOver(DateTime now) {
@@ -52,6 +55,7 @@ class DaylockState {
       history: archived,
       freedomSettings: freedomSettings,
       routines: routines,
+      notificationPreferences: notificationPreferences,
       todayPlan: canPromote
           ? tomorrowPlan
           : DailyPlan(date: currentDate, tasks: []),
@@ -81,6 +85,7 @@ class DaylockState {
       'history': history.toJson(),
       'freedomSettings': freedomSettings.toJson(),
       'routines': routines.toJson(),
+      'notificationPreferences': notificationPreferences.toJson(),
     };
   }
 
@@ -89,6 +94,11 @@ class DaylockState {
       throw const FormatException('Unsupported saved state version');
     }
     return DaylockState(
+      notificationPreferences: json.containsKey('notificationPreferences')
+          ? NotificationPreferences.fromJson(
+              json['notificationPreferences'] as Map<String, dynamic>,
+            )
+          : const NotificationPreferences(),
       freedomSettings: json.containsKey('freedomSettings')
           ? FreedomSettings.fromJson(
               json['freedomSettings'] as Map<String, dynamic>,

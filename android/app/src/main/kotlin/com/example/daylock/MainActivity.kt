@@ -13,9 +13,11 @@ class MainActivity : FlutterActivity() {
     private val main = Handler(Looper.getMainLooper())
     private var methods: MethodChannel? = null
     private var events: EventChannel? = null
+    private var notifications: NotificationBridge? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        notifications = NotificationBridge(this, flutterEngine.dartExecutor.binaryMessenger)
         DetectionRuntime.attach(this)
         methods = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "daylock/instagram_detection").apply {
             setMethodCallHandler { call, result ->
@@ -60,9 +62,16 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        notifications?.close()
+        notifications = null
         methods?.setMethodCallHandler(null)
         events?.setStreamHandler(null)
         DetectionRuntime.sink = null
         super.cleanUpFlutterEngine(flutterEngine)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        notifications?.onIntent(intent)
     }
 }

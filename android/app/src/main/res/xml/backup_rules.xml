@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
+    <exclude domain="sharedpref" path="daylock.notifications.v1.xml" />
     <!-- Keystore-backed credentials must not be restored without their keys. -->
     <!-- Ephemeral eligibility and latest detection must not transfer to another device. -->
     <exclude domain="sharedpref" path="daylock.instagram_detection.v1.xml" />
