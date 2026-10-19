@@ -31,6 +31,25 @@ secure storage. There is no Daylock backend, account system or cloud database.
 
 ## Development setup
 
+### Web version
+
+Open [Daylock in your browser](https://softhefrenchguy.github.io/Daylock/).
+Plans are saved in that browser's storage; they do not sync with the Android app
+or another browser. Clearing site data removes those local plans. Scheduled
+notifications, Instagram blocking, and Google/Microsoft calendar sign-in are not
+available in this web build. Local planning, Focus timers, and local events work
+without an account. Background tabs may pause UI updates; this is not a promise
+of closed-browser reminders or offline availability.
+
+The Flutter source stays on `main`. GitHub Pages serves the compiled web files
+from the root of `gh-pages`. To prepare an updated site with the correct project
+path, run `flutter build web --release --base-href /Daylock/`, then publish only
+the contents of `build/web` plus an empty `.nojekyll` file to `gh-pages`. Rebuild
+and republish after source changes; pushing `main` alone does not update the site.
+Do not copy local app data, OAuth credentials, or signing keys into the web output.
+
+### Local development
+
 The current project has been validated with **Flutter 3.47.6 / Dart 3.13.5**.
 The Dart SDK requirement is declared in pubspec.yaml and dependencies are pinned
 in pubspec.lock. Install Flutter, Android Studio, its Android SDK and a compatible
