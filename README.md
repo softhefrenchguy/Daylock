@@ -120,6 +120,10 @@ fixtures are synthetic. See .gitignore for local credential/data exclusions.
 
 ## Android Accessibility and Instagram control
 
+See [lock-screen reliability and device checks](docs/instagram-lock-reliability.md)
+for the activity-first navigation, visibility diagnostics and throttled notification
+fallback. The updated presentation still needs physical-device verification.
+
 In Daylock Settings, Freedom Control and Block Instagram are independent.
 Accessibility access must be enabled manually after reading Daylock's disclosure:
 

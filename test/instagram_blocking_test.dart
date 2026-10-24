@@ -233,6 +233,42 @@ void main() {
     },
   );
   testWidgets(
+    'Lock launch and notification statuses never claim a confirmed visible screen',
+    (tester) async {
+      final service = SettingsBridge((value) => storedChoice = value);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: InstagramDetectionSection(bridge: service),
+            ),
+          ),
+        ),
+      );
+      const messages = {
+        'lock_launch_requested': 'display not yet confirmed',
+        'lock_fallback_posted': 'Android controls its delivery',
+        'lock_fallback_unavailable': 'Instagram lock notices channel',
+      };
+      for (final entry in messages.entries) {
+        service.status.value = InstagramDetectionStatus(
+          supported: true,
+          enabled: true,
+          connected: true,
+          blockingEnabled: true,
+          freedomState: 'notEarned',
+          lastRestriction: entry.key,
+        );
+        await tester.pumpAndSettle();
+        expect(find.textContaining(entry.value), findsOneWidget);
+        expect(find.textContaining('lock screen shown.'), findsNothing);
+        expect(find.textContaining('Home requested'), findsNothing);
+      }
+      await tester.pumpWidget(const SizedBox());
+      await service.close();
+    },
+  );
+  testWidgets(
     'Blocking consent is usable at narrow width with 200 percent text',
     (tester) async {
       await tester.binding.setSurfaceSize(const Size(320, 740));

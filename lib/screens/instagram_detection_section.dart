@@ -88,7 +88,7 @@ class InstagramDetectionSection extends StatelessWidget {
         const DaylockLabel('INSTAGRAM CONTROL'),
         const SizedBox(height: DaylockSpace.sm),
         const Text(
-          'Accessibility detects Instagram opening in the background. Optional blocking returns Home and opens a Daylock lock screen until Freedom is earned.',
+          'Accessibility detects Instagram opening in the background. Optional blocking shows a Daylock lock screen or returns Home until Freedom is earned. If the screen cannot appear, a notification explains the block when Android permits it.',
         ),
         SwitchListTile(
           key: const ValueKey('instagram-blocking-enabled'),
@@ -124,7 +124,13 @@ class InstagramDetectionSection extends StatelessWidget {
             'lock_shown' =>
               'Last restriction attempt: Daylock lock screen shown.',
             'state_unknown' => 'Last attempt: Instagram allowed while Freedom state was unavailable.',
-            'home_only' || 'lock_launch_failed' || 'lock_launch_unconfirmed' => 'Last attempt: Home requested; lock screen was not confirmed. Android may restrict background launches.',
+            'lock_launch_requested' =>
+              'Last attempt: lock screen requested; display not yet confirmed.',
+            'lock_fallback_posted' => 'Last attempt: lock screen not confirmed; Instagram lock notification posted. Android controls its delivery.',
+            'lock_fallback_unavailable' => 'Last attempt: lock screen not confirmed. Allow notifications and the Instagram lock notices channel in Android settings for fallback notices.',
+            'home_only' =>
+              'Last attempt: Home requested; lock screen was not confirmed.',
+            'lock_launch_failed' || 'lock_launch_unconfirmed' => 'Last attempt: lock screen was not confirmed. Android may restrict background launches.',
             'home_failed' => 'Last attempt: Android rejected Home navigation. Restriction could not be applied.',
             _ => 'Last restriction attempt could not be verified.',
           }),

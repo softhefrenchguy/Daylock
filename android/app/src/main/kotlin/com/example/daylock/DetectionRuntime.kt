@@ -37,6 +37,8 @@ object DetectionRuntime {
         private set
     private val observers = mutableSetOf<() -> Unit>()
     private val attemptCounter = AtomicLong(System.nanoTime())
+    val lockFlow = InstagramLockFlow()
+    private var lockRecovery = false
     @Volatile var acknowledgedLockAttempt = 0L
         private set
     fun nextLockAttempt(): Long = attemptCounter.incrementAndGet()
@@ -81,7 +83,11 @@ object DetectionRuntime {
 
     private fun notifyPermissionChange() {
         val enabled = isEnabled()
-        if (!enabled) connected = false
+        if (!enabled) {
+            connected = false
+            lockFlow.disconnect()
+            lockVisible = false
+        }
         stateRevision.incrementAndGet()
         lastEnabled = enabled
         worker.execute {
@@ -92,7 +98,11 @@ object DetectionRuntime {
     fun setConnected(value: Boolean) {
         if (connected == value) return
         connected = value
-        if (!value) stateRevision.incrementAndGet()
+        if (!value) {
+            stateRevision.incrementAndGet()
+            lockFlow.disconnect()
+            lockVisible = false
+        }
         worker.execute { emit() }
     }
 
@@ -113,15 +123,54 @@ object DetectionRuntime {
     }
 
     fun lockResumed(attempt: Long) {
-        lockVisible = true
+        if (!lockFlow.isCurrent(attempt)) return
+        lockFlow.resumed(attempt)
         visibleLockAttempt = attempt
+        InstagramLockLog.event("activity_resumed", attempt)
+        confirmLock(attempt)
     }
     fun lockDrawn(attempt: Long, recovery: Boolean) {
+        if (!lockFlow.isCurrent(attempt)) return
+        lockRecovery = recovery
+        lockFlow.drawn(attempt)
+        InstagramLockLog.event("activity_drawn", attempt)
+        confirmLock(attempt)
+    }
+    fun lockFocused(attempt: Long, focused: Boolean) {
+        lockFlow.focused(attempt, focused)
+        if (!focused && visibleLockAttempt == attempt) lockVisible = false
+        InstagramLockLog.event("activity_focus", attempt, "focused=$focused")
+        confirmLock(attempt)
+    }
+    private fun confirmLock(attempt: Long) {
+        val interactive = runCatching {
+            context.getSystemService(android.os.PowerManager::class.java).isInteractive &&
+                !context.getSystemService(android.app.KeyguardManager::class.java).isKeyguardLocked
+        }.getOrDefault(false)
+        if (!lockFlow.isCurrent(attempt)) return
+        lockVisible = lockFlow.visible(attempt, interactive)
+        if (!lockFlow.confirm(attempt, interactive)) return
         acknowledgedLockAttempt = attempt
-        reportRestriction(if (recovery) "recovery_shown" else "lock_shown")
+        InstagramLockLog.event("lock_visible_confirmed", attempt, "evidence=resumed_focused_drawn_unlocked")
+        val recovery = lockRecovery
+        worker.execute {
+            runCatching { InstagramLockFeedback.cancel(context) }
+            store.reportRestriction(if (recovery) "recovery_shown" else "lock_shown")
+            emit()
+        }
     }
     fun lockPaused(attempt: Long) {
+        lockFlow.paused(attempt)
+        InstagramLockLog.event("activity_paused", attempt)
         if (visibleLockAttempt == attempt) lockVisible = false
+    }
+    fun lockFallback(attempt: Long?) {
+        worker.execute {
+            runCatching { InstagramLockFeedback.show(context, attempt) }.onFailure {
+                InstagramLockLog.event("fallback_exception", attempt ?: 0, "type=${it.javaClass.simpleName}")
+            }
+            emit()
+        }
     }
     fun addObserver(observer: () -> Unit) { observers.add(observer) }
     fun removeObserver(observer: () -> Unit) { observers.remove(observer) }
@@ -137,6 +186,7 @@ object DetectionRuntime {
     }
 
     fun emit() {
+        runCatching { InstagramLockFeedback.reconcile(context) }
         val value = status()
         main.post { sink?.success(value); observers.toList().forEach { it() } }
     }

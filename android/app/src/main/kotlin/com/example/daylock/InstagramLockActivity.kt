@@ -35,6 +35,8 @@ class InstagramLockActivity : Activity() {
         super.onCreate(savedInstanceState)
         DetectionRuntime.attach(this)
         attempt = intent.getLongExtra("attempt", 0)
+        InstagramLockLog.event("activity_created", attempt)
+        if (!DetectionRuntime.lockFlow.isCurrent(attempt)) { finish(); return }
         if (Build.VERSION.SDK_INT >= 30) window.setDecorFitsSystemWindows(false)
         if (Build.VERSION.SDK_INT >= 33) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) { goHome() }
@@ -45,16 +47,28 @@ class InstagramLockActivity : Activity() {
         super.onNewIntent(intent)
         setIntent(intent)
         attempt = intent.getLongExtra("attempt", 0)
-        if (resumed) DetectionRuntime.lockResumed(attempt)
+        if (!DetectionRuntime.lockFlow.isCurrent(attempt)) { finish(); return }
+        lastRender = null // The new attempt needs its own draw acknowledgement.
+        if (resumed) {
+            DetectionRuntime.lockResumed(attempt)
+            DetectionRuntime.lockFocused(attempt, window.decorView.hasWindowFocus())
+        }
         refresh()
     }
 
     override fun onResume() {
         super.onResume()
+        if (!DetectionRuntime.lockFlow.isCurrent(attempt)) { finish(); return }
         resumed = true
         DetectionRuntime.addObserver(observer)
         DetectionRuntime.lockResumed(attempt)
+        DetectionRuntime.lockFocused(attempt, window.decorView.hasWindowFocus())
         refresh()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        DetectionRuntime.lockFocused(attempt, hasFocus)
     }
 
     override fun onPause() {
@@ -193,10 +207,11 @@ class InstagramLockActivity : Activity() {
         button("Accessibility Settings", false) { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); finish() }
         setContentView(scroll)
         var acknowledged = false
+        val drawnAttempt = attempt
         scroll.viewTreeObserver.addOnDrawListener {
             if (!acknowledged) {
                 acknowledged = true
-                main.post { if (resumed && !isFinishing) DetectionRuntime.lockDrawn(attempt, freedom.state == "unknown") }
+                main.post { if (resumed && !isFinishing) DetectionRuntime.lockDrawn(drawnAttempt, freedom.state == "unknown") }
             }
         }
         scroll.requestApplyInsets()

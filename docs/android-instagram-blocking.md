@@ -6,6 +6,10 @@
 
 # Instagram blocking — Stage 2B
 
+For the current activity-first presentation, diagnostics and notification fallback,
+see [Instagram lock-screen reliability](instagram-lock-reliability.md). That guide
+supersedes the Home-first navigation and display acknowledgement described below.
+
 Stage 2A detection was verified on the user's Android phone. This stage adds
 **optional, voluntary restriction of the official Instagram Android app only**.
 Stage 2B navigation and the native lock screen still need physical verification.
