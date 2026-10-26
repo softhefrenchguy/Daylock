@@ -8,6 +8,8 @@ import '../models/calendar_cache.dart';
 import '../models/daily_plan.dart';
 import '../models/event.dart';
 import '../models/task.dart';
+import '../models/area.dart';
+import '../design/daylock_areas.dart';
 import 'commitment_editor.dart';
 import '../models/routine.dart';
 import '../services/routine_service.dart';
@@ -15,6 +17,8 @@ import '../design/daylock_routine_suggestions.dart';
 
 class PlanScreen extends StatefulWidget {
   final DailyPlan plan;
+  final AreaBook? areas;
+  final void Function(Task, String)? onTaskAreaChanged;
   final List<Event> events;
   final CalendarCache? calendarCache;
   final ValueChanged<Task> onTaskCreated;
@@ -24,6 +28,8 @@ class PlanScreen extends StatefulWidget {
   const PlanScreen({
     super.key,
     required this.plan,
+    this.areas,
+    this.onTaskAreaChanged,
     this.events = const [],
     this.calendarCache,
     required this.onTaskCreated,
@@ -84,7 +90,10 @@ class _PlanScreenState extends State<PlanScreen> {
         // Follow the app theme even if system appearance changes with the sheet open.
         return Theme(
           data: Theme.of(Navigator.of(sheetContext).context),
-          child: CommitmentEditor(canCreate: () => _editable(plan)),
+          child: CommitmentEditor(
+            canCreate: () => _editable(plan),
+            areas: widget.areas,
+          ),
         );
       },
     );
@@ -92,6 +101,50 @@ class _PlanScreenState extends State<PlanScreen> {
     _openingModal = false;
     if (task == null || !_editable(plan)) return;
     widget.onTaskCreated(task);
+  }
+
+  Future<void> _changeArea(Task task) async {
+    final plan = widget.plan;
+    if (!_editable(plan) || _openingModal || !plan.tasks.contains(task)) return;
+    _openingModal = true;
+    final id = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      constraints: const BoxConstraints(maxWidth: 640),
+      builder: (sheetContext) {
+        _activeModal = ModalRoute.of(sheetContext);
+        return SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(DaylockSpace.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Area for ${task.name}',
+                  style: Theme.of(sheetContext).textTheme.titleLarge,
+                ),
+                AreaChoices(
+                  book: widget.areas ?? AreaBook.initial(),
+                  selectedId: task.areaId,
+                  onSelected: (id) {
+                    if (_editable(plan) && plan.tasks.contains(task)) {
+                      Navigator.pop(sheetContext, id);
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    _activeModal = null;
+    _openingModal = false;
+    if (id != null && _editable(plan) && plan.tasks.contains(task)) {
+      widget.onTaskAreaChanged?.call(task, id);
+    }
   }
 
   Future<void> _confirmCommit() async {
@@ -204,6 +257,7 @@ class _PlanScreenState extends State<PlanScreen> {
                                     widget.routineSuggestions.isNotEmpty &&
                                     widget.onRoutineAction != null) ...[
                                   DaylockRoutineSuggestions(
+                                    areas: widget.areas,
                                     suggestions: widget.routineSuggestions,
                                     onAction: (suggestion, action) {
                                       if (_editable(plan)) {
@@ -299,6 +353,30 @@ class _PlanScreenState extends State<PlanScreen> {
                               key: ValueKey('plan-task-$index'),
                               children: [
                                 DaylockPlanTaskRow(task: plan.tasks[index]),
+                                if (widget.areas != null)
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child:
+                                        !plan.isCommitted &&
+                                            widget.onTaskAreaChanged != null
+                                        ? TextButton(
+                                            key: ValueKey(
+                                              'edit-task-area-$index',
+                                            ),
+                                            onPressed: () =>
+                                                _changeArea(plan.tasks[index]),
+                                            child: AreaBadge(
+                                              area: widget.areas!.resolve(
+                                                plan.tasks[index].areaId,
+                                              ),
+                                            ),
+                                          )
+                                        : AreaBadge(
+                                            area: widget.areas!.resolve(
+                                              plan.tasks[index].areaId,
+                                            ),
+                                          ),
+                                  ),
                                 const Divider(),
                               ],
                             ),

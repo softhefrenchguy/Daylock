@@ -3,13 +3,20 @@ import 'package:flutter/material.dart';
 import '../models/calendar_activity.dart';
 import '../models/event.dart';
 import '../models/task.dart';
+import '../models/area.dart';
+import 'daylock_areas.dart';
 import 'daylock_plan_rows.dart';
 import 'daylock_theme.dart';
 import 'daylock_widgets.dart';
 
 class DaylockCalendarCommitments extends StatelessWidget {
   final CalendarDayActivity activity;
-  const DaylockCalendarCommitments({super.key, required this.activity});
+  final AreaBook? areas;
+  const DaylockCalendarCommitments({
+    super.key,
+    required this.activity,
+    this.areas,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -130,6 +137,8 @@ class DaylockCalendarCommitments extends StatelessWidget {
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
+                        if (areas != null)
+                          AreaBadge(area: areas!.resolve(task.areaId)),
                         if (task.type == TaskType.focus) ...[
                           Text(
                             '${recordedFocusLabel(task.accumulatedFocusMilliseconds)} / ${task.minimumFocusMinutes} min',

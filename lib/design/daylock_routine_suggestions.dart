@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../models/routine.dart';
 import '../models/task.dart';
+import '../models/area.dart';
+import 'daylock_areas.dart';
 import '../services/routine_service.dart';
 import 'daylock_widgets.dart';
 
 class DaylockRoutineSuggestions extends StatelessWidget {
   final List<RoutineSuggestion> suggestions;
+  final AreaBook? areas;
   final void Function(RoutineSuggestion, RoutineAction) onAction;
   const DaylockRoutineSuggestions({
     super.key,
     required this.suggestions,
+    this.areas,
     required this.onAction,
   });
   @override
@@ -43,6 +47,10 @@ class DaylockRoutineSuggestions extends StatelessWidget {
                 Text('Focus · ${suggestion.step.minimumFocusMinutes} min'),
               if (suggestion.step.focusTarget != null)
                 Text(suggestion.step.focusTarget!),
+              if (areas != null)
+                AreaBadge(
+                  area: areas!.forNewCommitment(suggestion.step.areaId),
+                ),
               Wrap(
                 spacing: 4,
                 children: [

@@ -1,5 +1,6 @@
 import '../models/routine.dart';
 import '../models/task.dart';
+import '../models/area.dart';
 
 class RoutineSuggestion {
   final String routineId, routineName;
@@ -44,8 +45,9 @@ class RoutineService {
     RoutineBook book,
     RoutineSuggestion suggestion,
     RoutineAction action,
-    DateTime planDate,
-  ) {
+    DateTime planDate, {
+    AreaBook? areas,
+  }) {
     if (routineDateKey(suggestion.date) != routineDateKey(planDate)) {
       return RoutineResolution(book: book, changed: false);
     }
@@ -59,10 +61,16 @@ class RoutineService {
         routine.nextStep.id != suggestion.step.id) {
       return RoutineResolution(book: book, changed: false);
     }
+    final task = action == RoutineAction.accept
+        ? routine.nextStep.toTask()
+        : null;
+    if (task != null && areas != null) {
+      task.areaId = areas.forNewCommitment(task.areaId).id;
+    }
     return RoutineResolution(
       book: book.upsert(routine.decide(planDate, action)),
       changed: true,
-      task: action == RoutineAction.accept ? routine.nextStep.toTask() : null,
+      task: task,
     );
   }
 }

@@ -21,7 +21,7 @@ class LocalStorage {
     final json = await _preferences.getString(stateKey);
     if (json != null) {
       final decoded = jsonDecode(json) as Map<String, dynamic>;
-      final state = DaylockState.fromJson(decoded);
+      final state = DaylockState.fromJson(decoded, migrationTime: _now());
       // Additive v2 migration: missing collections become empty. Never backfill history.
       if (!decoded.containsKey('events') ||
           !decoded.containsKey('calendarCache') ||
@@ -29,6 +29,7 @@ class LocalStorage {
           !decoded.containsKey('freedomSettings') ||
           !decoded.containsKey('routines') ||
           !decoded.containsKey('notificationPreferences') ||
+          !decoded.containsKey('areas') ||
           _needsOutcomeMigration(decoded) ||
           (decoded['events'] as List).any(
             (event) => !(event as Map).containsKey('source'),

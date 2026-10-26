@@ -7,6 +7,7 @@ DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
 // Immutable execution snapshots: no timer or completion setters are exposed.
 class HistoricalTask {
   final String name;
+  final String? areaId;
   final TaskType type;
   final TaskOutcome outcome;
   final String? excuseReason;
@@ -18,6 +19,7 @@ class HistoricalTask {
 
   HistoricalTask._(Task task)
     : name = task.name,
+      areaId = task.areaId,
       type = task.type,
       outcome = task.outcome,
       excuseReason = task.excuseReason,
@@ -46,6 +48,7 @@ class HistoricalTask {
     'isCompleted': isCompleted,
     'outcome': outcome.name,
     'excuseReason': excuseReason,
+    if (areaId != null) 'areaId': areaId,
     if (type == TaskType.focus) ...{
       'minimumFocusMinutes': minimumFocusMinutes,
       'focusTarget': focusTarget,

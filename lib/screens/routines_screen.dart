@@ -2,21 +2,26 @@ import 'package:flutter/material.dart';
 
 import '../design/daylock_theme.dart';
 import '../models/routine.dart';
+import '../models/area.dart';
 import 'routine_editor.dart';
 
 class RoutinesScreen extends StatelessWidget {
   final RoutineBook book;
+  final AreaBook? areas;
   final ValueChanged<Routine> onSaved;
   final ValueChanged<String> onDeleted;
   const RoutinesScreen({
     super.key,
     required this.book,
+    this.areas,
     required this.onSaved,
     required this.onDeleted,
   });
   Future<void> _edit(BuildContext context, [Routine? routine]) async {
     final saved = await Navigator.of(context).push<Routine>(
-      MaterialPageRoute(builder: (_) => RoutineEditor(routine: routine)),
+      MaterialPageRoute(
+        builder: (_) => RoutineEditor(routine: routine, areas: areas),
+      ),
     );
     if (context.mounted && saved != null) onSaved(saved);
   }

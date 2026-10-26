@@ -24,6 +24,8 @@ import 'screens/calendar_screen.dart';
 import 'services/local_storage.dart';
 import 'models/freedom_settings.dart';
 import 'models/routine.dart';
+import 'models/area.dart';
+import 'screens/areas_screen.dart';
 import 'services/freedom_service.dart';
 import 'services/routine_service.dart';
 import 'screens/routines_screen.dart';
@@ -78,6 +80,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       const NotificationPreferences();
   FreedomSettings freedomSettings = const FreedomSettings();
   RoutineBook routines = RoutineBook.empty;
+  late AreaBook areas;
   late final AppearanceStorage _appearanceStorage;
   late final Future<void> _appearanceReady;
   bool _isLoading = true;
@@ -108,6 +111,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     _calendarService =
         widget.calendarService ?? defaultCalendarService(now: _now);
     final now = _now();
+    areas = AreaBook.initial(createdAt: now);
     todayPlan = DailyPlan(date: now, tasks: [], isCommitted: true);
     tomorrowPlan = DailyPlan(
       date: DateTime(now.year, now.month, now.day + 1),
@@ -128,6 +132,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     history: history,
     freedomSettings: freedomSettings,
     routines: routines,
+    areas: areas,
     notificationPreferences: notificationPreferences,
   );
 
@@ -309,6 +314,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         history = current.history;
         freedomSettings = current.freedomSettings;
         routines = current.routines;
+        areas = current.areas;
         notificationPreferences = current.notificationPreferences;
         _isLoading = false;
         _loadFailed = false;
@@ -383,6 +389,8 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             onFreedomChanged: _changeFreedomSettings,
             routineCount: routines.routines.length,
             onRoutinesRequested: _openRoutines,
+            onAreasRequested: _openAreas,
+            areaCount: areas.active.length,
             detectionBridge: _detectionBridge,
             notificationService: _notifications,
             notificationPreferences: notificationPreferences,
@@ -448,12 +456,48 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.ensureVisualUpdate();
   }
 
+  void _openAreas() => _navigatorKey.currentState!.push(
+    MaterialPageRoute<void>(
+      builder: (_) => ValueListenableBuilder<int>(
+        valueListenable: _planningChanges,
+        builder: (context, revision, _) => AreasScreen(
+          book: areas,
+          onSaved: (area) {
+            setState(() => areas = areas.upsert(area));
+            _planningChanges.value++;
+            unawaited(_saveState());
+          },
+          onArchived: (id, archived) {
+            if (areas.resolve(id).isDefault) return;
+            setState(() => areas = areas.archive(id, archived));
+            _planningChanges.value++;
+            unawaited(_saveState());
+          },
+        ),
+      ),
+    ),
+  );
+
+  void _changeTaskArea(Task task, String id, DailyPlan sourcePlan) {
+    _refreshClock();
+    if (!identical(sourcePlan, tomorrowPlan) ||
+        tomorrowPlan.isCommitted ||
+        !tomorrowPlan.tasks.contains(task) ||
+        !areas.active.any((a) => a.id == id)) {
+      return;
+    }
+    // Update only the relationship; retain the same Task and all execution state.
+    setState(() => task.areaId = id);
+    unawaited(_saveState());
+  }
+
   void _openRoutines() => _navigatorKey.currentState!.push(
     MaterialPageRoute<void>(
       builder: (_) => ValueListenableBuilder<int>(
         valueListenable: _planningChanges,
         builder: (context, revision, _) => RoutinesScreen(
           book: routines,
+          areas: areas,
           onSaved: _saveRoutine,
           onDeleted: (id) {
             setState(() => routines = routines.remove(id));
@@ -495,6 +539,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       suggestion,
       action,
       tomorrowPlan.date,
+      areas: areas,
     );
     if (!resolution.changed) return;
     setState(() {
@@ -612,6 +657,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       PlanScreen(
         key: ValueKey(planForTomorrow.date),
         plan: planForTomorrow,
+        areas: areas,
+        onTaskAreaChanged: (task, id) =>
+            _changeTaskArea(task, id, planForTomorrow),
         routineSuggestions: const RoutineService().suggestions(
           routines,
           planForTomorrow.date,
@@ -621,12 +669,14 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         events: Event.forDate(displayedEvents, planForTomorrow.date),
         calendarCache: calendarCache,
         onTaskCreated: (task) {
+          _refreshClock();
           if (!identical(planForTomorrow, tomorrowPlan) ||
               tomorrowPlan.isCommitted) {
             return;
           }
 
           setState(() {
+            task.areaId = areas.forNewCommitment(task.areaId).id;
             tomorrowPlan.tasks.add(task);
           });
           unawaited(_saveState());
@@ -645,6 +695,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         },
       ),
       CalendarScreen(
+        areas: areas,
         initialDate: _now(),
         todayPlan: planForToday,
         history: history,

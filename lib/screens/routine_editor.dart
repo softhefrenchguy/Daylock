@@ -3,11 +3,14 @@ import 'package:flutter/material.dart';
 import '../design/daylock_theme.dart';
 import '../models/routine.dart';
 import '../models/task.dart';
+import '../models/area.dart';
+import '../design/daylock_areas.dart';
 import 'commitment_editor.dart';
 
 class RoutineEditor extends StatefulWidget {
   final Routine? routine;
-  const RoutineEditor({super.key, this.routine});
+  final AreaBook? areas;
+  const RoutineEditor({super.key, this.routine, this.areas});
   @override
   State<RoutineEditor> createState() => _RoutineEditorState();
 }
@@ -44,6 +47,7 @@ class _RoutineEditorState extends State<RoutineEditor> {
         child: CommitmentEditor(
           canCreate: () => mounted && !_submitted,
           initialTask: old?.toTask(),
+          areas: widget.areas,
           heading: old == null ? 'New routine step' : 'Edit routine step',
           submitLabel: old == null ? 'Add step' : 'Save step',
         ),
@@ -116,6 +120,8 @@ class _RoutineEditorState extends State<RoutineEditor> {
                 ),
                 if (_steps[index].focusTarget != null)
                   Text(_steps[index].focusTarget!),
+                if (widget.areas != null)
+                  AreaBadge(area: widget.areas!.resolve(_steps[index].areaId)),
                 Wrap(
                   children: [
                     IconButton(

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'task.dart';
+import 'area.dart';
 
 String newRoutineId() {
   final random = Random.secure();
@@ -17,6 +18,7 @@ enum RoutineAction { accept, skip, dismiss }
 
 class RoutineStep {
   final String id, name;
+  final String? areaId;
   final TaskType type;
   final int? minimumFocusMinutes;
   final String? focusTarget;
@@ -24,6 +26,7 @@ class RoutineStep {
     required this.id,
     required String name,
     required this.type,
+    this.areaId = Area.defaultId,
     this.minimumFocusMinutes,
     String? focusTarget,
   }) : name = name.trim(),
@@ -43,12 +46,14 @@ class RoutineStep {
     id: id ?? newRoutineId(),
     name: task.name,
     type: task.type,
+    areaId: task.areaId,
     minimumFocusMinutes: task.minimumFocusMinutes,
     focusTarget: task.focusTarget,
   );
   Task toTask() => Task(
     name: name,
     type: type,
+    areaId: areaId ?? Area.defaultId,
     minimumFocusMinutes: minimumFocusMinutes,
     focusTarget: focusTarget,
   );
@@ -58,11 +63,13 @@ class RoutineStep {
     'type': type.name,
     'minimumFocusMinutes': minimumFocusMinutes,
     'focusTarget': focusTarget,
+    if (areaId != null) 'areaId': areaId,
   };
   factory RoutineStep.fromJson(Map<String, dynamic> json) => RoutineStep(
     id: json['id'] as String,
     name: json['name'] as String,
     type: TaskType.values.byName(json['type'] as String),
+    areaId: readAreaId(json['areaId']),
     minimumFocusMinutes: json['minimumFocusMinutes'] as int?,
     focusTarget: json['focusTarget'] as String?,
   );

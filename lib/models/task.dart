@@ -1,3 +1,5 @@
+import 'area.dart';
+
 enum TaskType { goal, focus }
 
 enum TaskOutcome {
@@ -14,6 +16,7 @@ class Task {
   static const maxExcuseReasonLength = 240;
 
   String name;
+  String? areaId;
   final TaskType type;
   final int? minimumFocusMinutes;
   final String? focusTarget;
@@ -25,6 +28,7 @@ class Task {
   Task({
     required this.name,
     required this.type,
+    this.areaId = Area.defaultId,
     bool isCompleted = false,
     TaskOutcome? outcome,
     String? excuseReason,
@@ -188,6 +192,7 @@ class Task {
     'isCompleted': isCompleted,
     'outcome': outcome.name,
     'excuseReason': excuseReason,
+    if (areaId != null) 'areaId': areaId,
     if (type == TaskType.focus) ...{
       'minimumFocusMinutes': minimumFocusMinutes,
       'focusTarget': focusTarget,
@@ -218,6 +223,7 @@ class Task {
         !json.containsKey('accumulatedFocusMilliseconds');
     final task = Task(
       name: json['name'] as String,
+      areaId: readAreaId(json['areaId']),
       type: type,
       isCompleted: completed,
       outcome: savedOutcome,

@@ -2,16 +2,20 @@ import 'package:flutter/material.dart';
 
 import '../design/daylock_theme.dart';
 import '../models/task.dart';
+import '../models/area.dart';
+import '../design/daylock_areas.dart';
 
 // The sheet returns a validated Task. MainApp still owns and persists the plan.
 class CommitmentEditor extends StatefulWidget {
   final bool Function() canCreate;
   final Task? initialTask;
+  final AreaBook? areas;
   final String heading, submitLabel;
   const CommitmentEditor({
     super.key,
     required this.canCreate,
     this.initialTask,
+    this.areas,
     this.heading = 'New commitment',
     this.submitLabel = 'Add commitment',
   });
@@ -26,6 +30,8 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
   final _target = TextEditingController();
   TaskType _type = TaskType.goal;
   bool _submitted = false;
+  late final AreaBook _areas;
+  late String _areaId;
   int? get _minimum => int.tryParse(_minutes.text.trim());
   bool get _validDuration =>
       _type == TaskType.goal || (_minimum != null && _minimum! > 0);
@@ -35,6 +41,8 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
   void initState() {
     super.initState();
     final task = widget.initialTask;
+    _areas = widget.areas ?? AreaBook.initial();
+    _areaId = _areas.resolve(task?.areaId).id;
     if (task != null) {
       _name.text = task.name;
       _minutes.text = task.minimumFocusMinutes?.toString() ?? '';
@@ -56,6 +64,7 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
     _submitted = true;
     final task = Task(
       name: _name.text.trim(),
+      areaId: _areaId,
       type: _type,
       minimumFocusMinutes: _type == TaskType.focus ? _minimum : null,
       focusTarget: _type == TaskType.focus ? _target.text : null,
@@ -197,6 +206,12 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
               ),
             ],
             const SizedBox(height: DaylockSpace.md),
+            AreaSelector(
+              book: _areas,
+              selectedId: _areaId,
+              onChanged: (id) => setState(() => _areaId = id),
+            ),
+            const SizedBox(height: DaylockSpace.sm),
             FilledButton.icon(
               key: const ValueKey('save-commitment'),
               onPressed: _valid ? _submit : null,

@@ -6,6 +6,7 @@ import 'plan_history.dart';
 import 'freedom_settings.dart';
 import 'routine.dart';
 import 'notification_preferences.dart';
+import 'area.dart';
 
 // A snapshot for storage. MainApp still owns the live plans.
 class DaylockState {
@@ -17,8 +18,9 @@ class DaylockState {
   final FreedomSettings freedomSettings;
   final RoutineBook routines;
   final NotificationPreferences notificationPreferences;
+  final AreaBook areas;
 
-  const DaylockState({
+  DaylockState({
     required this.todayPlan,
     required this.tomorrowPlan,
     this.events = const [],
@@ -27,7 +29,8 @@ class DaylockState {
     this.freedomSettings = const FreedomSettings(),
     this.routines = RoutineBook.empty,
     this.notificationPreferences = const NotificationPreferences(),
-  });
+    AreaBook? areas,
+  }) : areas = areas ?? AreaBook.initial(createdAt: todayPlan.date);
 
   DaylockState rollOver(DateTime now) {
     final currentDate = DateTime(now.year, now.month, now.day);
@@ -56,6 +59,7 @@ class DaylockState {
       freedomSettings: freedomSettings,
       routines: routines,
       notificationPreferences: notificationPreferences,
+      areas: areas,
       todayPlan: canPromote
           ? tomorrowPlan
           : DailyPlan(date: currentDate, tasks: []),
@@ -86,14 +90,21 @@ class DaylockState {
       'freedomSettings': freedomSettings.toJson(),
       'routines': routines.toJson(),
       'notificationPreferences': notificationPreferences.toJson(),
+      'areas': areas.toJson(),
     };
   }
 
-  factory DaylockState.fromJson(Map<String, dynamic> json) {
+  factory DaylockState.fromJson(
+    Map<String, dynamic> json, {
+    DateTime? migrationTime,
+  }) {
     if (json['version'] != 2) {
       throw const FormatException('Unsupported saved state version');
     }
     return DaylockState(
+      areas: json.containsKey('areas')
+          ? AreaBook.fromJson(json['areas'] as List)
+          : AreaBook.initial(createdAt: migrationTime),
       notificationPreferences: json.containsKey('notificationPreferences')
           ? NotificationPreferences.fromJson(
               json['notificationPreferences'] as Map<String, dynamic>,
@@ -140,6 +151,7 @@ class DaylockState {
     Map<String, dynamic> json, {
     required DateTime today,
   }) => DaylockState(
+    areas: AreaBook.initial(createdAt: today),
     // The old format had no dates. Assign them once, during migration.
     todayPlan: DailyPlan(
       date: today,

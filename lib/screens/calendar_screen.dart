@@ -7,6 +7,7 @@ import '../design/daylock_widgets.dart';
 import '../models/calendar_activity.dart';
 import '../models/daily_plan.dart';
 import '../models/plan_history.dart';
+import '../models/area.dart';
 import '../models/event.dart';
 import 'event_editor.dart';
 import '../models/calendar_cache.dart';
@@ -20,6 +21,7 @@ class CalendarScreen extends StatefulWidget {
   final List<Event> events;
   final DailyPlan? todayPlan;
   final PlanHistory history;
+  final AreaBook? areas;
   final ValueChanged<Event> onEventSaved;
   final ValueChanged<Event> onEventDeleted;
   final CalendarCache? calendarCache;
@@ -32,6 +34,7 @@ class CalendarScreen extends StatefulWidget {
     required this.events,
     this.todayPlan,
     this.history = PlanHistory.empty,
+    this.areas,
     required this.onEventSaved,
     required this.onEventDeleted,
     this.calendarCache,
@@ -351,7 +354,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               style: theme.textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
-            DaylockCalendarCommitments(activity: activity),
+            DaylockCalendarCommitments(activity: activity, areas: widget.areas),
             if (!activity.isFuture) const SizedBox(height: 16),
             LayoutBuilder(
               builder: (context, constraints) {

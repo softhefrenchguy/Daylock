@@ -18,6 +18,8 @@ class SettingsScreen extends StatelessWidget {
   final ValueChanged<FreedomSettings>? onFreedomChanged;
   final VoidCallback? onRoutinesRequested;
   final int routineCount;
+  final VoidCallback? onAreasRequested;
+  final int areaCount;
   final InstagramDetectionBridge? detectionBridge;
   final NotificationPreferences notificationPreferences;
   final ValueChanged<NotificationPreferences>? onNotificationsChanged;
@@ -30,6 +32,8 @@ class SettingsScreen extends StatelessWidget {
     this.onFreedomChanged,
     this.onRoutinesRequested,
     this.routineCount = 0,
+    this.onAreasRequested,
+    this.areaCount = 1,
     this.detectionBridge,
     this.notificationPreferences = const NotificationPreferences(),
     this.onNotificationsChanged,
@@ -201,6 +205,16 @@ class SettingsScreen extends StatelessWidget {
                       service: notificationService!,
                     ),
                   ],
+                  const SizedBox(height: DaylockSpace.xl),
+                  const DaylockLabel('AREAS'),
+                  ListTile(
+                    key: const ValueKey('manage-areas'),
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Manage Areas'),
+                    subtitle: Text('$areaCount active Areas'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: onAreasRequested,
+                  ),
                 ],
               ),
             ),
