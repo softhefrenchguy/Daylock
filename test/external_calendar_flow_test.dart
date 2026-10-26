@@ -1,3 +1,5 @@
+import 'navigation_helpers.dart';
+
 import 'package:daylock/main.dart';
 import 'package:daylock/models/calendar_account.dart';
 import 'package:daylock/models/calendar_cache.dart';
@@ -24,10 +26,8 @@ Future<void> _tap(WidgetTester tester, Finder finder) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> _navigate(WidgetTester tester, String page) => _tap(
-  tester,
-  find.descendant(of: find.byType(NavigationBar), matching: find.text(page)),
-);
+Future<void> _navigate(WidgetTester tester, String page) =>
+    navigateApp(tester, page);
 Future<void> _tomorrow(WidgetTester tester) =>
     _tap(tester, find.byKey(const ValueKey('calendar-day-2026-10-09')));
 Future<DaylockState> _saved(WidgetTester tester) async =>

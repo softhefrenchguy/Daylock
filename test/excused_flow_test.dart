@@ -1,3 +1,5 @@
+import 'navigation_helpers.dart';
+
 import 'dart:convert';
 
 import 'package:daylock/design/daylock_calendar.dart';
@@ -70,10 +72,8 @@ Future<void> _excuse(
   await _tap(tester, find.byKey(const ValueKey('confirm-excuse')));
 }
 
-Future<void> _page(WidgetTester tester, String name) => _tap(
-  tester,
-  find.descendant(of: find.byType(NavigationBar), matching: find.text(name)),
-);
+Future<void> _page(WidgetTester tester, String name) =>
+    navigateApp(tester, name);
 void _resume(WidgetTester tester) {
   for (final state in [
     AppLifecycleState.inactive,

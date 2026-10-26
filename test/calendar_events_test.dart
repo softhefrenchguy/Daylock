@@ -1,3 +1,5 @@
+import 'navigation_helpers.dart';
+
 import 'package:daylock/main.dart';
 import 'package:daylock/models/daily_plan.dart';
 import 'package:daylock/models/daylock_state.dart';
@@ -16,12 +18,8 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 
 final _today = DateTime(2026, 10, 8, 9);
 
-Future<void> _navigate(WidgetTester tester, String page) async {
-  await tester.tap(
-    find.descendant(of: find.byType(NavigationBar), matching: find.text(page)),
-  );
-  await tester.pumpAndSettle();
-}
+Future<void> _navigate(WidgetTester tester, String page) =>
+    navigateApp(tester, page);
 
 Future<void> _tap(WidgetTester tester, Finder finder) async {
   await tester.ensureVisible(finder);

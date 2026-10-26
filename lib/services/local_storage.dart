@@ -30,6 +30,7 @@ class LocalStorage {
           !decoded.containsKey('routines') ||
           !decoded.containsKey('notificationPreferences') ||
           !decoded.containsKey('areas') ||
+          !decoded.containsKey('highlights') ||
           _needsOutcomeMigration(decoded) ||
           (decoded['events'] as List).any(
             (event) => !(event as Map).containsKey('source'),

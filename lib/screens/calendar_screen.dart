@@ -18,6 +18,7 @@ import 'calendar_month_picker.dart';
 
 class CalendarScreen extends StatefulWidget {
   final DateTime initialDate;
+  final DateTime? initialSelectedDate;
   final List<Event> events;
   final DailyPlan? todayPlan;
   final PlanHistory history;
@@ -31,6 +32,7 @@ class CalendarScreen extends StatefulWidget {
   const CalendarScreen({
     super.key,
     required this.initialDate,
+    this.initialSelectedDate,
     required this.events,
     this.todayPlan,
     this.history = PlanHistory.empty,
@@ -52,7 +54,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   void initState() {
     super.initState();
-    final date = widget.initialDate;
+    final date = widget.initialSelectedDate ?? widget.initialDate;
     _selectedDate = DateTime(date.year, date.month, date.day);
   }
 

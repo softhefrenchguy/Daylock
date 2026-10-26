@@ -26,6 +26,12 @@ import 'models/freedom_settings.dart';
 import 'models/routine.dart';
 import 'models/area.dart';
 import 'screens/areas_screen.dart';
+import 'models/highlight.dart';
+import 'services/journey_service.dart';
+import 'screens/journey_screen.dart';
+import 'screens/area_journey_screen.dart';
+import 'screens/highlight_editor.dart';
+import 'design/daylock_journey.dart';
 import 'services/freedom_service.dart';
 import 'services/routine_service.dart';
 import 'screens/routines_screen.dart';
@@ -73,6 +79,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   final _navigatorKey = GlobalKey<NavigatorState>();
   final _appearance = ValueNotifier(const AppearancePreferences());
   final _planningChanges = ValueNotifier(0);
+  final _journeyChanges = ValueNotifier(0);
   final _todayScreenKey = GlobalKey<TodayScreenState>();
   late final NotificationService _notifications;
   NotificationTarget? _pendingNotificationTap;
@@ -81,6 +88,8 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   FreedomSettings freedomSettings = const FreedomSettings();
   RoutineBook routines = RoutineBook.empty;
   late AreaBook areas;
+  HighlightBook highlights = HighlightBook.empty;
+  JourneyData? _cachedJourney;
   late final AppearanceStorage _appearanceStorage;
   late final Future<void> _appearanceReady;
   bool _isLoading = true;
@@ -133,6 +142,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     freedomSettings: freedomSettings,
     routines: routines,
     areas: areas,
+    highlights: highlights,
     notificationPreferences: notificationPreferences,
   );
 
@@ -143,6 +153,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     _clockRefreshTimer?.cancel();
     _appearance.dispose();
     _planningChanges.dispose();
+    _journeyChanges.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -208,6 +219,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     _checkRollover();
     final changed = _reconcileFocus(_snapshot(), _now());
     setState(() {});
+    _journeyChanges.value++;
     if (changed) unawaited(_saveState());
     _publishNativeFreedom();
     _configureClockRefresh();
@@ -315,6 +327,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         freedomSettings = current.freedomSettings;
         routines = current.routines;
         areas = current.areas;
+        highlights = current.highlights;
         notificationPreferences = current.notificationPreferences;
         _isLoading = false;
         _loadFailed = false;
@@ -551,7 +564,222 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     unawaited(_saveState());
   }
 
+  JourneyData _journeyData() {
+    final now = _now();
+    if (_cachedJourney == null || _cachedJourney!.today != journeyDay(now)) {
+      _cachedJourney = JourneyData(
+        areas: areas,
+        history: history,
+        todayPlan: todayPlan,
+        now: now,
+      );
+    }
+    return _cachedJourney!;
+  }
+
+  void _openCalendar([DateTime? date]) => _navigatorKey.currentState!.push(
+    MaterialPageRoute<void>(
+      builder: (_) => ValueListenableBuilder<int>(
+        valueListenable: _journeyChanges,
+        builder: (context, revision, _) => Scaffold(
+          appBar: AppBar(title: const Text('Daily history')),
+          body: _buildCalendar(date),
+        ),
+      ),
+    ),
+  );
+
+  void _openAreaJourney(String id) => _navigatorKey.currentState!.push(
+    MaterialPageRoute<void>(
+      builder: (_) => ValueListenableBuilder<int>(
+        valueListenable: _journeyChanges,
+        builder: (context, revision, _) => AreaJourneyScreen(
+          area: areas.resolve(id),
+          areas: areas,
+          data: _journeyData(),
+          highlights: highlights,
+          onHighlightOpened: _openHighlight,
+          onDayOpened: _openCalendar,
+          onAddHighlight: () => _editHighlight(initialAreaId: id),
+        ),
+      ),
+    ),
+  );
+
+  Future<void> _editHighlight({
+    Highlight? original,
+    String? initialAreaId,
+  }) async {
+    final saved = await showModalBottomSheet<Highlight>(
+      context: _navigatorKey.currentContext!,
+      isScrollControlled: true,
+      useSafeArea: true,
+      constraints: const BoxConstraints(maxWidth: 640),
+      builder: (_) => HighlightEditor(
+        highlight: original,
+        areas: areas,
+        now: _now(),
+        initialAreaId: initialAreaId,
+      ),
+    );
+    if (!mounted || saved == null) return;
+    if (original != null &&
+        !highlights.highlights.any((h) => h.id == original.id)) {
+      return;
+    }
+    setState(() => highlights = highlights.upsert(saved));
+    unawaited(_saveState());
+  }
+
+  void _openHighlights() => _navigatorKey.currentState!.push(
+    MaterialPageRoute<void>(
+      builder: (_) => ValueListenableBuilder<int>(
+        valueListenable: _journeyChanges,
+        builder: (context, revision, _) => Scaffold(
+          appBar: AppBar(title: const Text('Highlights')),
+          body: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: ListView(
+                  padding: const EdgeInsets.all(24),
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _editHighlight(),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Highlight'),
+                      ),
+                    ),
+                    if (highlights.highlights.isEmpty)
+                      const Text('Keep the moments that matter to you.'),
+                    for (final highlight in highlights.newestFirst)
+                      JourneyHighlightTile(
+                        highlight: highlight,
+                        areas: areas,
+                        onTap: () => _openHighlight(highlight),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  void _openHighlight(Highlight selected) => _navigatorKey.currentState!.push(
+    MaterialPageRoute<void>(
+      builder: (_) => ValueListenableBuilder<int>(
+        valueListenable: _journeyChanges,
+        builder: (context, revision, _) {
+          final matches = highlights.highlights.where(
+            (h) => h.id == selected.id,
+          );
+          if (matches.isEmpty) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Highlight')),
+              body: const Center(
+                child: Text('This Highlight has been removed.'),
+              ),
+            );
+          }
+          final highlight = matches.single;
+          return Scaffold(
+            appBar: AppBar(title: const Text('Highlight')),
+            body: SafeArea(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 720),
+                  child: ListView(
+                    padding: const EdgeInsets.all(24),
+                    children: [
+                      Text(
+                        highlight.title,
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        MaterialLocalizations.of(context)
+                            .formatFullDate(highlight.date),
+                      ),
+                      if (highlight.areaId != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          areas.areas.any((a) => a.id == highlight.areaId)
+                              ? areas.resolve(highlight.areaId).name
+                              : 'Area unavailable',
+                        ),
+                      ],
+                      if (highlight.description != null) ...[
+                        const SizedBox(height: 24),
+                        Text(highlight.description!),
+                      ],
+                      const SizedBox(height: 24),
+                      Wrap(
+                        spacing: 12,
+                        children: [
+                          OutlinedButton(
+                            key: const ValueKey('edit-highlight'),
+                            onPressed: () =>
+                                _editHighlight(original: highlight),
+                            child: const Text('Edit'),
+                          ),
+                          TextButton(
+                            key: const ValueKey('delete-highlight'),
+                            onPressed: () =>
+                                _deleteHighlight(context, highlight),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    ),
+  );
+
+  Future<void> _deleteHighlight(
+    BuildContext context,
+    Highlight highlight,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        scrollable: true,
+        title: const Text('Delete Highlight?'),
+        content: Text(
+          'Remove “${highlight.title}”? Your commitments and Areas will stay as they are.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Keep Highlight'),
+          ),
+          FilledButton(
+            key: const ValueKey('confirm-delete-highlight'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || !context.mounted || confirmed != true) return;
+    Navigator.pop(context);
+    setState(() => highlights = highlights.remove(highlight.id));
+    unawaited(_saveState());
+  }
+
   Future<void> _saveState() async {
+    _cachedJourney = null;
+    _journeyChanges.value++;
     // Freeze mutable tasks before any await, preserving the order of rapid edits.
     final snapshot = DaylockState.fromJson(_snapshot().toJson());
     final revision = ++_nativeSaveRevision;
@@ -612,6 +840,43 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           home: _buildHome(),
         ),
       );
+
+  Widget _buildCalendar(DateTime? selectedDate) => CalendarScreen(
+    areas: areas,
+    initialDate: _now(),
+    initialSelectedDate: selectedDate,
+    todayPlan: todayPlan,
+    history: history,
+    events: [...events, ...calendarCache.visibleEvents],
+    calendarCache: calendarCache,
+    calendarService: _calendarService,
+    onCalendarCacheChanged: (updated) async {
+      if (!mounted) return calendarCache;
+      setState(() => calendarCache = updated);
+      await _saveState();
+      return calendarCache;
+    },
+    onEventSaved: (event) {
+      if (event.isExternal ||
+          calendarCache.events.any((e) => e.id == event.id)) {
+        return;
+      }
+      setState(() {
+        final index = events.indexWhere((existing) => existing.id == event.id);
+        if (index == -1) {
+          events.add(event);
+        } else {
+          events[index] = event;
+        }
+      });
+      unawaited(_saveState());
+    },
+    onEventDeleted: (event) {
+      if (event.isExternal) return;
+      setState(() => events.removeWhere((existing) => existing.id == event.id));
+      unawaited(_saveState());
+    },
+  );
 
   Widget _buildHome() {
     if (_isLoading || _loadFailed) {
@@ -694,44 +959,15 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           unawaited(_saveState());
         },
       ),
-      CalendarScreen(
+      JourneyScreen(
         areas: areas,
-        initialDate: _now(),
-        todayPlan: planForToday,
-        history: history,
-        events: displayedEvents,
-        calendarCache: calendarCache,
-        calendarService: _calendarService,
-        onCalendarCacheChanged: (updated) async {
-          if (!mounted) return calendarCache;
-          setState(() => calendarCache = updated);
-          await _saveState();
-          return calendarCache;
-        },
-        onEventSaved: (event) {
-          if (event.isExternal ||
-              calendarCache.events.any((e) => e.id == event.id)) {
-            return;
-          }
-          setState(() {
-            final index = events.indexWhere(
-              (existing) => existing.id == event.id,
-            );
-            if (index == -1) {
-              events.add(event);
-            } else {
-              events[index] = event;
-            }
-          });
-          unawaited(_saveState());
-        },
-        onEventDeleted: (event) {
-          if (event.isExternal) return;
-          setState(
-            () => events.removeWhere((existing) => existing.id == event.id),
-          );
-          unawaited(_saveState());
-        },
+        highlights: highlights,
+        data: _journeyData(),
+        onAreaOpened: _openAreaJourney,
+        onHighlightOpened: _openHighlight,
+        onAddHighlight: () => _editHighlight(),
+        onAllHighlights: _openHighlights,
+        onDailyHistory: () => _openCalendar(),
       ),
     ];
 
@@ -756,9 +992,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             label: 'Plan',
           ),
           NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined),
-            selectedIcon: Icon(Icons.calendar_month),
-            label: 'Calendar',
+            icon: Icon(Icons.auto_stories_outlined),
+            selectedIcon: Icon(Icons.auto_stories),
+            label: 'Journey',
           ),
         ],
       ),

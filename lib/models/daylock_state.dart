@@ -7,6 +7,7 @@ import 'freedom_settings.dart';
 import 'routine.dart';
 import 'notification_preferences.dart';
 import 'area.dart';
+import 'highlight.dart';
 
 // A snapshot for storage. MainApp still owns the live plans.
 class DaylockState {
@@ -19,6 +20,7 @@ class DaylockState {
   final RoutineBook routines;
   final NotificationPreferences notificationPreferences;
   final AreaBook areas;
+  final HighlightBook highlights;
 
   DaylockState({
     required this.todayPlan,
@@ -30,6 +32,7 @@ class DaylockState {
     this.routines = RoutineBook.empty,
     this.notificationPreferences = const NotificationPreferences(),
     AreaBook? areas,
+    this.highlights = HighlightBook.empty,
   }) : areas = areas ?? AreaBook.initial(createdAt: todayPlan.date);
 
   DaylockState rollOver(DateTime now) {
@@ -60,6 +63,7 @@ class DaylockState {
       routines: routines,
       notificationPreferences: notificationPreferences,
       areas: areas,
+      highlights: highlights,
       todayPlan: canPromote
           ? tomorrowPlan
           : DailyPlan(date: currentDate, tasks: []),
@@ -91,6 +95,7 @@ class DaylockState {
       'routines': routines.toJson(),
       'notificationPreferences': notificationPreferences.toJson(),
       'areas': areas.toJson(),
+      'highlights': highlights.toJson(),
     };
   }
 
@@ -102,6 +107,9 @@ class DaylockState {
       throw const FormatException('Unsupported saved state version');
     }
     return DaylockState(
+      highlights: json.containsKey('highlights')
+          ? HighlightBook.fromJson(json['highlights'] as List)
+          : HighlightBook.empty,
       areas: json.containsKey('areas')
           ? AreaBook.fromJson(json['areas'] as List)
           : AreaBook.initial(createdAt: migrationTime),

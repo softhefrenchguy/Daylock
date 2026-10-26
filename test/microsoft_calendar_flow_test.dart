@@ -1,3 +1,5 @@
+import 'navigation_helpers.dart';
+
 import 'package:daylock/main.dart';
 import 'package:daylock/models/calendar_account.dart';
 import 'package:daylock/models/daily_plan.dart';
@@ -25,10 +27,8 @@ Future<void> _tap(WidgetTester tester, Finder finder) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> _page(WidgetTester tester, String name) => _tap(
-  tester,
-  find.descendant(of: find.byType(NavigationBar), matching: find.text(name)),
-);
+Future<void> _page(WidgetTester tester, String name) =>
+    navigateApp(tester, name);
 
 Future<DaylockState> _saved(WidgetTester tester) async =>
     (await tester.runAsync<DaylockState?>(() => LocalStorage().load()))!;

@@ -1,3 +1,5 @@
+import 'navigation_helpers.dart';
+
 import 'package:daylock/design/daylock_calendar.dart';
 import 'package:daylock/design/daylock_palette.dart';
 import 'package:daylock/design/daylock_theme.dart';
@@ -646,13 +648,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await _tap(
-        tester,
-        find.descendant(
-          of: find.byType(NavigationBar),
-          matching: find.text('Calendar'),
-        ),
-      );
+      await navigateApp(tester, 'Calendar');
       expect(find.text('0 / 1 complete'), findsOneWidget);
       await _day(tester, 4);
       expect(find.text('1 / 2 complete'), findsOneWidget);
@@ -691,13 +687,7 @@ void main() {
       );
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      await _tap(
-        tester,
-        find.descendant(
-          of: find.byType(NavigationBar),
-          matching: find.text('Calendar'),
-        ),
-      );
+      await navigateApp(tester, 'Calendar');
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       now = DateTime(2026, 10, 9, 8);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);

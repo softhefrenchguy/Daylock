@@ -1,3 +1,5 @@
+import 'navigation_helpers.dart';
+
 import 'package:daylock/design/daylock_calendar.dart';
 import 'package:daylock/design/daylock_palette.dart';
 import 'package:daylock/design/daylock_theme.dart';
@@ -570,13 +572,7 @@ void main() {
       await tester.runAsync(() => LocalStorage().save(state));
       await tester.pumpWidget(MainApp(now: () => _today));
       await tester.pumpAndSettle();
-      await _tap(
-        tester,
-        find.descendant(
-          of: find.byType(NavigationBar),
-          matching: find.text('Calendar'),
-        ),
-      );
+      await navigateApp(tester, 'Calendar');
       await _pick(tester, 2016, 2);
       _selected(tester, DateTime(2016, 2, 8));
       await _tap(tester, find.byKey(const ValueKey('calendar-add-event')));

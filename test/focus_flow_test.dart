@@ -1,3 +1,5 @@
+import 'navigation_helpers.dart';
+
 import 'package:daylock/main.dart';
 import 'package:daylock/design/daylock_task_row.dart';
 import 'package:daylock/models/daily_plan.dart';
@@ -432,10 +434,7 @@ Future<void> _seed(WidgetTester tester, DateTime date, List<Task> tasks) =>
     );
 
 Future<void> _navigate(WidgetTester tester, String label) async {
-  await tester.tap(
-    find.descendant(of: find.byType(NavigationBar), matching: find.text(label)),
-  );
-  await tester.pumpAndSettle();
+  await navigateApp(tester, label);
 }
 
 void _background(WidgetTester tester) {

@@ -23,7 +23,14 @@ const areaColours = <String, int>{
 
 class AreaBadge extends StatelessWidget {
   final Area area;
-  const AreaBadge({super.key, required this.area});
+  final TextStyle? textStyle;
+  final double iconSize;
+  const AreaBadge({
+    super.key,
+    required this.area,
+    this.textStyle,
+    this.iconSize = 20,
+  });
   @override
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
@@ -31,13 +38,13 @@ class AreaBadge extends StatelessWidget {
       Icon(
         areaIcons[area.icon] ?? areaIcons['life'],
         color: Color(area.colour),
-        size: 20,
+        size: iconSize,
       ),
       const SizedBox(width: 8),
       Flexible(
         child: Text(
           '${area.name}${area.isArchived ? ' (archived)' : ''}',
-          style: Theme.of(context).textTheme.bodyMedium,
+          style: textStyle ?? Theme.of(context).textTheme.bodyMedium,
         ),
       ),
     ],
