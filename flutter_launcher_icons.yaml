@@ -1,0 +1,19 @@
+# Approved borderless sunrise/lock master. Regenerate all platform sizes with:
+# dart run tool/generate_app_icons.dart
+flutter_launcher_icons:
+  image_path: assets/branding/daylock-icon.png
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  adaptive_icon_background: "#100B30"
+  adaptive_icon_foreground: assets/branding/daylock-icon.png
+  adaptive_icon_foreground_inset: 8
+  web:
+    generate: true
+    background_color: "#171321"
+    theme_color: "#171321"
+  windows:
+    generate: true
+    icon_size: 256
+  macos:
+    generate: true
