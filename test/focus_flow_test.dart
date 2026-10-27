@@ -201,7 +201,7 @@ void main() {
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
       expect(find.text('23:00'), findsOneWidget);
-      expect(find.text('Start stopwatch'), findsOneWidget);
+      expect(find.text('Resume stopwatch'), findsOneWidget);
     },
   );
 

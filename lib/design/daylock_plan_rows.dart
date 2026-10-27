@@ -10,7 +10,13 @@ import 'daylock_theme.dart';
 class DaylockPlanTaskRow extends StatelessWidget {
   final Task task;
   final Area? area;
-  const DaylockPlanTaskRow({super.key, required this.task, this.area});
+  final Widget? areaAction;
+  const DaylockPlanTaskRow({
+    super.key,
+    required this.task,
+    this.area,
+    this.areaAction,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +35,9 @@ class DaylockPlanTaskRow extends StatelessWidget {
                   area == null
                       ? Icons.task_alt_rounded
                       : (areaIcons[area!.icon] ?? Icons.task_alt_rounded),
-                  color: theme.colorScheme.primary,
+                  color: area == null
+                      ? theme.colorScheme.primary
+                      : Color(area!.colour),
                   size: DaylockSpace.icon,
                 ),
               ),
@@ -53,6 +61,7 @@ class DaylockPlanTaskRow extends StatelessWidget {
                       ),
                     ],
                   ),
+                  ?areaAction,
                   if (task.focusTarget != null)
                     Text(
                       task.focusTarget!,

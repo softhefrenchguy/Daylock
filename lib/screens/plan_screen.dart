@@ -362,7 +362,19 @@ class _PlanScreenState extends State<PlanScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        const DaylockLabel('SCHEDULE'),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.event_outlined,
+                                              color: colors.primary,
+                                              size: 20,
+                                            ),
+                                            const SizedBox(width: 10),
+                                            const Expanded(
+                                              child: DaylockLabel('SCHEDULE'),
+                                            ),
+                                          ],
+                                        ),
                                         if (scheduled.isEmpty) ...[
                                           const SizedBox(height: 6),
                                           Text(
@@ -414,33 +426,100 @@ class _PlanScreenState extends State<PlanScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                Row(
+                                Wrap(
+                                  alignment: WrapAlignment.spaceBetween,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  spacing: 12,
                                   children: [
-                                    const Expanded(
-                                      child: DaylockLabel('COMMITMENTS'),
+                                    Wrap(
+                                      spacing: 8,
+                                      crossAxisAlignment:
+                                          WrapCrossAlignment.center,
+                                      children: [
+                                        const DaylockLabel('COMMITMENTS'),
+                                        Text(
+                                          '${plan.tasks.length}',
+                                          style: theme.textTheme.labelLarge,
+                                        ),
+                                      ],
                                     ),
-                                    Text(
-                                      '${plan.tasks.length}',
-                                      style: theme.textTheme.labelLarge,
-                                    ),
+                                    if (!plan.isCommitted && plan.tasks.isEmpty)
+                                      FilledButton(
+                                        key: const ValueKey(
+                                          'open-commitment-editor',
+                                        ),
+                                        onPressed: _addCommitment,
+                                        child: const Text('+ Add commitment'),
+                                      )
+                                    else if (!plan.isCommitted)
+                                      TextButton(
+                                        key: const ValueKey(
+                                          'open-commitment-editor',
+                                        ),
+                                        onPressed: _addCommitment,
+                                        child: const Text('+ Add commitment'),
+                                      ),
                                   ],
                                 ),
-                                if (!plan.isCommitted) ...[
-                                  const SizedBox(height: DaylockSpace.sm),
-                                  OutlinedButton(
-                                    key: const ValueKey(
-                                      'open-commitment-editor',
-                                    ),
-                                    onPressed: _addCommitment,
-                                    child: const Text('+ Add commitment'),
-                                  ),
-                                ],
                                 if (plan.tasks.isEmpty) ...[
-                                  const SizedBox(height: DaylockSpace.md),
-                                  Text(
-                                    'No commitments planned yet.',
-                                    style: theme.textTheme.bodyMedium!.copyWith(
-                                      color: colors.onSurfaceVariant,
+                                  const SizedBox(height: 8),
+                                  JourneySurface(
+                                    radius: 16,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(14),
+                                      child: Row(
+                                        children: [
+                                          ExcludeSemantics(
+                                            child: Container(
+                                              padding: const EdgeInsets.all(12),
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                gradient: RadialGradient(
+                                                  colors: [
+                                                    colors.primary.withValues(
+                                                      alpha: .3,
+                                                    ),
+                                                    colors.primary.withValues(
+                                                      alpha: .05,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              child: Icon(
+                                                Icons.edit_calendar_rounded,
+                                                color: colors.primary,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'No commitments planned yet.',
+                                                  style: theme
+                                                      .textTheme
+                                                      .titleSmall,
+                                                ),
+                                                Text(
+                                                  plan.isCommitted
+                                                      ? 'Tomorrow is locked.'
+                                                      : 'Add one small step for tomorrow.',
+                                                  style: theme
+                                                      .textTheme
+                                                      .bodySmall!
+                                                      .copyWith(
+                                                        color: colors
+                                                            .onSurfaceVariant,
+                                                      ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -459,6 +538,12 @@ class _PlanScreenState extends State<PlanScreen> {
                             itemCount: plan.tasks.length,
                             itemBuilder: (context, index) {
                               final task = plan.tasks[index];
+                              final selectedArea = widget.areas?.resolve(
+                                task.areaId,
+                              );
+                              final areaName = selectedArea == null
+                                  ? null
+                                  : '${selectedArea.name}${selectedArea.isArchived ? ' (archived)' : ''}';
                               return Padding(
                                 key: ValueKey('plan-task-$index'),
                                 padding: const EdgeInsets.only(bottom: 8),
@@ -482,9 +567,55 @@ class _PlanScreenState extends State<PlanScreen> {
                                             Expanded(
                                               child: DaylockPlanTaskRow(
                                                 task: task,
-                                                area: widget.areas?.resolve(
-                                                  task.areaId,
-                                                ),
+                                                area: selectedArea,
+                                                areaAction: widget.areas == null
+                                                    ? null
+                                                    : !plan.isCommitted &&
+                                                          widget.onTaskAreaChanged !=
+                                                              null
+                                                    ? TextButton(
+                                                        key: ValueKey(
+                                                          'edit-task-area-$index',
+                                                        ),
+                                                        onPressed: () =>
+                                                            _changeArea(task),
+                                                        style:
+                                                            TextButton.styleFrom(
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .zero,
+                                                              minimumSize:
+                                                                  const Size(
+                                                                    48,
+                                                                    36,
+                                                                  ),
+                                                              alignment: Alignment
+                                                                  .centerLeft,
+                                                              visualDensity:
+                                                                  VisualDensity
+                                                                      .compact,
+                                                            ),
+                                                        child: Text(
+                                                          areaName!,
+                                                          style: theme
+                                                              .textTheme
+                                                              .bodySmall!
+                                                              .copyWith(
+                                                                color: colors
+                                                                    .onSurfaceVariant,
+                                                              ),
+                                                        ),
+                                                      )
+                                                    : Text(
+                                                        areaName!,
+                                                        style: theme
+                                                            .textTheme
+                                                            .bodySmall!
+                                                            .copyWith(
+                                                              color: colors
+                                                                  .onSurfaceVariant,
+                                                            ),
+                                                      ),
                                               ),
                                             ),
                                             if (!plan.isCommitted &&
@@ -526,33 +657,6 @@ class _PlanScreenState extends State<PlanScreen> {
                                               ),
                                           ],
                                         ),
-                                        if (widget.areas != null)
-                                          !plan.isCommitted &&
-                                                  widget.onTaskAreaChanged !=
-                                                      null
-                                              ? TextButton(
-                                                  key: ValueKey(
-                                                    'edit-task-area-$index',
-                                                  ),
-                                                  onPressed: () =>
-                                                      _changeArea(task),
-                                                  child: AreaBadge(
-                                                    area: widget.areas!.resolve(
-                                                      task.areaId,
-                                                    ),
-                                                  ),
-                                                )
-                                              : Padding(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                      ),
-                                                  child: AreaBadge(
-                                                    area: widget.areas!.resolve(
-                                                      task.areaId,
-                                                    ),
-                                                  ),
-                                                ),
                                       ],
                                     ),
                                   ),

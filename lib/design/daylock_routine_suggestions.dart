@@ -23,6 +23,11 @@ class DaylockRoutineSuggestions extends StatelessWidget {
       duration: daylockMotion(context),
       reverseDuration: daylockMotion(context),
     ),
+    dense: true,
+    leading: Icon(
+      Icons.tips_and_updates_outlined,
+      color: Theme.of(context).colorScheme.primary,
+    ),
     tilePadding: EdgeInsets.zero,
     childrenPadding: EdgeInsets.zero,
     title: const DaylockLabel('ROUTINE SUGGESTIONS'),

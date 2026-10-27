@@ -80,7 +80,7 @@ void main() {
         expect(find.text('Task $i'), findsOneWidget);
       }
       expect(find.byKey(const ValueKey('today-expand')), findsNothing);
-      expect(find.byKey(const ValueKey('freedom-status')), findsNothing);
+      expect(find.byKey(const ValueKey('freedom-status')), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
@@ -114,7 +114,7 @@ void main() {
   );
   for (final enabled in [false, true]) {
     testWidgets(
-      'Freedom status dialog shows actual conditions when enabled=$enabled',
+      'Permanent Freedom card shows actual conditions when enabled=$enabled',
       (tester) async {
         final plan = DailyPlan(
           date: day,
@@ -122,8 +122,7 @@ void main() {
         );
         await tester.pumpWidget(today(plan, enabled: enabled));
         await tester.pumpAndSettle();
-        expect(find.byKey(const ValueKey('freedom-status')), findsNothing);
-        await tap(tester, find.byKey(const ValueKey('freedom-indicator')));
+        expect(find.byKey(const ValueKey('freedom-status')), findsOneWidget);
         expect(
           find.text(enabled ? 'Freedom earned' : 'Freedom Control is off'),
           findsOneWidget,
@@ -134,13 +133,12 @@ void main() {
           findsOneWidget,
         );
         expect(find.textContaining('plan committed'), findsOneWidget);
-        await tap(tester, find.text('Close'));
         expect(find.byKey(const ValueKey('freedom-dialog')), findsNothing);
       },
     );
   }
   testWidgets(
-    'An open Freedom dialog updates when time reaches the threshold',
+    'The permanent Freedom card updates when time reaches the threshold',
     (tester) async {
       var now = DateTime(2026, 10, 27, 17, 59);
       final plan = DailyPlan(
@@ -176,8 +174,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tap(tester, find.byKey(const ValueKey('freedom-indicator')));
-      expect(find.text('Freedom not yet earned'), findsOneWidget);
+      expect(find.text('Waiting for Freedom Time'), findsOneWidget);
       refresh(() => now = DateTime(2026, 10, 27, 18));
       await tester.pump();
       await tester.pumpAndSettle();

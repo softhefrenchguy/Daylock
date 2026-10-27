@@ -7,7 +7,7 @@ import '../design/daylock_widgets.dart';
 import '../models/daily_plan.dart';
 import '../models/task.dart';
 import '../models/area.dart';
-import '../design/journey_surface.dart';
+import '../design/daily_progress_card.dart';
 import 'task_actions_sheet.dart';
 import '../services/freedom_service.dart';
 import '../models/freedom_settings.dart';
@@ -46,7 +46,7 @@ class TodayScreenState extends State<TodayScreen> {
   final Set<ModalRoute<dynamic>> _ownedModals = {};
   bool _openingModal = false;
   bool _showAll = false;
-  late final ValueNotifier<FreedomEligibility> _freedom;
+  final GlobalKey _freedomCard = GlobalKey();
   FreedomEligibility get _currentFreedom =>
       widget.freedomEligibility ??
       const FreedomService().evaluate(
@@ -54,12 +54,6 @@ class TodayScreenState extends State<TodayScreen> {
         settings: const FreedomSettings(),
         todayPlan: widget.plan,
       );
-
-  @override
-  void initState() {
-    super.initState();
-    _freedom = ValueNotifier(_currentFreedom);
-  }
 
   DailyPlan get plan => widget.plan;
   DateTime get currentTime => widget.currentTime;
@@ -94,16 +88,12 @@ class TodayScreenState extends State<TodayScreen> {
   @override
   void dispose() {
     _dismissModal();
-    _freedom.dispose();
     super.dispose();
   }
 
   @override
   void didUpdateWidget(covariant TodayScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _freedom.value = _currentFreedom;
-    });
     if (!identical(oldWidget.plan, widget.plan)) {
       _showAll = false;
       _dismissModal();
@@ -163,37 +153,14 @@ class TodayScreenState extends State<TodayScreen> {
     }
   }
 
-  Future<void> _showFreedom() async {
-    if (_openingModal) return;
-    _openingModal = true;
-    try {
-      await showDialog<void>(
-        context: context,
-        builder: (dialogContext) {
-          final route = ModalRoute.of(dialogContext);
-          if (route != null) _ownedModals.add(route);
-          return AlertDialog(
-            key: const ValueKey('freedom-dialog'),
-            contentPadding: const EdgeInsets.all(12),
-            content: SingleChildScrollView(
-              child: ValueListenableBuilder<FreedomEligibility>(
-                valueListenable: _freedom,
-                builder: (context, eligibility, _) =>
-                    DaylockFreedomStatus(eligibility: eligibility),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('Close'),
-              ),
-            ],
-          );
-        },
+  void _showFreedom() {
+    final target = _freedomCard.currentContext;
+    if (target != null) {
+      Scrollable.ensureVisible(
+        target,
+        duration: daylockMotion(context),
+        curve: Curves.easeOut,
       );
-    } finally {
-      _ownedModals.removeWhere((route) => !route.isActive);
-      _openingModal = false;
     }
   }
 
@@ -227,8 +194,6 @@ class TodayScreenState extends State<TodayScreen> {
     ];
     final summary = plan.progress;
     final empty = plan.tasks.isEmpty;
-    final noEligible = !empty && summary.isNeutral;
-    final progress = summary.fraction ?? 0.0;
     final eligibility = _currentFreedom;
     final visible = <Task>[];
     if (_showAll || plan.tasks.length <= 3) {
@@ -311,58 +276,12 @@ class TodayScreenState extends State<TodayScreen> {
                         ],
                       ),
                       const SizedBox(height: 10),
-                      JourneySurface(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      noEligible
-                                          ? 'No eligible commitments'
-                                          : '${summary.completedCount} / ${summary.eligibleCount} complete',
-                                      style: theme.textTheme.titleMedium,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    noEligible
-                                        ? '—'
-                                        : '${(progress * 100).round()}%',
-                                    style: theme.textTheme.titleMedium!
-                                        .copyWith(color: colors.primary),
-                                  ),
-                                ],
-                              ),
-                              if (!noEligible) ...[
-                                const SizedBox(height: 10),
-                                DaylockProgress(
-                                  value: progress,
-                                  label: 'Commitments complete',
-                                ),
-                              ],
-                              if (summary.excusedCount > 0) ...[
-                                const SizedBox(height: 6),
-                                Text(
-                                  '${summary.excusedCount} excused',
-                                  key: const ValueKey('today-excused-count'),
-                                  style: theme.textTheme.bodySmall,
-                                ),
-                              ],
-                              if (summary.isComplete) ...[
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Day complete',
-                                  style: theme.textTheme.labelLarge!.copyWith(
-                                    color: colors.primary,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
+                      DailyProgressCard(
+                        progress: summary,
+                        recordedMilliseconds: plan.tasks.fold<int>(
+                          0,
+                          (total, task) =>
+                              total + task.focusMillisecondsAt(currentTime),
                         ),
                       ),
                       const SizedBox(height: 18),
@@ -434,6 +353,11 @@ class TodayScreenState extends State<TodayScreen> {
                             ),
                           ),
                       ],
+                      const SizedBox(height: 8),
+                      KeyedSubtree(
+                        key: _freedomCard,
+                        child: DaylockFreedomStatus(eligibility: eligibility),
+                      ),
                     ],
                   ),
                 ),

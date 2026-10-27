@@ -17,6 +17,7 @@ Future<void> openCommitmentEditor(WidgetTester tester) async {
     );
   }
   await tester.ensureVisible(open);
+  await tester.pumpAndSettle();
   await tester.tap(open);
   await tester.pumpAndSettle();
 }

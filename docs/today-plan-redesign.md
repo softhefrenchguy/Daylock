@@ -1,3 +1,5 @@
+> The later [premium Today and Plan redesign](premium-today-plan.md) supersedes the Freedom dialog described below.
+
 ﻿# Today and Plan redesign
 
 Today and Plan use the existing Journey surface and active palette. Today displays at most three commitments until expanded; if a stopwatch is running outside the first three, that commitment replaces the third visible item. Expand and collapse only changes the view, leaving the underlying order, completion and stopwatch state untouched. The header's Freedom icon opens the existing eligibility conditions, and the dialog refreshes while open.

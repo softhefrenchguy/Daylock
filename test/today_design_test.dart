@@ -140,8 +140,10 @@ void main() {
     expect(find.byTooltip('Freedom Control is off'), findsOneWidget);
     await _tap(tester, find.byKey(const ValueKey('freedom-indicator')));
     expect(find.textContaining('18:00'), findsOneWidget);
-    expect(find.textContaining('No eligible commitments'), findsOneWidget);
-    await _tap(tester, find.text('Close'));
+    expect(
+      find.textContaining('completion is required to earn Freedom'),
+      findsOneWidget,
+    );
     expect(find.byType(CheckboxListTile), findsNothing);
     await _tap(tester, find.text('Plan tomorrow'));
     expect(openPlan, isTrue);
@@ -156,7 +158,6 @@ void main() {
       expect(find.byTooltip('Freedom Control is off'), findsOneWidget);
       await _tap(tester, find.byKey(const ValueKey('freedom-indicator')));
       expect(find.text('0 / 1 eligible commitments complete'), findsOneWidget);
-      await _tap(tester, find.text('Close'));
       await _tap(tester, find.text('Take a walk'));
       expect(goal.isCompleted, isTrue);
       expect(find.text('1 / 1 complete'), findsOneWidget);
@@ -164,7 +165,6 @@ void main() {
       expect(find.text('Day complete'), findsOneWidget);
       await _tap(tester, find.byKey(const ValueKey('freedom-indicator')));
       expect(find.text('1 / 1 eligible commitments complete'), findsOneWidget);
-      await _tap(tester, find.text('Close'));
       expect(
         tester
             .widget<LinearProgressIndicator>(

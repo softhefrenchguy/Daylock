@@ -177,7 +177,6 @@ void main() {
         find.text('Instagram control is configured in Settings.'),
         findsOneWidget,
       );
-      await _tap(tester, find.text('Close'));
       now = DateTime(2026, 10, 13, 17);
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
@@ -251,7 +250,6 @@ void main() {
       expect(find.byTooltip('Freedom earned'), findsOneWidget);
       await _tap(tester, _key('freedom-indicator'));
       expect(find.text('1 / 1 eligible commitments complete'), findsOneWidget);
-      await _tap(tester, find.text('Close'));
       await tester.longPress(find.text('Done'));
       await tester.pumpAndSettle();
       await _tap(tester, _key('task-excuse'));
@@ -263,7 +261,6 @@ void main() {
         find.textContaining('completion is required to earn Freedom'),
         findsOneWidget,
       );
-      await _tap(tester, find.text('Close'));
     },
   );
 

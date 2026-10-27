@@ -36,17 +36,47 @@ class DaylockTaskRow extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final elapsed = task.focusMillisecondsAt(currentTime);
+    final timerAction = task.isFocusRunning
+        ? 'Pause stopwatch'
+        : elapsed > 0
+        ? 'Resume stopwatch'
+        : 'Start stopwatch';
+    final areaText = area == null && task.focusTarget == null
+        ? null
+        : Wrap(
+            spacing: 8,
+            runSpacing: 2,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              if (area != null)
+                AreaBadge(
+                  area: area!,
+                  iconSize: 15,
+                  textStyle: theme.textTheme.bodySmall!.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              if (task.focusTarget != null)
+                Text(
+                  task.focusTarget!,
+                  style: theme.textTheme.bodySmall!.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+            ],
+          );
     return JourneySurface(
-      accent: task.isFocusRunning ? colors.primary : null,
-      emphasized: task.isFocusRunning,
+      accent: area == null ? colors.primary : Color(area!.colour),
+      emphasized: task.isFocusRunning || task.isCompleted,
       radius: 16,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
+        padding: const EdgeInsets.fromLTRB(6, 0, 6, 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (task.isExcused)
               ListTile(
+                dense: true,
                 contentPadding: EdgeInsets.zero,
                 onTap: onDetailsRequested,
                 leading: Icon(
@@ -54,7 +84,13 @@ class DaylockTaskRow extends StatelessWidget {
                   color: colors.onSurfaceVariant,
                 ),
                 title: Text(task.name, style: theme.textTheme.titleMedium),
-                subtitle: const Text('Excused'),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Excused'),
+                    ?areaText,
+                  ],
+                ),
                 trailing: const Icon(
                   Icons.more_horiz_rounded,
                   semanticLabel: 'Task details and actions',
@@ -63,6 +99,7 @@ class DaylockTaskRow extends StatelessWidget {
             else
               CheckboxListTile(
                 key: ValueKey('complete-${task.id}'),
+                dense: true,
                 contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
                 title: Text(
@@ -76,6 +113,7 @@ class DaylockTaskRow extends StatelessWidget {
                         : null,
                   ),
                 ),
+                subtitle: areaText,
                 value: task.isCompleted,
                 onChanged: (_) => onGoalChanged(),
                 secondary: onDetailsRequested == null
@@ -86,28 +124,9 @@ class DaylockTaskRow extends StatelessWidget {
                         onPressed: onDetailsRequested,
                       ),
               ),
-            if (area != null || task.focusTarget != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Wrap(
-                  spacing: 10,
-                  runSpacing: 4,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    if (area != null)
-                      AreaBadge(
-                        area: area!,
-                        iconSize: 16,
-                        textStyle: theme.textTheme.bodySmall,
-                      ),
-                    if (task.focusTarget != null)
-                      Text(task.focusTarget!, style: theme.textTheme.bodySmall),
-                  ],
-                ),
-              ),
             if (task.outcome == TaskOutcome.incomplete || elapsed > 0)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.only(left: 14, right: 8),
                 child: Wrap(
                   spacing: 12,
                   crossAxisAlignment: WrapCrossAlignment.center,
@@ -118,40 +137,42 @@ class DaylockTaskRow extends StatelessWidget {
                         child: Text(
                           stopwatchLabel(elapsed),
                           key: ValueKey('stopwatch-time-${task.id}'),
-                          style: theme.textTheme.titleMedium!.copyWith(
-                            fontFeatures: const [FontFeature.tabularFigures()],
-                          ),
+                          style:
+                              (task.isFocusRunning
+                                      ? theme.textTheme.titleLarge
+                                      : theme.textTheme.titleMedium)!
+                                  .copyWith(
+                                    color: task.isFocusRunning
+                                        ? colors.onSurface
+                                        : colors.onSurfaceVariant,
+                                    fontFeatures: const [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                  ),
                         ),
                       ),
                     ),
                     if (task.outcome == TaskOutcome.incomplete)
-                      Semantics(
-                        label:
-                            '${task.isFocusRunning ? 'Pause' : 'Start'} stopwatch: ${task.name}',
-                        child: TextButton.icon(
-                          key: ValueKey('stopwatch-toggle-${task.id}'),
-                          onPressed: onFocusToggled,
-                          icon: Icon(
-                            task.isFocusRunning
-                                ? Icons.pause_rounded
-                                : Icons.play_arrow_rounded,
-                          ),
-                          label: Text(
-                            task.isFocusRunning
-                                ? 'Pause stopwatch'
-                                : 'Start stopwatch',
-                          ),
+                      TextButton.icon(
+                        key: ValueKey('stopwatch-toggle-${task.id}'),
+                        onPressed: onFocusToggled,
+                        icon: Icon(
+                          task.isFocusRunning
+                              ? Icons.pause_rounded
+                              : Icons.play_arrow_rounded,
+                        ),
+                        label: Text(timerAction),
+                        style: TextButton.styleFrom(
+                          backgroundColor: task.isFocusRunning
+                              ? colors.primary
+                              : colors.primary.withValues(alpha: .08),
+                          foregroundColor: task.isFocusRunning
+                              ? colors.onPrimary
+                              : colors.primary,
                         ),
                       )
                     else
                       Text('Recorded time', style: theme.textTheme.bodySmall),
-                    if (task.isFocusRunning)
-                      Text(
-                        'Tracking',
-                        style: theme.textTheme.labelMedium!.copyWith(
-                          color: colors.primary,
-                        ),
-                      ),
                   ],
                 ),
               ),

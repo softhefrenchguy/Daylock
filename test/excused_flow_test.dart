@@ -209,7 +209,6 @@ void main() {
       expect(find.text('Day complete'), findsNothing);
       await _tap(tester, find.byKey(const ValueKey('freedom-indicator')));
       expect(find.text('2 / 3 eligible commitments complete'), findsOneWidget);
-      await _tap(tester, find.text('Close'));
     },
   );
 
@@ -234,7 +233,6 @@ void main() {
         find.textContaining('completion is required to earn Freedom'),
         findsOneWidget,
       );
-      await _tap(tester, find.text('Close'));
       expect(find.text('Day complete'), findsNothing);
       expect(find.text('100%'), findsNothing);
       expect(find.text('0%'), findsNothing);
@@ -291,7 +289,7 @@ void main() {
       ]);
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      await _tap(tester, find.text('Start stopwatch'));
+      await _tap(tester, find.text('Resume stopwatch'));
       now = now.add(const Duration(milliseconds: 23500));
       await tester.pump(const Duration(seconds: 1));
       await _actions(tester, 'Study');
@@ -322,7 +320,7 @@ void main() {
       expect(task.outcome, TaskOutcome.excused);
       await _tap(tester, find.text('Study'));
       await _tap(tester, find.byKey(const ValueKey('task-reset')));
-      await _tap(tester, find.text('Start stopwatch'));
+      await _tap(tester, find.text('Resume stopwatch'));
       now = now.add(const Duration(milliseconds: 499));
       await _tap(tester, find.text('Pause stopwatch'));
       expect(
