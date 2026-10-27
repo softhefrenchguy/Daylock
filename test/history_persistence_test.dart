@@ -34,21 +34,34 @@ DaylockState _state({PlanHistory history = PlanHistory.empty}) {
       date: _day,
       isCommitted: true,
       tasks: [
-        Task(name: 'Done goal', type: TaskType.goal, isCompleted: true),
         Task(
-          name: 'Interrupted focus',
-          type: TaskType.focus,
-          minimumFocusMinutes: 30,
-          focusTarget: 'Finish the chapter',
-          accumulatedFocusMilliseconds: 4001,
-          focusStartedAt: DateTime(2026, 10, 7, 23, 50),
+          id: 'done',
+          name: 'Done goal',
+          type: TaskType.goal,
+          isCompleted: true,
         ),
+        Task.fromJson({
+          'id': 'interrupted',
+          'name': 'Interrupted focus',
+          'type': 'focus',
+          'isCompleted': false,
+          'minimumFocusMinutes': 30,
+          'focusTarget': 'Finish the chapter',
+          'accumulatedFocusMilliseconds': 4001,
+          'focusStartedAt': DateTime(
+            2026,
+            10,
+            7,
+            23,
+            50,
+          ).toUtc().toIso8601String(),
+        }),
       ],
     ),
     tomorrowPlan: DailyPlan(
       date: DateTime(2026, 10, 8),
       isCommitted: true,
-      tasks: [Task(name: 'Next day goal', type: TaskType.goal)],
+      tasks: [Task(id: 'next', name: 'Next day goal', type: TaskType.goal)],
     ),
     events: [
       Event(

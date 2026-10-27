@@ -133,7 +133,7 @@ void main() {
     final focus = ((data['today'] as Map)['tasks'] as List).single as Map;
     expect(
       focus['deadlineMs'],
-      start.add(const Duration(minutes: 40)).millisecondsSinceEpoch,
+      isNull,
     );
     expect(state.toJson(), before);
     task.pauseFocus(start.add(const Duration(minutes: 10)));
@@ -146,7 +146,7 @@ void main() {
     expect(
       ((notificationSnapshot(state, start)['today'] as Map)['tasks'] as List)
           .single['deadlineMs'],
-      start.add(const Duration(minutes: 50)).millisecondsSinceEpoch,
+      isNull,
     );
     task.changeOutcome(
       TaskOutcome.excused,

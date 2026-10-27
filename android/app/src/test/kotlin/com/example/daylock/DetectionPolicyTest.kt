@@ -87,7 +87,7 @@ class DetectionPolicyTest {
         val value = state.copy(completedCount = 2, runningFocus = true, focusCompletesAtMs = clock.wallMs + 120 * 60000)
         assertEquals("notEarned", evaluate(value).state)
         val due = clock.copy(wallMs = value.focusCompletesAtMs!!)
-        repeat(10) { assertEquals("earned", evaluate(value, due).state) }
+        repeat(10) { assertEquals("notEarned", evaluate(value, due).state) }
         assertEquals(2, value.completedCount)
         assertEquals("notEarned", evaluate(value, due.copy(wallMs = due.wallMs - 1)).state)
     }
@@ -98,7 +98,7 @@ class DetectionPolicyTest {
         assertEquals(0, result.conditions!!.completedCount)
     }
     @Test fun focusMissingDeadlineHasExplicitRecovery() {
-        assertEquals("focus_needs_refresh", evaluate(state.copy(completedCount = 2, runningFocus = true)).reason)
+        assertEquals("conditions_remaining", evaluate(state.copy(completedCount = 2, runningFocus = true)).reason)
     }
     @Test fun invalidCountsTimesDatesAndUnrelatedTomorrowAreRejected() {
         for (create in listOf<() -> NativeFreedomState>(

@@ -291,7 +291,24 @@ class TodayScreenState extends State<TodayScreen> {
                                 key: ObjectKey(task),
                                 task: task,
                                 currentTime: currentTime,
-                                onGoalChanged: onTaskChanged,
+                                onGoalChanged: () {
+                                  final outcome = task.isCompleted
+                                      ? TaskOutcome.incomplete
+                                      : TaskOutcome.completed;
+                                  if (widget.onOutcomeChanged != null) {
+                                    widget.onOutcomeChanged!(
+                                      task,
+                                      outcome,
+                                      null,
+                                    );
+                                  } else {
+                                    task.changeOutcome(
+                                      outcome,
+                                      now: currentTime,
+                                    );
+                                    onTaskChanged();
+                                  }
+                                },
                                 onFocusToggled: () => onFocusToggled(task),
                                 onDetailsRequested: () => _showActions(task),
                               ),

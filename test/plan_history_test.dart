@@ -244,6 +244,7 @@ void main() {
       minimumFocusMinutes: 5,
       focusTarget: 'Unfinished chapter',
     )..startFocus(DateTime(2026, 10, 7, 23, 50));
+    task.changeOutcome(TaskOutcome.completed, now: DateTime(2026, 10, 7, 23, 55));
     final rolled = _state(todayTasks: [task])
         .rollOver(DateTime(2026, 10, 8, 7));
     final past = rolled.history.forDate(_date)!;

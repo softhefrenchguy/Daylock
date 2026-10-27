@@ -284,7 +284,7 @@ void main() {
       expect(
         find.descendant(
           of: fixture.key('journey-area-learn'),
-          matching: find.text('1 min Focus'),
+          matching: find.text('1 min recorded'),
         ),
         findsOneWidget,
       );

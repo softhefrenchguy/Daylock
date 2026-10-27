@@ -84,8 +84,8 @@ class JourneyProgressSummary extends StatelessWidget {
         Icons.schedule_rounded,
         shiftedAccent(-40),
         journeyFocusLabel(summary.focusMilliseconds),
-        'Focus\nrecorded',
-        '${journeyFocusLabel(summary.focusMilliseconds)} recorded Focus',
+        'Time\nrecorded',
+        '${journeyFocusLabel(summary.focusMilliseconds)} recorded time',
       ),
       metric(
         'journey-total-highlights',

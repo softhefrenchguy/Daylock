@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../models/calendar_activity.dart';
 import '../models/event.dart';
-import '../models/task.dart';
 import '../models/area.dart';
 import 'daylock_areas.dart';
 import 'daylock_plan_rows.dart';
@@ -89,7 +88,7 @@ class DaylockCalendarCommitments extends StatelessWidget {
           ],
           const SizedBox(height: 12),
           Text(
-            'Recorded Focus: ${recordedFocusLabel(activity.focusMilliseconds)}',
+            'Recorded time: ${recordedFocusLabel(activity.focusMilliseconds)}',
             key: const ValueKey('calendar-recorded-focus'),
             style: theme.textTheme.bodyMedium!.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -105,9 +104,7 @@ class DaylockCalendarCommitments extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 3),
                     child: Icon(
-                      task.type == TaskType.goal
-                          ? Icons.flag_outlined
-                          : Icons.timelapse_rounded,
+                      Icons.flag_outlined,
                       size: DaylockSpace.icon,
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -125,7 +122,7 @@ class DaylockCalendarCommitments extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${task.type == TaskType.goal ? 'Goal' : 'Focus'} · ${task.outcome.label}',
+                          'Commitment · ${task.outcome.label}',
                           style: theme.textTheme.bodySmall!.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -139,9 +136,10 @@ class DaylockCalendarCommitments extends StatelessWidget {
                           ),
                         if (areas != null)
                           AreaBadge(area: areas!.resolve(task.areaId)),
-                        if (task.type == TaskType.focus) ...[
+                        if (task.accumulatedFocusMilliseconds > 0 ||
+                            task.focusTarget != null) ...[
                           Text(
-                            '${recordedFocusLabel(task.accumulatedFocusMilliseconds)} / ${task.minimumFocusMinutes} min',
+                            '${recordedFocusLabel(task.accumulatedFocusMilliseconds)} recorded',
                             style: theme.textTheme.bodyMedium!.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),

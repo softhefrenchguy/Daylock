@@ -39,9 +39,13 @@ class DailyPlan {
 
     return DailyPlan(
       date: date,
-      tasks: (json['tasks'] as List)
-          .map((task) => Task.fromJson(task as Map<String, dynamic>))
-          .toList(),
+      tasks: [
+        for (final entry in (json['tasks'] as List).indexed)
+          Task.fromJson(
+            entry.$2 as Map<String, dynamic>,
+            fallbackId: 'legacy-$value-${entry.$1}',
+          ),
+      ],
       isCommitted: json['isCommitted'] as bool,
     );
   }

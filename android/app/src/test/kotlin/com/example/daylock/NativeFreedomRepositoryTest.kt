@@ -142,7 +142,7 @@ class NativeFreedomRepositoryTest {
         val due = clock.wallMs + 60 * 60000
         val result = saved(state.copy(runningFocus = true, focusCompletesAtMs = due))
         assertEquals("notEarned", repository().eligibility(clock).state)
-        assertEquals("earned", repository().eligibility(clock.copy(wallMs = due)).state)
+        assertEquals("notEarned", repository().eligibility(clock.copy(wallMs = due)).state)
         assertTrue(result.publish(state.copy(eligibleCount = 2, completedCount = 2), 1))
         assertNull(repository().record().freedom!!.focusCompletesAtMs)
         assertEquals("earned", repository().eligibility(clock).state)

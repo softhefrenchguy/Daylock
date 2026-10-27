@@ -166,35 +166,32 @@ void main() {
     expect(restored.excuseReason, isNull);
   });
 
-  test('Focus completion cannot bypass minimum; resetting retains earned time and completion resumes safely', () {
-    final task = Task(
-      name: 'Study',
-      type: TaskType.focus,
-      minimumFocusMinutes: 1,
-    );
-    expect(
-      () => task.changeOutcome(TaskOutcome.completed, now: _now),
-      throwsStateError,
-    );
-    expect(() => task.isCompleted = true, throwsStateError);
-    task.startFocus(_now);
-    task.finishFocusIfDue(_now.add(const Duration(minutes: 1)));
-    expect(task.outcome, TaskOutcome.completed);
-    task.changeOutcome(
-      TaskOutcome.excused,
-      now: _now,
-      reason: 'Appointment cancelled.',
-    );
-    expect(task.outcome, TaskOutcome.excused);
-    expect(task.accumulatedFocusMilliseconds, 60000);
-    task.changeOutcome(TaskOutcome.incomplete, now: _now);
-    final restored = Task.fromJson(task.toJson());
-    expect(restored.outcome, TaskOutcome.incomplete);
-    expect(restored.accumulatedFocusMilliseconds, 60000);
-    restored.startFocus(_now);
-    expect(restored.outcome, TaskOutcome.completed);
-    expect(restored.isFocusRunning, isFalse);
-  });
+  test(
+    'Manual completion is independent of tracked time and reset retains effort',
+    () {
+      final task = Task(
+        name: 'Study',
+        type: TaskType.focus,
+        minimumFocusMinutes: 1,
+      );
+      task.changeOutcome(TaskOutcome.completed, now: _now);
+      expect(task.accumulatedFocusMilliseconds, 0);
+      task.changeOutcome(TaskOutcome.incomplete, now: _now);
+      task.startFocus(_now);
+      task.changeOutcome(
+        TaskOutcome.completed,
+        now: _now.add(const Duration(minutes: 2)),
+      );
+      expect(task.accumulatedFocusMilliseconds, 120000);
+      task.changeOutcome(TaskOutcome.excused, now: _now, reason: 'Cancelled.');
+      task.changeOutcome(TaskOutcome.incomplete, now: _now);
+      final restored = Task.fromJson(task.toJson());
+      expect(restored.accumulatedFocusMilliseconds, 120000);
+      restored.startFocus(_now);
+      expect(restored.isFocusRunning, isTrue);
+      expect(restored.isCompleted, isFalse);
+    },
+  );
 
   test('Excusing Focus near or beyond midnight cannot overwrite its archived outcome', () {
     final task = Task(
@@ -377,14 +374,15 @@ void main() {
     final appearance = await prefs.getString(AppearanceStorage.key);
     await prefs.setString('unrelated', 'retain');
     final restored = (await LocalStorage().load())!;
-    expect(restored.toJson(), state.toJson());
+    final expected = state.toJson()..['history'] = old['history'];
+    expect(restored.toJson(), expected);
     expect(
       jsonDecode((await prefs.getString(LocalStorage.stateKey))!),
-      state.toJson(),
+      expected,
     );
     expect(await prefs.getString(AppearanceStorage.key), appearance);
     expect(await prefs.getString('unrelated'), 'retain');
-    expect((await LocalStorage().load())!.toJson(), state.toJson());
+    expect((await LocalStorage().load())!.toJson(), expected);
   });
 
   test('Mixed old/new task records migrate while preserving existing excuses and their history', () async {
@@ -450,10 +448,7 @@ void main() {
       TaskOutcome.completed,
       TaskOutcome.completed,
     ]);
-    expect(
-      saved.todayPlan.tasks.last.accumulatedFocusMilliseconds,
-      Task.legacyFocusMinutes * 60000,
-    );
+    expect(saved.todayPlan.tasks.last.accumulatedFocusMilliseconds, 0);
     expect(saved.tomorrowPlan.tasks.single.outcome, TaskOutcome.incomplete);
     expect(saved.tomorrowPlan.isCommitted, isTrue);
     expect(await prefs.getString(LocalStorage.legacyStateKey), raw);
@@ -469,15 +464,6 @@ void main() {
       {..._goal(TaskOutcome.incomplete).toJson(), 'outcome': 'unknown'},
       {..._goal(TaskOutcome.excused).toJson(), 'excuseReason': '  '},
       {..._goal(TaskOutcome.excused).toJson(), 'isCompleted': true},
-      {
-        ...Task(
-          name: 'Focus',
-          type: TaskType.focus,
-          outcome: TaskOutcome.excused,
-          excuseReason: 'Cancelled.',
-        ).toJson(),
-        'focusStartedAt': _now.toUtc().toIso8601String(),
-      },
     ]) {
       final json = state.toJson();
       json['todayPlan']['tasks'] = [task];

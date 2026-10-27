@@ -123,12 +123,6 @@ class NotificationSettingsSection extends StatelessWidget {
             (v) => onChanged(preferences.copyWith(freedom: v)),
           ),
           const Text('Uses Freedom Time when Freedom Control is enabled.'),
-          toggle(
-            'focus',
-            'Focus Timer Completion',
-            preferences.focus,
-            (v) => onChanged(preferences.copyWith(focus: v)),
-          ),
         ],
       );
     },

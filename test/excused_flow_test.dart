@@ -235,7 +235,7 @@ void main() {
       expect(find.text('0%'), findsNothing);
       expect(find.text('2 excused'), findsOneWidget);
       expect(find.byType(CheckboxListTile), findsNothing);
-      expect(find.text('Start'), findsNothing);
+      expect(find.text('Start stopwatch'), findsNothing);
       now = DateTime(2026, 10, 14, 8);
       _resume(tester);
       await tester.pumpAndSettle();
@@ -252,8 +252,8 @@ void main() {
       await _tap(tester, find.byKey(const ValueKey('calendar-day-2026-10-13')));
       expect(find.text('No eligible commitments'), findsOneWidget);
       expect(find.text('2 excused'), findsOneWidget);
-      expect(find.text('Goal · Excused'), findsOneWidget);
-      expect(find.text('Focus · Excused'), findsOneWidget);
+      expect(find.text('Commitment · Excused'), findsNWidgets(2));
+      expect(find.text('Commitment · Excused'), findsNWidgets(2));
       expect(find.text('Reason: Buyer did not arrive.'), findsOneWidget);
       expect(find.text('Reason: Library closed.'), findsOneWidget);
       expect(
@@ -286,7 +286,7 @@ void main() {
       ]);
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      await _tap(tester, find.text('Start'));
+      await _tap(tester, find.text('Start stopwatch'));
       now = now.add(const Duration(milliseconds: 23500));
       await tester.pump(const Duration(seconds: 1));
       await _actions(tester, 'Study');
@@ -294,7 +294,7 @@ void main() {
         tester
             .widget<ListTile>(find.byKey(const ValueKey('task-mark-completed')))
             .onTap,
-        isNull,
+        isNotNull,
       );
       await _tap(tester, find.byKey(const ValueKey('task-excuse')));
       await tester.enterText(
@@ -317,9 +317,9 @@ void main() {
       expect(task.outcome, TaskOutcome.excused);
       await _tap(tester, find.text('Study'));
       await _tap(tester, find.byKey(const ValueKey('task-reset')));
-      await _tap(tester, find.text('Start'));
+      await _tap(tester, find.text('Start stopwatch'));
       now = now.add(const Duration(milliseconds: 499));
-      await _tap(tester, find.text('Pause'));
+      await _tap(tester, find.text('Pause stopwatch'));
       expect(
         (await _saved(tester))
             .todayPlan
@@ -345,7 +345,7 @@ void main() {
         of: find.byWidgetPredicate(
           (widget) => widget is DaylockTaskRow && widget.task.name == 'Study',
         ),
-        matching: find.text('Start'),
+        matching: find.text('Start stopwatch'),
       );
       await _tap(tester, first);
       now = now.add(const Duration(minutes: 5));

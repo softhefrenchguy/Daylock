@@ -100,7 +100,7 @@ class JourneyAreaTile extends StatelessWidget {
 
   String get progress {
     if (summary.focusMilliseconds > 0) {
-      return '${journeyFocusLabel(summary.focusMilliseconds)} Focus';
+      return '${journeyFocusLabel(summary.focusMilliseconds)} recorded';
     }
     if (summary.completedCount > 0) {
       return '${summary.completedCount} completed';

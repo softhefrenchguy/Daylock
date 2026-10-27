@@ -161,7 +161,7 @@ void main() {
         tester.getSize(find.byKey(const ValueKey('long'))).height,
         greaterThan(goalHeight),
       );
-      expect(find.text('60 min'), findsOneWidget);
+      expect(find.text('60 min'), findsNothing);
       expect(find.text('GOAL · COMPLETE ONCE'), findsNothing);
       expect(find.byType(Checkbox), findsNothing);
       expect(tester.takeException(), isNull);
@@ -261,26 +261,12 @@ void main() {
         final plan = DailyPlan(date: _date, tasks: []);
         await tester.pumpWidget(_screen(plan, scale: scale));
         await openCommitmentEditor(tester);
-        final focus = find.text('Focus');
-        await tester.ensureVisible(focus);
-        await tester.tap(focus);
-        await tester.pumpAndSettle();
         tester.view.viewInsets = const FakeViewPadding(bottom: 280);
         await tester.pumpAndSettle();
         await enterPlanText(
           tester,
           find.byKey(const ValueKey('commitment-name')),
           'Read',
-        );
-        await enterPlanText(
-          tester,
-          find.byKey(const ValueKey('focus-minutes')),
-          '30',
-        );
-        await enterPlanText(
-          tester,
-          find.byKey(const ValueKey('focus-target')),
-          'Finish the chapter',
         );
         await tester.pumpAndSettle();
         final save = find.byKey(const ValueKey('save-commitment'));
@@ -292,8 +278,8 @@ void main() {
         tester.view.resetViewInsets();
         await tester.pumpAndSettle();
         expect(find.byType(CommitmentEditor), findsNothing);
-        expect(plan.tasks.single.minimumFocusMinutes, 30);
-        expect(plan.tasks.single.focusTarget, 'Finish the chapter');
+        expect(plan.tasks.single.minimumFocusMinutes, isNull);
+        expect(plan.tasks.single.focusTarget, isNull);
         expect(
           find.widgetWithText(FilledButton, 'COMMIT FRIDAY').hitTestable(),
           findsOneWidget,

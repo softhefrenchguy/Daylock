@@ -124,7 +124,7 @@ void main() {
     expect(history.toJson(), before);
   });
 
-  test('Same-name commitments are distinct, running time is not extrapolated or mutated', () {
+  test('Same-name commitments are distinct; Journey projects running time without mutation', () {
     final running = focus(
       12000,
       started: now.subtract(const Duration(minutes: 10)),
@@ -135,7 +135,7 @@ void main() {
     );
     final result = data(history: history, live: [goal(), running]);
     expect(result.forArea(Area.defaultId).completedCount, 3);
-    expect(result.forArea(study.id).focusMilliseconds, 12000);
+    expect(result.forArea(study.id).focusMilliseconds, 612000);
     expect(running.toJson(), before);
     expect(
       result.records.map((r) => '${r.date}:${r.taskIndex}').toSet(),

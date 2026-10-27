@@ -68,7 +68,7 @@ void main() {
           ),
         ),
       );
-      for (final name in ['plan', 'commitments', 'freedom', 'focus']) {
+      for (final name in ['plan', 'commitments', 'freedom']) {
         final toggle = find.byKey(ValueKey('notification-$name'));
         await tester.ensureVisible(toggle);
         await tester.tap(toggle);
@@ -81,7 +81,7 @@ void main() {
           planTomorrow: false,
           commitments: false,
           freedom: false,
-          focus: false,
+          focus: true,
         ).toJson(),
       );
       expect(service.requests, 0);
@@ -192,10 +192,7 @@ void main() {
 
       toggle();
       await tester.pumpAndSettle();
-      expect(
-        task()['deadlineMs'],
-        now.add(const Duration(minutes: 1)).millisecondsSinceEpoch,
-      );
+      expect(task()['deadlineMs'], isNull);
       now = now.add(const Duration(seconds: 20));
       toggle();
       await tester.pumpAndSettle();
@@ -203,17 +200,14 @@ void main() {
       now = now.add(const Duration(seconds: 10));
       toggle();
       await tester.pumpAndSettle();
-      expect(
-        task()['deadlineMs'],
-        now.add(const Duration(seconds: 40)).millisecondsSinceEpoch,
-      );
+      expect(task()['deadlineMs'], isNull);
       now = now.add(const Duration(seconds: 40));
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
-      expect(task()['outcome'], 'completed');
+      expect(task()['outcome'], 'incomplete');
       expect(
         (await LocalStorage().load())!.todayPlan.tasks.single.isCompleted,
-        isTrue,
+        isFalse,
       );
       final today = tester.widget<TodayScreen>(find.byType(TodayScreen));
       today.onOutcomeChanged!(
@@ -224,7 +218,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(task()['outcome'], 'excused');
       expect(task()['deadlineMs'], isNull);
-      expect(service.invalidations, greaterThanOrEqualTo(5));
+      expect(service.invalidations, greaterThanOrEqualTo(4));
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );

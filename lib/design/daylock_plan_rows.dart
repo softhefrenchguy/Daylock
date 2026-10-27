@@ -12,20 +12,8 @@ class DaylockPlanTaskRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final focus = task.type == TaskType.focus;
-    final largeText = MediaQuery.textScalerOf(context).scale(16) > 24;
-    final duration = focus
-        ? Text(
-            '${task.minimumFocusMinutes} min',
-            style: theme.textTheme.labelLarge!.copyWith(
-              color: theme.colorScheme.primary,
-            ),
-          )
-        : null;
     return Semantics(
-      label: focus
-          ? 'Focus commitment, minimum ${task.minimumFocusMinutes} minutes'
-          : 'Goal commitment',
+      label: 'Commitment',
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
@@ -35,9 +23,7 @@ class DaylockPlanTaskRow extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(top: 2),
                 child: Icon(
-                  focus
-                      ? Icons.timelapse_rounded
-                      : Icons.check_box_outline_blank_rounded,
+                  Icons.check_box_outline_blank_rounded,
                   color: theme.colorScheme.primary,
                   size: DaylockSpace.icon,
                 ),
@@ -60,14 +46,9 @@ class DaylockPlanTaskRow extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (duration != null && !largeText) ...[
-                        const SizedBox(width: DaylockSpace.sm),
-                        duration,
-                      ],
                     ],
                   ),
-                  if (duration != null && largeText) duration,
-                  if (focus && task.focusTarget != null)
+                  if (task.focusTarget != null)
                     Text(
                       task.focusTarget!,
                       style: theme.textTheme.bodySmall!.copyWith(

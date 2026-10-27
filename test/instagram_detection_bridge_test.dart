@@ -148,10 +148,10 @@ void main() {
       type: TaskType.focus,
       minimumFocusMinutes: 20,
     )..startFocus(date);
-    expect(input(tasks: [focus]).values['runningFocus'], isTrue);
+    expect(input(tasks: [focus]).values['runningFocus'], isFalse);
     expect(
       input(tasks: [focus]).values['focusCompletesAtMs'],
-      date.add(const Duration(minutes: 20)).millisecondsSinceEpoch,
+      isNull,
     );
     focus.changeOutcome(
       TaskOutcome.excused,

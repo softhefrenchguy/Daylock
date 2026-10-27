@@ -25,15 +25,6 @@ Future<void> _add(
   bool focus = false,
 }) async {
   await openCommitmentEditor(tester);
-  if (focus) {
-    await tester.tap(find.text('Focus'));
-    await tester.pumpAndSettle();
-    await enterPlanText(
-      tester,
-      find.byKey(const ValueKey('focus-minutes')),
-      '60',
-    );
-  }
   await enterPlanText(
     tester,
     find.byKey(const ValueKey('commitment-name')),
@@ -121,7 +112,7 @@ void main() {
         expect(find.byType(CommitmentEditor), findsNothing);
         expect(find.text('Read a chapter'), findsOneWidget);
         final saved = (await LocalStorage().load())!;
-        expect(saved.tomorrowPlan.tasks.single.type, type);
+        expect(saved.tomorrowPlan.tasks.single.type, TaskType.goal);
         expect(saved.tomorrowPlan.tasks.single.name, 'Read a chapter');
         expect(saved.tomorrowPlan.tasks.single.isCompleted, isFalse);
         expect(saved.todayPlan.tasks, hasLength(3));

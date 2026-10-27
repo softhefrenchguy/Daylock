@@ -24,7 +24,7 @@ class JourneyActivityStrip extends StatelessWidget {
 
   String description(BuildContext context) {
     final locale = MaterialLocalizations.of(context);
-    return 'Last 30 days, ${usesFocus ? 'recorded Focus' : 'completed commitments'}. ${[for (final bucket in buckets) '${locale.formatShortDate(bucket.from)} to ${locale.formatShortDate(bucket.through)}: ${usesFocus ? journeyFocusLabel(bucket.summary.focusMilliseconds) : bucket.summary.completedCount}'].join('; ')}';
+    return 'Last 30 days, ${usesFocus ? 'recorded time' : 'completed commitments'}. ${[for (final bucket in buckets) '${locale.formatShortDate(bucket.from)} to ${locale.formatShortDate(bucket.through)}: ${usesFocus ? journeyFocusLabel(bucket.summary.focusMilliseconds) : bucket.summary.completedCount}'].join('; ')}';
   }
 
   @override
@@ -72,7 +72,7 @@ class JourneyActivityStrip extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          '30 days · ${usesFocus ? 'Focus' : 'completed'}',
+          '30 days · ${usesFocus ? 'time' : 'completed'}',
           style: Theme.of(context).textTheme.bodySmall!.copyWith(
             fontSize: 9,
             height: 1.2,

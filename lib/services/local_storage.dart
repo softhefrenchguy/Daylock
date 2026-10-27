@@ -7,6 +7,7 @@ import '../models/daylock_state.dart';
 class LocalStorage {
   static const stateKey = 'daylock.state.v2';
   static const legacyStateKey = 'daylock.state.v1';
+  static const beforeStopwatchKey = 'daylock.state.v2.before-stopwatch';
 
   final SharedPreferencesAsync _preferences;
   final DateTime Function() _now;
@@ -22,8 +23,22 @@ class LocalStorage {
     if (json != null) {
       final decoded = jsonDecode(json) as Map<String, dynamic>;
       final state = DaylockState.fromJson(decoded, migrationTime: _now());
+      final stopwatchMigration = [decoded['todayPlan'], decoded['tomorrowPlan']]
+          .any(
+            (plan) => ((plan as Map)['tasks'] as List).any(
+              (task) =>
+                  !(task as Map).containsKey('id') ||
+                  !task.containsKey('stopwatchVersion'),
+            ),
+          );
+      if (stopwatchMigration &&
+          await _preferences.getString(beforeStopwatchKey) == null) {
+        // Preserve the exact pre-migration snapshot before any additive write.
+        await _preferences.setString(beforeStopwatchKey, json);
+      }
       // Additive v2 migration: missing collections become empty. Never backfill history.
-      if (!decoded.containsKey('events') ||
+      if (stopwatchMigration ||
+          !decoded.containsKey('events') ||
           !decoded.containsKey('calendarCache') ||
           !decoded.containsKey('history') ||
           !decoded.containsKey('freedomSettings') ||
@@ -53,11 +68,7 @@ class LocalStorage {
   }
 
   bool _needsOutcomeMigration(Map<String, dynamic> json) {
-    final plans = [
-      json['todayPlan'],
-      json['tomorrowPlan'],
-      ...json['history'] as List,
-    ];
+    final plans = [json['todayPlan'], json['tomorrowPlan']];
     return plans.any(
       (plan) => ((plan as Map)['tasks'] as List).any(
         (task) =>
@@ -82,6 +93,7 @@ class LocalStorage {
     await _pendingSave;
     // Remove the backup first so it cannot resurrect old commitments.
     await _preferences.remove(legacyStateKey);
+    await _preferences.remove(beforeStopwatchKey);
     await _preferences.remove(stateKey);
   }
 }

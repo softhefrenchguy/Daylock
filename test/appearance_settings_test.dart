@@ -268,7 +268,7 @@ void main() {
       await tester.pumpAndSettle();
       await _tap(
         tester,
-        find.widgetWithText(FilledButton, 'Start'),
+        find.widgetWithText(TextButton, 'Start stopwatch').first,
         running: true,
       );
       final startedAt = (await _saved(tester))
@@ -285,13 +285,13 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
       await tester.pumpAndSettle();
-      expect(find.text('23 / 60 min'), findsOneWidget);
-      expect(find.text('Pause'), findsOneWidget);
+      expect(find.text('23:00'), findsOneWidget);
+      expect(find.text('Pause stopwatch'), findsOneWidget);
       expect(
         (await _saved(tester)).todayPlan.tasks.first.focusStartedAt,
         startedAt,
       );
-      await _tap(tester, find.widgetWithText(FilledButton, 'Pause'));
+      await _tap(tester, find.widgetWithText(TextButton, 'Pause stopwatch'));
       await _tap(tester, find.text('Walk'));
       final saved = await _saved(tester);
       expect(

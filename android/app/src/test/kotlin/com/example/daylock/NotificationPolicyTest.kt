@@ -83,44 +83,30 @@ class NotificationPolicyTest {
         val body = messages(eval(snapshot(listOf(task(outcome = "completed"))), "2026-10-14T18:00:00")).single().body
         assertEquals("Commit tomorrow's plan to earn Freedom.", body)
     }
-    @Test fun dueFocusCompletesCountsAndCanEarnFreedomInTheBackground() {
-        val s = snapshot(listOf(task("Study maths", deadline = time("2026-10-14T18:45:00"))), committed = true)
-        val first = eval(s, "2026-10-14T18:00:00")
-        assertEquals(time("2026-10-14T18:45:00"), first.nextAlarmMs)
-        val due = eval(s, "2026-10-14T18:45:00", consumed(first))
-        assertEquals(setOf("Freedom earned", "Focus complete"), messages(due).map { it.title }.toSet())
-        assertTrue(messages(due).last().body.contains("45-minute minimum for Study maths"))
-        assertTrue(messages(eval(s, "2026-10-14T18:46:00", consumed(first) + consumed(due))).isEmpty())
+    @Test fun legacyDeadlineCannotCompleteOrEarnFreedom() {
+        val deadline = time("2026-10-14T18:45:00")
+        val running = snapshot(listOf(task("Study", deadline = deadline)), committed = true)
+        val first = eval(running, "2026-10-14T18:00:00")
+        assertTrue(messages(first).any { it.title == "Freedom Time is here" })
+        val due = eval(running, "2026-10-14T18:45:00", consumed(first))
+        assertTrue(messages(due).isEmpty())
+        assertNotEquals(deadline, first.nextAlarmMs)
+        val manual = running.copy(today = running.today.copy(tasks = listOf(task("Study", outcome = "completed"))))
+        assertEquals("Freedom earned", messages(eval(manual, "2026-10-14T18:45:00", consumed(first))).single().title)
     }
-    @Test fun focusDisabledStillSchedulesFreedomTransitionAtItsExistingDeadline() {
-        val s = snapshot(listOf(task(deadline = time("2026-10-14T18:45:00"))), committed = true)
-        val disabled = s.copy(preferences = s.preferences.copy(focus = false))
-        val first = eval(disabled, "2026-10-14T18:00:00")
-        assertEquals(time("2026-10-14T18:45:00"), first.nextAlarmMs)
-        val due = messages(eval(disabled, "2026-10-14T18:45:00", consumed(first)))
-        assertEquals(listOf("Freedom earned"), due.map { it.title })
-    }
-    @Test fun pauseResumeResetExcuseAndEarlyCompletionCancelOldDeadline() {
+    @Test fun oldFocusPreferenceAloneNeverSchedulesAlerts() {
         val prefs = ReminderPreferences(false, false, false, true, 1200, 840)
         val s = snapshot(listOf(task(deadline = time("2026-10-14T13:45:00"))), prefs = prefs)
-        assertEquals(time("2026-10-14T13:45:00"), eval(s, "2026-10-14T13:00:00").nextAlarmMs)
-        for (outcome in listOf("incomplete", "excused", "completed")) {
-            val stopped = s.copy(today = s.today.copy(tasks = listOf(ReminderTask("Walk", outcome, 45, null))))
-            assertNull(eval(stopped, "2026-10-14T13:00:00").nextAlarmMs)
-            assertTrue(messages(eval(stopped)).isEmpty())
-        }
-        val resumed = s.copy(today = s.today.copy(tasks = listOf(task(deadline = time("2026-10-14T14:15:00")))))
-        assertTrue(messages(eval(resumed, "2026-10-14T13:45:00")).isEmpty())
-        assertEquals(time("2026-10-14T14:15:00"), eval(resumed, "2026-10-14T13:45:00").nextAlarmMs)
+        assertNull(eval(s, "2026-10-14T13:00:00").nextAlarmMs)
+        assertTrue(messages(eval(s, "2026-10-14T13:45:00")).isEmpty())
     }
-    @Test fun uiSettlementRetainsOnlyGenuinelyDueFocus() {
+    @Test fun retainedLegacyDeadlineDoesNotProduceFocusNotification() {
         val deadline = time("2026-10-14T13:45:00")
         val running = snapshot(listOf(task(deadline = deadline)))
         val completed = running.copy(today = running.today.copy(tasks = listOf(ReminderTask("Walk", "completed", 45, null))))
-        assertNull(completed.retainingDueFocus(running, deadline - 1).today.tasks.single().deadlineMs)
         val settled = completed.retainingDueFocus(running, deadline)
         assertEquals(deadline, settled.today.tasks.single().deadlineMs)
-        assertEquals("Focus complete", messages(eval(settled, "2026-10-14T13:45:00")).single().title)
+        assertFalse(messages(eval(settled, "2026-10-14T13:45:00")).any { it.category == "focus" })
     }
     @Test fun midnightPromotesOnlyActualTomorrowAndNeverUsesHistory() {
         val s = snapshot(listOf(task(deadline = time("2026-10-14T23:59:00"))))

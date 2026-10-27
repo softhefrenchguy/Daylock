@@ -6,7 +6,6 @@ import '../design/daylock_theme.dart';
 import '../design/daylock_widgets.dart';
 import '../models/area.dart';
 import '../models/highlight.dart';
-import '../models/task.dart';
 import '../services/journey_service.dart';
 
 class AreaJourneyScreen extends StatefulWidget {
@@ -82,12 +81,12 @@ class _AreaJourneyScreenState extends State<AreaJourneyScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${journeyFocusLabel(summary.focusMilliseconds)} recorded Focus',
+                  '${journeyFocusLabel(summary.focusMilliseconds)} recorded time',
                   key: const ValueKey('area-focus-time'),
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Focus time updates when a session pauses or finishes. Goals add commitments, not hours.',
+                  'Stopwatch time records actual effort, including incomplete commitments.',
                 ),
                 const SizedBox(height: 24),
                 const DaylockLabel('ACTIVITY OVER TIME'),
@@ -100,7 +99,7 @@ class _AreaJourneyScreenState extends State<AreaJourneyScreen> {
                       onSelected: (_) => setState(() => _focus = false),
                     ),
                     ChoiceChip(
-                      label: const Text('Focus time'),
+                      label: const Text('Tracked time'),
                       selected: _focus,
                       onSelected: (_) => setState(() => _focus = true),
                     ),
@@ -161,7 +160,7 @@ class _AreaJourneyScreenState extends State<AreaJourneyScreen> {
                         title: Text(record.task.name),
                         subtitle: Text(
                           '${MaterialLocalizations.of(context).formatMediumDate(record.date)} · ${record.task.outcome.label}'
-                          '${record.task.type == TaskType.focus ? ' · ${journeyFocusLabel(record.task.accumulatedFocusMilliseconds)} Focus' : ''}',
+                          '${record.task.accumulatedFocusMilliseconds > 0 ? ' · ${journeyFocusLabel(record.task.accumulatedFocusMilliseconds)} recorded' : ''}',
                         ),
                         onTap: () => widget.onDayOpened(record.date),
                       ),

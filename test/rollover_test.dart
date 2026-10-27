@@ -190,10 +190,15 @@ void main() {
 
       await tester.tap(find.text('Tomorrow task'));
       await tester.pumpAndSettle();
-      expect(find.text('0 / 1 complete'), findsOneWidget);
-      await tester.tap(find.text('Start'));
+      expect(find.text('1 / 1 complete'), findsOneWidget);
+      await tester.tap(find.text('Tomorrow task'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start stopwatch'));
       now = now.add(const Duration(minutes: Task.legacyFocusMinutes));
       await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+      expect(find.text('0 / 1 complete'), findsOneWidget);
+      await tester.tap(find.text('Tomorrow task'));
       await tester.pumpAndSettle();
       expect(find.text('1 / 1 complete'), findsOneWidget);
       await _openPlan(tester);

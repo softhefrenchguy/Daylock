@@ -93,7 +93,7 @@ void main() {
             );
             expect(find.byType(TextField), findsNothing);
             expect(find.byType(DaylockPlanTaskRow), findsNWidgets(2));
-            expect(find.text('60 min'), findsOneWidget);
+            expect(find.text('60 min'), findsNothing);
             expect(find.text('Finish Chapter 7'), findsOneWidget);
             expect(find.byType(Checkbox), findsNothing);
             final expected = DaylockTheme.forPalette(colour, brightness);
@@ -148,21 +148,10 @@ void main() {
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
       await tester.pumpWidget(_screen(plan));
       await openCommitmentEditor(tester);
-      await _tap(tester, find.text('Focus'));
       await enterPlanText(
         tester,
         find.byKey(const ValueKey('commitment-name')),
         'Study Pega',
-      );
-      await enterPlanText(
-        tester,
-        find.byKey(const ValueKey('focus-minutes')),
-        '45',
-      );
-      await enterPlanText(
-        tester,
-        find.byKey(const ValueKey('focus-target')),
-        'Finish module',
       );
       for (final colour in ColourTheme.values) {
         for (final brightness in Brightness.values) {
@@ -188,26 +177,12 @@ void main() {
                 .text,
             'Study Pega',
           );
-          expect(
-            tester
-                .widget<TextField>(find.byKey(const ValueKey('focus-minutes')))
-                .controller!
-                .text,
-            '45',
-          );
-          expect(
-            tester
-                .widget<TextField>(find.byKey(const ValueKey('focus-target')))
-                .controller!
-                .text,
-            'Finish module',
-          );
         }
       }
       await _tap(tester, find.text('Add commitment'));
       expect(plan.tasks.last.name, 'Study Pega');
-      expect(plan.tasks.last.minimumFocusMinutes, 45);
-      expect(plan.tasks.last.focusTarget, 'Finish module');
+      expect(plan.tasks.last.minimumFocusMinutes, isNull);
+      expect(plan.tasks.last.focusTarget, isNull);
       expect(plan.isCommitted, isFalse);
       expect(tester.takeException(), isNull);
     },
@@ -230,38 +205,15 @@ void main() {
           );
           await tester.pumpAndSettle();
           await openCommitmentEditor(tester);
-          await _tap(tester, find.text('Focus'));
           await enterPlanText(
             tester,
             find.byKey(const ValueKey('commitment-name')),
             'Practice',
           );
-          await enterPlanText(
-            tester,
-            find.byKey(const ValueKey('focus-minutes')),
-            '0',
-          );
           await tester.pumpAndSettle();
-          expect(
-            find.text('Enter a whole number greater than zero.'),
-            findsOneWidget,
-          );
-          expect(
-            tester
-                .widget<FilledButton>(
-                  find.widgetWithText(FilledButton, 'Add commitment'),
-                )
-                .onPressed,
-            isNull,
-          );
-          await enterPlanText(
-            tester,
-            find.byKey(const ValueKey('focus-minutes')),
-            '30',
-          );
           await tester.pumpAndSettle();
           await _tap(tester, find.text('Add commitment'));
-          expect(plan.tasks.last.minimumFocusMinutes, 30);
+          expect(plan.tasks.last.minimumFocusMinutes, isNull);
           await tester.pump(const Duration(seconds: 4));
           await tester.pumpAndSettle();
           await _tap(tester, find.text('COMMIT FRIDAY'));

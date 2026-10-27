@@ -6,6 +6,7 @@ import 'package:daylock/models/daylock_state.dart';
 import 'package:daylock/models/task.dart';
 import 'package:daylock/services/local_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:daylock/services/calendar_credentials.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -59,9 +60,25 @@ void main() {
         await LocalStorage().save(oldState);
       });
 
+      // Supply the Android clock channel when the widget test emulates Android.
+      const clockChannel = MethodChannel('daylock/stopwatch_clock');
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      messenger.setMockMethodCallHandler(
+        clockChannel,
+        (_) async => {'elapsedMs': 1000, 'bootCount': 1},
+      );
+      addTearDown(() => messenger.setMockMethodCallHandler(clockChannel, null));
       // Exercise the actual production entry point, including its debug-only gate.
       await app.main();
-      await tester.pumpAndSettle();
+      await tester.pump();
+      for (var i = 0; i < 30; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find.text('Go to the gym').evaluate().isNotEmpty ||
+            find.text('0 / 0 complete').evaluate().isNotEmpty) {
+          break;
+        }
+      }
       final saved = (await LocalStorage().load())!;
       expect(await preferences.getString('unrelated.preference'), 'keep');
       expect(

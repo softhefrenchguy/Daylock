@@ -61,11 +61,7 @@ Map<String, dynamic> notificationSnapshot(DaylockState state, DateTime now) {
           'name': task.name,
           'outcome': task.outcome.name,
           'minimumMinutes': task.minimumFocusMinutes,
-          'deadlineMs': allowTimers && task.isFocusRunning && !task.isCompleted
-              ? task.focusStartedAt!.millisecondsSinceEpoch +
-                    task.minimumFocusMinutes! * 60000 -
-                    task.accumulatedFocusMilliseconds
-              : null,
+          'deadlineMs': null,
         },
     ],
   };

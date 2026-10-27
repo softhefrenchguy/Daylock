@@ -18,7 +18,7 @@ data class ReminderTask(val name: String, val outcome: String, val minimumMinute
         require(deadlineMs == null || (minimumMinutes != null && deadlineMs > 0 && outcome != "excused"))
     }
     val eligible get() = outcome != "excused"
-    fun complete(now: Long) = outcome == "completed" || (outcome == "incomplete" && deadlineMs != null && now >= deadlineMs)
+    fun complete(now: Long) = outcome == "completed"
 }
 data class ReminderPlan(val date: String, val committed: Boolean, val tasks: List<ReminderTask>) {
     init { nextPlanDate(date) }
@@ -113,7 +113,8 @@ object NotificationPolicy {
             if (p.plan) add("plan")
             if (p.commitments) add("commitments")
             if (p.freedom && s.freedomEnabled) add("freedom")
-            if (p.focus) add("focus")
+            // The old Focus-completion preference is retained on disk only.
+            // Optional stopwatches have no completion deadline or timer alert.
         }.intersect(allowed)
         if (enabled.isEmpty()) return ReminderEvaluation(emptyList(), null)
         val decisions = mutableListOf<ReminderDecision>()
@@ -152,20 +153,9 @@ object NotificationPolicy {
                 decisions.add(ReminderDecision(setOf(timeKey), ReminderMessage("freedom", "Freedom Time is here", body, day)))
             } else if (now < time && timeKey !in seen) upcoming.add(time)
         }
-        today?.tasks?.forEachIndexed { index, task ->
-            val deadline = task.deadlineMs
-            val key = "$day|focus|$index"
-            if (task.eligible && deadline != null) {
-                if (deadline > now && ("focus" in enabled || "freedom" in enabled)) upcoming.add(deadline)
-                if ("focus" in enabled && deadline <= now && key !in seen) {
-                    decisions.add(ReminderDecision(setOf(key), ReminderMessage("focus", "Focus complete",
-                        "You've reached your ${task.minimumMinutes}-minute minimum for ${task.name}.", day, index, task.name)))
-                }
-            }
-        }
         // One wake at midnight reconciles dates even when Flutter never opens.
         // No repeating service, polling job or exact-alarm permission is used.
-        if (enabled.any { it != "focus" } || today?.tasks?.any { it.deadlineMs != null && it.deadlineMs > now } == true) {
+        if (enabled.isNotEmpty()) {
             upcoming.add(date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli())
         }
         return ReminderEvaluation(decisions, upcoming.filter { it > now }.minOrNull())

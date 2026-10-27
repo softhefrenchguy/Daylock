@@ -91,9 +91,9 @@ void main() {
           await tester.pumpAndSettle();
           expect(goal.isCompleted, isTrue);
           expect(find.text('1 / 2 complete'), findsOneWidget);
-          expect(find.byType(Checkbox), findsOneWidget);
-          expect(find.text('23 / 60 min'), findsOneWidget);
-          final button = find.widgetWithText(FilledButton, 'Start');
+          expect(find.byType(Checkbox), findsNWidgets(2));
+          expect(find.text('23:00'), findsOneWidget);
+          final button = find.byKey(ValueKey('stopwatch-toggle-${focus.id}'));
           await tester.ensureVisible(button);
           await tester.tap(button);
           expect(started, isTrue);

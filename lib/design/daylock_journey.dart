@@ -63,7 +63,7 @@ class JourneyActivityChart extends StatelessWidget {
     String range(JourneyBucket b) =>
         '${local.formatShortDate(b.from)} – ${local.formatShortDate(b.through)}';
     String label(int i) =>
-        '${range(buckets[i])}: ${focus ? '${journeyFocusLabel(values[i])} recorded Focus' : '${values[i]} completed commitments'}';
+        '${range(buckets[i])}: ${focus ? '${journeyFocusLabel(values[i])} recorded time' : '${values[i]} completed commitments'}';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -72,7 +72,7 @@ class JourneyActivityChart extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
               focus
-                  ? 'Recorded Focus will appear here.'
+                  ? 'Recorded time will appear here.'
                   : 'Completed commitments will appear here.',
             ),
           ),

@@ -20,8 +20,6 @@ class NativeFreedomInput {
     FreedomEligibility eligibility, {
     required DailyPlan tomorrowPlan,
   }) {
-    final running = plan.tasks.where((task) => task.isFocusRunning).firstOrNull;
-    final focusCompletesAtMs = running?.focusStartedAt?.millisecondsSinceEpoch;
     return NativeFreedomInput._({
       'date':
           '${plan.date.year.toString().padLeft(4, '0')}-${plan.date.month.toString().padLeft(2, '0')}-${plan.date.day.toString().padLeft(2, '0')}',
@@ -34,18 +32,15 @@ class NativeFreedomInput {
       'eligibleCount': eligibility.eligibleCount,
       'completedCount': eligibility.completedCount,
       'tomorrowCommitted': eligibility.tomorrowCommitted,
-      'runningFocus': plan.tasks.any((task) => task.isFocusRunning),
+      // Stopwatches cannot predict a commitment outcome. Only saved outcomes
+      // affect Freedom, including while Flutter is closed.
+      'runningFocus': false,
       'tomorrowPlan': Map<String, Object>.unmodifiable({
         'date':
             '${tomorrowPlan.date.year.toString().padLeft(4, '0')}-${tomorrowPlan.date.month.toString().padLeft(2, '0')}-${tomorrowPlan.date.day.toString().padLeft(2, '0')}',
         'eligibleCount': tomorrowPlan.progress.eligibleCount,
         'completedCount': tomorrowPlan.progress.completedCount,
       }),
-      if (running != null && focusCompletesAtMs != null)
-        'focusCompletesAtMs':
-            focusCompletesAtMs +
-            running.minimumFocusMinutes! * 60000 -
-            running.accumulatedFocusMilliseconds,
     });
   }
 }

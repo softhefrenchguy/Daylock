@@ -14,9 +14,18 @@ class MainActivity : FlutterActivity() {
     private var methods: MethodChannel? = null
     private var events: EventChannel? = null
     private var notifications: NotificationBridge? = null
+    private var stopwatchClock: MethodChannel? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        stopwatchClock = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "daylock/stopwatch_clock").apply {
+            setMethodCallHandler { call, result ->
+                if (call.method != "read") result.notImplemented()
+                else result.success(mapOf(
+                    "elapsedMs" to android.os.SystemClock.elapsedRealtime(),
+                    "bootCount" to Settings.Global.getInt(contentResolver, Settings.Global.BOOT_COUNT, -1)))
+            }
+        }
         notifications = NotificationBridge(this, flutterEngine.dartExecutor.binaryMessenger)
         DetectionRuntime.attach(this)
         methods = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "daylock/instagram_detection").apply {
@@ -62,6 +71,8 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        stopwatchClock?.setMethodCallHandler(null)
+        stopwatchClock = null
         notifications?.close()
         notifications = null
         methods?.setMethodCallHandler(null)

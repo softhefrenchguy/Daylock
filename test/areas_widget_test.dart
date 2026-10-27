@@ -132,17 +132,6 @@ void main() {
           find.byKey(const ValueKey('commitment-name')),
           'Walk',
         );
-        if (type == TaskType.focus) {
-          await tap(tester, find.text('Focus'));
-          await tester.enterText(
-            find.byKey(const ValueKey('focus-minutes')),
-            '20',
-          );
-          await tester.enterText(
-            find.byKey(const ValueKey('focus-target')),
-            'Outside',
-          );
-        }
         await tap(tester, find.byKey(const ValueKey('select-area')));
         expect(
           find.byKey(ValueKey('choose-area-${archived.id}')),
@@ -151,12 +140,8 @@ void main() {
         await tap(tester, find.byKey(ValueKey('choose-area-${health.id}')));
         await tap(tester, find.byKey(const ValueKey('save-commitment')));
         expect(plan.tasks.single.areaId, health.id);
-        expect(plan.tasks.single.type, type);
+        expect(plan.tasks.single.type, TaskType.goal);
         expect(plan.tasks.single.isCompleted, isFalse);
-        if (type == TaskType.focus) {
-          expect(plan.tasks.single.minimumFocusMinutes, 20);
-          expect(plan.tasks.single.focusTarget, 'Outside');
-        }
       },
     );
   }

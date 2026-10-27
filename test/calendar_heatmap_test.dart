@@ -272,10 +272,10 @@ void main() {
       expect(find.text('50%'), findsOneWidget);
       expect(find.text('Historical goal'), findsOneWidget);
       expect(find.text('Historical focus'), findsOneWidget);
-      expect(find.text('Goal · Completed'), findsOneWidget);
-      expect(find.text('Focus · Incomplete'), findsOneWidget);
-      expect(find.text('23 min / 60 min'), findsOneWidget);
-      expect(find.text('Recorded Focus: 23 min'), findsOneWidget);
+      expect(find.text('Commitment · Completed'), findsOneWidget);
+      expect(find.text('Commitment · Incomplete'), findsOneWidget);
+      expect(find.text('23 min recorded'), findsOneWidget);
+      expect(find.text('Recorded time: 23 min'), findsOneWidget);
       expect(find.text('Finish Chapter 7'), findsOneWidget);
       expect(find.byType(Checkbox), findsNothing);
       expect(find.text('Start'), findsNothing);
@@ -314,7 +314,7 @@ void main() {
       await tester.pumpWidget(_app(_screen(today: today)));
       await tester.pumpAndSettle();
       expect(find.text('1 / 2 complete'), findsOneWidget);
-      expect(find.text('Recorded Focus: 22 min'), findsOneWidget);
+      expect(find.text('Recorded time: 22 min'), findsOneWidget);
       expect(find.text('Today goal'), findsOneWidget);
       expect(find.byType(CheckboxListTile), findsNothing);
       expect(find.text('Start'), findsNothing);

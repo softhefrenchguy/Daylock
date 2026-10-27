@@ -1,3 +1,5 @@
+import 'package:daylock/models/stopwatch_stamp.dart';
+
 import 'navigation_helpers.dart';
 
 import 'package:daylock/main.dart';
@@ -21,185 +23,78 @@ void main() {
         InMemorySharedPreferencesAsync.empty();
   });
 
-  testWidgets(
-    'Focus planning validates duration and persists an optional target',
-    (tester) async {
-      await tester.pumpWidget(MainApp(now: () => DateTime(2026, 10, 7, 12)));
-      await tester.pumpAndSettle();
-      await _navigate(tester, 'Plan');
-      expect(find.byKey(const ValueKey('focus-minutes')), findsNothing);
+  testWidgets('Plan creates unified commitments with no required time', (
+    tester,
+  ) async {
+    await tester.pumpWidget(MainApp(now: () => DateTime(2026, 10, 7, 12)));
+    await tester.pumpAndSettle();
+    await _navigate(tester, 'Plan');
+    for (final title in ['Read']) {
       await openCommitmentEditor(tester);
-      await tester.ensureVisible(find.text('Focus'));
-      await tester.tap(find.text('Focus'));
-      await tester.pumpAndSettle();
+      expect(find.text('Goal'), findsNothing);
+      expect(find.text('Focus'), findsNothing);
+      expect(find.byKey(const ValueKey('focus-minutes')), findsNothing);
       await enterPlanText(
         tester,
         find.byKey(const ValueKey('commitment-name')),
-        'Read',
-      );
-      for (final value in ['', '0', '-5', '1.5', 'abc']) {
-        await enterPlanText(
-          tester,
-          find.byKey(const ValueKey('focus-minutes')),
-          value,
-        );
-        await tester.pump();
-        expect(
-          tester
-              .widget<FilledButton>(
-                find.widgetWithText(FilledButton, 'Add commitment'),
-              )
-              .onPressed,
-          isNull,
-        );
-        await tester.testTextInput.receiveAction(TextInputAction.done);
-        await tester.pump();
-      }
-      expect((await LocalStorage().load())!.tomorrowPlan.tasks, isEmpty);
-      await enterPlanText(
-        tester,
-        find.byKey(const ValueKey('focus-minutes')),
-        '60',
-      );
-      await enterPlanText(
-        tester,
-        find.byKey(const ValueKey('focus-target')),
-        '  Finish Chapter 7  ',
+        title,
       );
       await tester.pump();
-      final add = find.widgetWithText(FilledButton, 'Add commitment');
-      await tester.ensureVisible(add);
-      await tester.tap(add);
+      await tester.tap(find.widgetWithText(FilledButton, 'Add commitment'));
       await tester.pumpAndSettle();
-      final saved = (await LocalStorage().load())!;
-      expect(saved.tomorrowPlan.tasks.single.minimumFocusMinutes, 60);
-      expect(saved.tomorrowPlan.tasks.single.focusTarget, 'Finish Chapter 7');
-      expect(saved.todayPlan.tasks, isEmpty);
-      expect(find.text('60 min'), findsOneWidget);
-      expect(find.text('Finish Chapter 7'), findsOneWidget);
-      expect(find.byKey(const ValueKey('focus-minutes')), findsNothing);
-    },
-  );
+    }
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pumpAndSettle();
+    final commit = find.widgetWithText(FilledButton, 'COMMIT THURSDAY');
+    await tester.ensureVisible(commit);
+    await tester.tap(commit);
+    await confirmPlanCommit(tester);
+    final saved = (await LocalStorage().load())!;
+    expect(saved.tomorrowPlan.isCommitted, isTrue);
+    expect(saved.tomorrowPlan.tasks.map((t) => t.name), ['Read']);
+    expect(
+      saved.tomorrowPlan.tasks.every(
+        (t) =>
+            t.minimumFocusMinutes == null &&
+            t.accumulatedFocusMilliseconds == 0,
+      ),
+      isTrue,
+    );
+    expect(find.byType(TextField), findsNothing);
+    expect(find.byKey(const ValueKey('open-commitment-editor')), findsNothing);
+  });
 
   testWidgets(
-    'Goal selection ignores Focus fields; commit locks all Focus inputs',
-    (tester) async {
-      await tester.pumpWidget(MainApp(now: () => DateTime(2026, 10, 7, 12)));
-      await tester.pumpAndSettle();
-      await _navigate(tester, 'Plan');
-      await openCommitmentEditor(tester);
-      await tester.ensureVisible(find.text('Focus'));
-      await tester.tap(find.text('Focus'));
-      await tester.pump();
-      await enterPlanText(
-        tester,
-        find.byKey(const ValueKey('focus-minutes')),
-        '0',
-      );
-      await openCommitmentEditor(tester);
-      await tester.ensureVisible(find.text('Goal'));
-      await tester.tap(find.text('Goal'));
-      await tester.pump();
-      await enterPlanText(
-        tester,
-        find.byKey(const ValueKey('commitment-name')),
-        'Walk',
-      );
-      await tester.pump();
-      await tester.ensureVisible(find.text('Add commitment'));
-      await tester.tap(find.text('Add commitment'));
-      await tester.pumpAndSettle();
-      await openCommitmentEditor(tester);
-      await tester.ensureVisible(find.text('Focus'));
-      await tester.tap(find.text('Focus'));
-      await tester.pump();
-      await enterPlanText(
-        tester,
-        find.byKey(const ValueKey('commitment-name')),
-        'Read',
-      );
-      await enterPlanText(
-        tester,
-        find.byKey(const ValueKey('focus-minutes')),
-        '1',
-      );
-      await tester.pump();
-      await tester.ensureVisible(find.text('Add commitment'));
-      await tester.tap(find.text('Add commitment'));
-      await tester.pumpAndSettle();
-      for (var i = 0; i < 2; i++) {
-        await tester.pump(const Duration(seconds: 4));
-        await tester.pumpAndSettle();
-      }
-      final commit = find.widgetWithText(FilledButton, 'COMMIT THURSDAY');
-      await tester.ensureVisible(commit);
-      await tester.tap(commit);
-      await confirmPlanCommit(tester);
-      await tester.pumpAndSettle();
-      expect(find.byType(TextField), findsNothing);
-      expect(find.text('Add commitment'), findsNothing);
-      final saved = (await LocalStorage().load())!;
-      expect(saved.tomorrowPlan.isCommitted, isTrue);
-      expect(saved.tomorrowPlan.tasks.first.type, TaskType.goal);
-      expect(saved.tomorrowPlan.tasks.first.minimumFocusMinutes, isNull);
-      expect(saved.tomorrowPlan.tasks.last.focusTarget, isNull);
-    },
-  );
-
-  testWidgets(
-    'Focus has no checkbox, pauses accurately, and completes only at its minimum',
+    'Legacy Focus completes immediately and running completion saves uncapped time',
     (tester) async {
       var now = DateTime(2026, 10, 7, 12);
       await _seed(tester, now, [
-        Task(
-          name: 'Read',
-          type: TaskType.focus,
-          minimumFocusMinutes: 1,
-          focusTarget: 'Finish Chapter 7',
-        ),
+        Task(name: 'Read', type: TaskType.focus, minimumFocusMinutes: 1),
       ]);
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      expect(find.byType(CheckboxListTile), findsNothing);
-      expect(find.text('0 / 1 min'), findsOneWidget);
-      expect(find.text('Finish Chapter 7'), findsOneWidget);
       await tester.tap(find.text('Read'));
       await tester.pumpAndSettle();
-      expect(find.text('0 / 1 complete'), findsOneWidget);
-      await _tapFocus(tester, 'Read');
-      await tester.pump();
-      now = now.add(const Duration(seconds: 23));
-      await tester.pump(const Duration(seconds: 1));
+      var task = (await LocalStorage().load())!.todayPlan.tasks.single;
+      expect(task.isCompleted, isTrue);
+      expect(task.accumulatedFocusMilliseconds, 0);
+      await tester.tap(find.text('Read'));
+      await tester.pumpAndSettle();
       await _tapFocus(tester, 'Read');
       await tester.pumpAndSettle();
-      var saved = (await LocalStorage().load())!;
-      expect(saved.todayPlan.tasks.single.accumulatedFocusMilliseconds, 23000);
-      expect(saved.todayPlan.tasks.single.isFocusRunning, isFalse);
-      now = now.add(const Duration(hours: 2));
+      now = now.add(const Duration(minutes: 2, seconds: 23));
       await tester.pump(const Duration(seconds: 1));
-      expect(
-        (await LocalStorage().load())!
-            .todayPlan
-            .tasks
-            .single
-            .accumulatedFocusMilliseconds,
-        23000,
-      );
-      await _tapFocus(tester, 'Read');
-      await tester.pump();
-      now = now.add(const Duration(seconds: 36));
-      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('02:23'), findsOneWidget);
       expect(find.text('0 / 1 complete'), findsOneWidget);
-      now = now.add(const Duration(seconds: 1));
-      await tester.pump(const Duration(seconds: 1));
+      await tester.tap(find.text('Read'));
       await tester.pumpAndSettle();
-      expect(find.text('1 / 1 complete'), findsOneWidget);
-      expect(find.text('1 / 1 min'), findsOneWidget);
-      expect(find.text('Finish Chapter 7'), findsOneWidget);
-      expect(tester.widget<FilledButton>(_action('Read')).onPressed, isNull);
-      saved = (await LocalStorage().load())!;
-      expect(saved.todayPlan.tasks.single.isCompleted, isTrue);
-      expect(saved.todayPlan.tasks.single.focusStartedAt, isNull);
+      task = (await LocalStorage().load())!.todayPlan.tasks.single;
+      expect(task.isCompleted, isTrue);
+      expect(task.isFocusRunning, isFalse);
+      expect(task.accumulatedFocusMilliseconds, 143000);
+      now = now.add(const Duration(hours: 1));
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('02:23'), findsOneWidget);
     },
   );
 
@@ -209,7 +104,7 @@ void main() {
       var now = DateTime(2026, 10, 7, 12);
       await _seed(tester, now, [
         Task(name: 'Read', type: TaskType.focus, minimumFocusMinutes: 60),
-        Task(name: 'Study', type: TaskType.focus, minimumFocusMinutes: 60),
+        Task(name: 'Study'),
         Task(name: 'Walk', type: TaskType.goal),
       ]);
       await tester.pumpWidget(MainApp(now: () => now));
@@ -229,12 +124,12 @@ void main() {
         hasLength(1),
       );
       expect(saved.todayPlan.tasks[1].isFocusRunning, isTrue);
-      expect(find.text('23 / 60 min'), findsOneWidget);
+      expect(find.text('23:00'), findsOneWidget);
       await _navigate(tester, 'Calendar');
       now = now.add(const Duration(minutes: 10));
       await tester.pump(const Duration(seconds: 1));
       await _navigate(tester, 'Today');
-      expect(find.text('10 / 60 min'), findsOneWidget);
+      expect(find.text('10:00'), findsOneWidget);
       await tester.ensureVisible(find.text('Walk'));
       await tester.tap(find.text('Walk'));
       await tester.pump();
@@ -247,7 +142,7 @@ void main() {
     },
   );
 
-  testWidgets('Background time counts and completion is reconciled on resume', (
+  testWidgets('Background time counts without automatic completion on resume', (
     tester,
   ) async {
     var now = DateTime(2026, 10, 7, 12);
@@ -262,19 +157,20 @@ void main() {
     now = now.add(const Duration(minutes: 23));
     _resume(tester);
     await tester.pump();
-    expect(find.text('23 / 60 min'), findsOneWidget);
-    expect(find.text('Pause'), findsOneWidget);
+    expect(find.text('23:00'), findsOneWidget);
+    expect(find.text('Pause stopwatch'), findsOneWidget);
     _background(tester);
     now = now.add(const Duration(hours: 2));
     _resume(tester);
     await tester.pumpAndSettle();
-    expect(find.text('1 / 1 complete'), findsOneWidget);
+    expect(find.text('0 / 1 complete'), findsOneWidget);
     final saved = (await LocalStorage().load())!;
     expect(
       saved.todayPlan.tasks.single.accumulatedFocusMilliseconds,
-      60 * 60000,
+      143 * 60000,
     );
-    expect(saved.todayPlan.tasks.single.isFocusRunning, isFalse);
+    expect(saved.todayPlan.tasks.single.isFocusRunning, isTrue);
+    expect(find.text('02:23:00'), findsOneWidget);
   });
 
   testWidgets(
@@ -297,38 +193,75 @@ void main() {
       now = now.add(const Duration(minutes: 23));
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      expect(find.text('23 / 60 min'), findsOneWidget);
+      expect(find.text('23:00'), findsOneWidget);
       await _tapFocus(tester, 'Read');
       await tester.pumpAndSettle();
       await tester.pumpWidget(const SizedBox.shrink());
       now = now.add(const Duration(hours: 1));
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      expect(find.text('23 / 60 min'), findsOneWidget);
-      expect(find.text('Start'), findsOneWidget);
+      expect(find.text('23:00'), findsOneWidget);
+      expect(find.text('Start stopwatch'), findsOneWidget);
     },
   );
 
+  testWidgets('Unverifiable persisted timer pauses without inventing time', (
+    tester,
+  ) async {
+    final start = DateTime(2026, 10, 7, 12);
+    final task = Task(name: 'Read', accumulatedFocusMilliseconds: 5000)
+      ..startFocus(start);
+    await _seed(tester, start, [task]);
+    await tester.pumpWidget(
+      MainApp(now: () => start.add(const Duration(hours: 1))),
+    );
+    await tester.pumpAndSettle();
+    final saved = (await LocalStorage().load())!.todayPlan.tasks.single;
+    expect(saved.isCompleted, isFalse);
+    expect(saved.isFocusRunning, isFalse);
+    expect(saved.accumulatedFocusMilliseconds, 5000);
+  });
+
   testWidgets(
-    'A timer reaching its minimum while closed is completed and saved at launch',
+    'A failed stopwatch save retains the durable state and retry saves the pending transition',
     (tester) async {
-      final start = DateTime(2026, 10, 7, 12);
-      final task = Task(
-        name: 'Read',
-        type: TaskType.focus,
-        minimumFocusMinutes: 1,
-      );
-      task.startFocus(start);
-      await _seed(tester, start, [task]);
-      await tester.pumpWidget(
-        MainApp(now: () => start.add(const Duration(hours: 1))),
-      );
+      var now = DateTime(2026, 10, 7, 12);
+      await _seed(tester, now, [Task(name: 'Read')]);
+      final storage = _FailingStopwatchStorage();
+      await tester.pumpWidget(MainApp(now: () => now, storage: storage));
       await tester.pumpAndSettle();
-      expect(find.text('Complete'), findsOneWidget);
-      final saved = (await LocalStorage().load())!;
-      expect(saved.todayPlan.tasks.single.isCompleted, isTrue);
-      expect(saved.todayPlan.tasks.single.focusStartedAt, isNull);
-      expect(saved.todayPlan.tasks.single.accumulatedFocusMilliseconds, 60000);
+      storage.fail = true;
+      await _tapFocus(tester, 'Read');
+      await tester.pumpAndSettle();
+      expect(find.text('Could not save your changes.'), findsOneWidget);
+      expect(
+        (await LocalStorage().load())!.todayPlan.tasks.single.isFocusRunning,
+        isFalse,
+      );
+      now = now.add(const Duration(seconds: 10));
+      await _tapFocus(tester, 'Read');
+      await tester.pumpAndSettle();
+      expect(
+        (await LocalStorage().load())!.todayPlan.tasks.single.isFocusRunning,
+        isFalse,
+      );
+      storage.fail = false;
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+      expect(
+        (await LocalStorage().load())!.todayPlan.tasks.single.isFocusRunning,
+        isTrue,
+      );
+      await _tapFocus(tester, 'Read');
+      await tester.pumpAndSettle();
+      expect(
+        (await LocalStorage().load())!
+            .todayPlan
+            .tasks
+            .single
+            .accumulatedFocusMilliseconds,
+        10000,
+      );
     },
   );
 
@@ -389,9 +322,16 @@ void main() {
     final start = DateTime(2026, 10, 7, 12);
     final tasks = [
       Task(name: 'Read', type: TaskType.focus, minimumFocusMinutes: 60),
-      Task(name: 'Study', type: TaskType.focus, minimumFocusMinutes: 60),
+      Task(name: 'Study'),
     ];
     for (final task in tasks) {
+      task.bindStopwatchClock(
+        () => StopwatchStamp(
+          start.toUtc(),
+          start.millisecondsSinceEpoch,
+          'injected-test-clock',
+        ),
+      );
       task.startFocus(start);
     }
     await _seed(tester, start, tasks);
@@ -404,7 +344,7 @@ void main() {
       saved.todayPlan.tasks.where((task) => task.isFocusRunning),
       hasLength(1),
     );
-    expect(saved.todayPlan.tasks.last.accumulatedFocusMilliseconds, 10 * 60000);
+    expect(saved.todayPlan.tasks.last.accumulatedFocusMilliseconds, 0);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
   });
@@ -412,7 +352,7 @@ void main() {
 
 Finder _action(String name) => find.descendant(
   of: find.widgetWithText(DaylockTaskRow, name),
-  matching: find.byType(FilledButton),
+  matching: find.byType(TextButton),
 );
 
 Future<void> _tapFocus(WidgetTester tester, String name) async {
@@ -454,5 +394,14 @@ void _resume(WidgetTester tester) {
     AppLifecycleState.resumed,
   ]) {
     tester.binding.handleAppLifecycleStateChanged(state);
+  }
+}
+
+class _FailingStopwatchStorage extends LocalStorage {
+  bool fail = false;
+  @override
+  Future<void> save(DaylockState state) async {
+    if (fail) throw StateError('Simulated interrupted save');
+    await super.save(state);
   }
 }

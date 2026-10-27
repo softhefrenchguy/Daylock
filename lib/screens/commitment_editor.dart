@@ -26,16 +26,10 @@ class CommitmentEditor extends StatefulWidget {
 
 class _CommitmentEditorState extends State<CommitmentEditor> {
   final _name = TextEditingController();
-  final _minutes = TextEditingController();
-  final _target = TextEditingController();
-  TaskType _type = TaskType.goal;
   bool _submitted = false;
   late final AreaBook _areas;
   late String _areaId;
-  int? get _minimum => int.tryParse(_minutes.text.trim());
-  bool get _validDuration =>
-      _type == TaskType.goal || (_minimum != null && _minimum! > 0);
-  bool get _valid => _name.text.trim().isNotEmpty && _validDuration;
+  bool get _valid => _name.text.trim().isNotEmpty;
 
   @override
   void initState() {
@@ -45,30 +39,26 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
     _areaId = _areas.resolve(task?.areaId).id;
     if (task != null) {
       _name.text = task.name;
-      _minutes.text = task.minimumFocusMinutes?.toString() ?? '';
-      _target.text = task.focusTarget ?? '';
-      _type = task.type;
     }
   }
 
   @override
   void dispose() {
     _name.dispose();
-    _minutes.dispose();
-    _target.dispose();
     super.dispose();
   }
 
   void _submit() {
     if (!mounted || _submitted || !widget.canCreate() || !_valid) return;
     _submitted = true;
-    final task = Task(
-      name: _name.text.trim(),
-      areaId: _areaId,
-      type: _type,
-      minimumFocusMinutes: _type == TaskType.focus ? _minimum : null,
-      focusTarget: _type == TaskType.focus ? _target.text : null,
-    );
+    final old = widget.initialTask;
+    final task = old == null
+        ? Task(name: _name.text.trim(), areaId: _areaId)
+        : Task.fromJson({
+            ...old.toJson(),
+            'name': _name.text.trim(),
+            'areaId': _areaId,
+          });
     FocusScope.of(context).unfocus();
     Navigator.of(context).pop(task);
   }
@@ -126,52 +116,6 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
               ],
             ),
             const SizedBox(height: DaylockSpace.md),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                void select(TaskType type) => setState(() => _type = type);
-                if (constraints.maxWidth < 300 &&
-                    MediaQuery.textScalerOf(context).scale(15) > 22) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final type in TaskType.values)
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            bottom: DaylockSpace.sm,
-                          ),
-                          child: Semantics(
-                            selected: type == _type,
-                            inMutuallyExclusiveGroup: true,
-                            child: OutlinedButton(
-                              onPressed: () => select(type),
-                              style: OutlinedButton.styleFrom(
-                                backgroundColor: type == _type
-                                    ? Theme.of(context)
-                                          .colorScheme
-                                          .primaryContainer
-                                    : null,
-                              ),
-                              child: Text(
-                                type == TaskType.goal ? 'Goal' : 'Focus',
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                }
-                return SegmentedButton<TaskType>(
-                  expandedInsets: EdgeInsets.zero,
-                  segments: const [
-                    ButtonSegment(value: TaskType.goal, label: Text('Goal')),
-                    ButtonSegment(value: TaskType.focus, label: Text('Focus')),
-                  ],
-                  selected: {_type},
-                  onSelectionChanged: (selection) => select(selection.single),
-                );
-              },
-            ),
-            const SizedBox(height: DaylockSpace.md),
             TextField(
               key: const ValueKey('commitment-name'),
               controller: _name,
@@ -182,29 +126,6 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
               onChanged: (_) => setState(() {}),
               onSubmitted: (_) => _submit(),
             ),
-            if (_type == TaskType.focus) ...[
-              const SizedBox(height: DaylockSpace.md),
-              TextField(
-                key: const ValueKey('focus-minutes'),
-                controller: _minutes,
-                keyboardType: TextInputType.number,
-                decoration: _field(
-                  'Minimum minutes',
-                  error: _minutes.text.isNotEmpty && !_validDuration
-                      ? 'Enter a whole number greater than zero.'
-                      : null,
-                ),
-                onChanged: (_) => setState(() {}),
-                onSubmitted: (_) => _submit(),
-              ),
-              const SizedBox(height: DaylockSpace.md),
-              TextField(
-                key: const ValueKey('focus-target'),
-                controller: _target,
-                decoration: _field('Target (optional)'),
-                onSubmitted: (_) => _submit(),
-              ),
-            ],
             const SizedBox(height: DaylockSpace.md),
             AreaSelector(
               book: _areas,

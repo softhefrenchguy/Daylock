@@ -52,6 +52,7 @@ DaylockState fixture({bool archived = false}) => DaylockState(
         Task(
           name: 'Read chapter',
           type: TaskType.focus,
+          isCompleted: true,
           minimumFocusMinutes: 30,
           accumulatedFocusMilliseconds: 1800000,
           areaId: area.id,
@@ -139,7 +140,7 @@ void main() {
       await launch(tester, initial);
       await tap(tester, find.byKey(ValueKey('journey-area-${area.id}')));
       expect(find.text('1 completed commitment'), findsOneWidget);
-      expect(find.text('30 min recorded Focus'), findsOneWidget);
+      expect(find.text('30 min recorded time'), findsOneWidget);
       expect(find.byType(JourneyActivityChart), findsOneWidget);
       await tap(tester, find.byKey(const ValueKey('journey-alltime')));
       await tap(tester, find.byKey(const ValueKey('area-records')));

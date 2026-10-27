@@ -49,14 +49,6 @@ void main() {
     await tester.tap(find.text('Add commitment'));
     await tester.pumpAndSettle();
     await openCommitmentEditor(tester);
-    await tester.ensureVisible(find.text('Focus'));
-    await tester.tap(find.text('Focus'));
-    await tester.pump();
-    await enterPlanText(
-      tester,
-      find.byKey(const ValueKey('focus-minutes')),
-      '60',
-    );
     await enterPlanText(
       tester,
       find.byKey(const ValueKey('commitment-name')),
@@ -104,7 +96,7 @@ void main() {
     await _reopenApp(tester);
 
     expect(find.text('1 / 3 complete'), findsOneWidget);
-    expect(find.byType(CheckboxListTile), findsNWidgets(2));
+    expect(find.byType(CheckboxListTile), findsNWidgets(3));
     await _openPlan(tester);
     expect(find.text("Tomorrow's plan is committed."), findsOneWidget);
     expect(find.byType(DaylockPlanTaskRow), findsNWidgets(2));
@@ -121,7 +113,7 @@ void main() {
     );
     expect(restored.tomorrowPlan.tasks.map((task) => task.type), [
       TaskType.goal,
-      TaskType.focus,
+      TaskType.goal,
     ]);
     expect(tester.takeException(), isNull);
   });
@@ -173,6 +165,7 @@ void main() {
               Task(
                 name: 'Recovered task',
                 type: TaskType.focus,
+                isCompleted: true,
                 accumulatedFocusMilliseconds: Task.legacyFocusMinutes * 60000,
               ),
             ],

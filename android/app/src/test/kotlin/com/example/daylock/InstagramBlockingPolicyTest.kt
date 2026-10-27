@@ -43,13 +43,13 @@ class InstagramBlockingPolicyTest {
         assertEquals(InstagramRestriction.ALLOW, decide(snapshot.copy(eligibleCount = 3, completedCount = 3)))
         assertEquals(InstagramRestriction.BLOCK, decide(snapshot.copy(eligibleCount = 3, completedCount = 2)))
     }
-    @Test fun runningFocusNeedsRecoveryUntilFlutterSettlesElapsedTime() { assertEquals(InstagramRestriction.RECOVER, decide(snapshot.copy(runningFocus = true))) }
+    @Test fun runningStopwatchRemainsBlockedUntilManuallyCompleted() { assertEquals(InstagramRestriction.BLOCK, decide(snapshot.copy(runningFocus = true))) }
     @Test fun focusDeadlineBlocksBeforeMinimumAndAllowsAtMinimumWithoutFlutterUi() {
         val value = snapshot.copy(runningFocus = true, focusCompletesAtMs = clock.wallMs + 60_000)
         assertEquals(InstagramRestriction.BLOCK, decide(value))
         val due = clock.copy(wallMs = clock.wallMs + 60_000, elapsedMs = clock.elapsedMs + 60_000)
-        assertEquals(InstagramRestriction.ALLOW, decide(value, due))
-        repeat(10) { assertEquals(3, DetectionPolicy.evaluate(value, due).conditions!!.completedCount) }
+        assertEquals(InstagramRestriction.BLOCK, decide(value, due))
+        repeat(10) { assertEquals(2, DetectionPolicy.evaluate(value, due).conditions!!.completedCount) }
         assertEquals(2, value.completedCount)
     }
     @Test fun focusCompletionCannotOverrideOtherIncompleteCommitments() {
@@ -69,7 +69,7 @@ class InstagramBlockingPolicyTest {
     }
     @Test fun focusSchedulesAnExactVisibleScreenUpdateWithoutExpiry() {
         assertNull(DetectionPolicy.evaluate(snapshot, clock).nextChangeInMs)
-        assertEquals(500L, DetectionPolicy.evaluate(snapshot.copy(runningFocus = true,
+        assertNull(DetectionPolicy.evaluate(snapshot.copy(runningFocus = true,
             focusCompletesAtMs = clock.wallMs + 500), clock).nextChangeInMs)
     }
     @Test fun fullWindowRequiredAndPaneEventsAreNotForegroundChanges() {

@@ -78,7 +78,7 @@ void main() {
     final tomorrow = DailyPlan(date: tomorrowDate, tasks: []);
     expect(
       payload(today, tomorrow).values['focusCompletesAtMs'],
-      date.add(const Duration(minutes: 40)).millisecondsSinceEpoch,
+      isNull,
     );
     focus.changeOutcome(
       TaskOutcome.excused,
@@ -98,9 +98,9 @@ void main() {
     focus.startFocus(date.add(const Duration(minutes: 10)));
     expect(
       payload(today, tomorrow).values['focusCompletesAtMs'],
-      date.add(const Duration(minutes: 40)).millisecondsSinceEpoch,
+      isNull,
     );
-    focus.finishFocusIfDue(date.add(const Duration(minutes: 40)));
+    focus.changeOutcome(TaskOutcome.completed, now: date.add(const Duration(minutes: 40)));
     expect(payload(today, tomorrow).values['completedCount'], 1);
     expect(
       payload(today, tomorrow).values.containsKey('focusCompletesAtMs'),

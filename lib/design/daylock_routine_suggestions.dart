@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../models/routine.dart';
-import '../models/task.dart';
 import '../models/area.dart';
 import 'daylock_areas.dart';
 import '../services/routine_service.dart';
@@ -43,8 +42,6 @@ class DaylockRoutineSuggestions extends StatelessWidget {
                 suggestion.step.name,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
-              if (suggestion.step.type == TaskType.focus)
-                Text('Focus · ${suggestion.step.minimumFocusMinutes} min'),
               if (suggestion.step.focusTarget != null)
                 Text(suggestion.step.focusTarget!),
               if (areas != null)

@@ -275,16 +275,18 @@ void main() {
       );
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      await _tap(tester, find.text('Start'));
+      await _tap(tester, find.text('Start stopwatch'));
       expect(find.text('Freedom not yet earned'), findsOneWidget);
       now = now.add(const Duration(minutes: 2));
       _resume(tester);
       await tester.pumpAndSettle();
+      expect(find.text('Freedom not yet earned'), findsOneWidget);
+      await _tap(tester, find.text('Read'));
       expect(find.text('Freedom earned'), findsOneWidget);
       final task = (await _saved(tester)).todayPlan.tasks.single;
       expect(task.isCompleted, isTrue);
       expect(task.isFocusRunning, isFalse);
-      expect(task.accumulatedFocusMilliseconds, 60000);
+      expect(task.accumulatedFocusMilliseconds, 120000);
     },
   );
 
@@ -323,7 +325,7 @@ void main() {
       await tester.pumpAndSettle();
       await _tap(tester, find.text('ROUTINE SUGGESTIONS'));
       expect(find.text('Pull'), findsOneWidget);
-      expect(find.textContaining('35 min'), findsOneWidget);
+      expect(find.textContaining('35 min'), findsNothing);
       expect(find.text('Technique practice'), findsOneWidget);
       await _tap(tester, _key('routine-accept-training'));
       final next = await _saved(tester);
@@ -418,15 +420,7 @@ void main() {
       await tester.enterText(_key('commitment-name'), 'Visit library');
       await _tap(tester, _key('save-commitment'));
       await _tap(tester, _key('add-routine-step'));
-      await _tap(tester, find.text('Focus'));
       await tester.enterText(_key('commitment-name'), 'Read book');
-      await tester.enterText(_key('focus-minutes'), '0');
-      expect(
-        tester.widget<FilledButton>(_key('save-commitment')).onPressed,
-        isNull,
-      );
-      await tester.enterText(_key('focus-minutes'), '25');
-      await tester.enterText(_key('focus-target'), 'Chapter 7');
       await _tap(tester, _key('save-commitment'));
       await _tap(tester, find.byTooltip('Move step 2 up'));
       await _tap(tester, _key('save-routine'));
@@ -436,15 +430,11 @@ void main() {
         'Read book',
         'Visit library',
       ]);
-      expect(routine.steps.first.minimumFocusMinutes, 25);
-      expect(routine.steps.first.focusTarget, 'Chapter 7');
+      expect(routine.steps.first.minimumFocusMinutes, isNull);
+      expect(routine.steps.first.focusTarget, isNull);
       await _tap(tester, find.text('Edit'));
       await _tap(tester, find.byTooltip('Edit step 1'));
-      expect(
-        tester.widget<TextField>(_key('focus-minutes')).controller!.text,
-        '25',
-      );
-      await tester.enterText(_key('focus-minutes'), '40');
+      await tester.enterText(_key('commitment-name'), 'Read revised');
       await _tap(tester, _key('save-commitment'));
       await _tap(tester, _key('save-routine'));
       expect(
@@ -455,7 +445,7 @@ void main() {
             .steps
             .first
             .minimumFocusMinutes,
-        40,
+        isNull,
       );
       await _tap(tester, _key('delete-routine-${routine.id}'));
       await _tap(tester, find.text('Cancel'));

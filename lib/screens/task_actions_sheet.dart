@@ -18,10 +18,6 @@ class TaskActionsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final canComplete =
-        task.type == TaskType.goal ||
-        task.focusMillisecondsAt(currentTime) >=
-            task.minimumFocusMinutes! * 60000;
     void choose(TaskOutcome outcome) {
       if (context.mounted &&
           canChange() &&
@@ -40,10 +36,10 @@ class TaskActionsSheet extends StatelessWidget {
             Text(task.name, style: theme.textTheme.titleLarge),
             const SizedBox(height: 8),
             DaylockLabel(task.outcome.name.toUpperCase()),
-            if (task.type == TaskType.focus) ...[
+            if (task.focusMillisecondsAt(currentTime) > 0) ...[
               const SizedBox(height: 8),
               Text(
-                '${recordedFocusLabel(task.focusMillisecondsAt(currentTime))} / ${task.minimumFocusMinutes} min',
+                '${recordedFocusLabel(task.focusMillisecondsAt(currentTime))} recorded',
               ),
             ],
             if (task.excuseReason != null) ...[
@@ -58,11 +54,7 @@ class TaskActionsSheet extends StatelessWidget {
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.check_circle_outline),
               title: const Text('Mark completed'),
-              enabled: canComplete,
-              subtitle: canComplete
-                  ? null
-                  : const Text('Focus requires its minimum duration.'),
-              onTap: canComplete ? () => choose(TaskOutcome.completed) : null,
+              onTap: () => choose(TaskOutcome.completed),
             ),
             ListTile(
               key: const ValueKey('task-excuse'),

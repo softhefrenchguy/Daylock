@@ -27,34 +27,24 @@ void main() {
     expect(task.isCompleted, isFalse);
   });
 
-  test(
-    'Only duration completes Focus, and completion stops at the minimum',
-    () {
-      final task = Task(
-        name: 'Read',
-        type: TaskType.focus,
-        minimumFocusMinutes: 1,
-        focusTarget: 'Finish Chapter 7',
-      );
-      final start = DateTime.utc(2026, 10, 7, 12);
-      expect(() => task.isCompleted = true, throwsStateError);
-      task.startFocus(start);
-      expect(
-        task.finishFocusIfDue(start.add(const Duration(seconds: 59))),
-        isFalse,
-      );
-      expect(task.isCompleted, isFalse);
-      expect(
-        task.finishFocusIfDue(start.add(const Duration(hours: 2))),
-        isTrue,
-      );
-      expect(task.accumulatedFocusMilliseconds, 60000);
-      expect(task.isCompleted, isTrue);
-      expect(task.isFocusRunning, isFalse);
-      task.startFocus(start.add(const Duration(hours: 3)));
-      expect(task.isFocusRunning, isFalse);
-    },
-  );
+  test('Legacy minimum never completes or caps a stopwatch', () {
+    final task = Task(
+      name: 'Read',
+      type: TaskType.focus,
+      minimumFocusMinutes: 1,
+    );
+    final start = DateTime.utc(2026, 10, 7, 12);
+    task.startFocus(start);
+    final end = start.add(const Duration(hours: 2));
+    expect(task.finishFocusIfDue(end), isFalse);
+    expect(task.isCompleted, isFalse);
+    task.changeOutcome(TaskOutcome.completed, now: end);
+    expect(task.accumulatedFocusMilliseconds, 7200000);
+    expect(task.isCompleted, isTrue);
+    expect(task.isFocusRunning, isFalse);
+    task.startFocus(end);
+    expect(task.isFocusRunning, isFalse);
+  });
 
   test(
     'JSON preserves a running start timestamp, progress, minimum, and target',
@@ -91,27 +81,21 @@ void main() {
       });
       expect(task.minimumFocusMinutes, Task.legacyFocusMinutes);
       expect(task.isCompleted, completed);
-      expect(
-        task.accumulatedFocusMilliseconds,
-        completed ? Task.legacyFocusMinutes * 60000 : 0,
-      );
+      expect(task.accumulatedFocusMilliseconds, 0);
       expect(task.focusStartedAt, isNull);
     }
   });
 
-  test(
-    'New Focus data cannot use a saved manual completion flag to bypass time',
-    () {
-      final task = Task.fromJson({
-        'name': 'Focus',
-        'type': 'focus',
-        'isCompleted': true,
-        'minimumFocusMinutes': 1,
-        'accumulatedFocusMilliseconds': 0,
-      });
-      expect(task.isCompleted, isFalse);
-    },
-  );
+  test('Manual completion survives with zero tracked time', () {
+    final task = Task.fromJson({
+      'name': 'Focus',
+      'type': 'focus',
+      'isCompleted': true,
+      'minimumFocusMinutes': 1,
+      'accumulatedFocusMilliseconds': 0,
+    });
+    expect(task.isCompleted, isTrue);
+  });
 
   test('Invalid Focus durations are rejected by the model', () {
     for (final duration in [0, -1]) {
@@ -121,7 +105,7 @@ void main() {
           type: TaskType.focus,
           minimumFocusMinutes: duration,
         ),
-        throwsArgumentError,
+        throwsFormatException,
       );
     }
   });

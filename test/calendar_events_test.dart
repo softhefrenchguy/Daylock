@@ -377,7 +377,7 @@ void main() {
       await _navigate(tester, 'Today');
       expect(find.text('Read'), findsOneWidget);
       expect(find.text('0 / 1 complete'), findsOneWidget);
-      expect(find.byType(CheckboxListTile), findsNothing);
+      expect(find.byType(CheckboxListTile), findsOneWidget);
       final saved = (await tester.runAsync<DaylockState?>(
         () => LocalStorage().load(),
       ))!;

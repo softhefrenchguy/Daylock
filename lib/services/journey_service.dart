@@ -27,9 +27,8 @@ class JourneySummary {
     : records = List.unmodifiable(records);
   int get completedCount =>
       records.where((r) => r.task.outcome == TaskOutcome.completed).length;
-  int get focusMilliseconds => records
-      .where((r) => r.task.type == TaskType.focus)
-      .fold(0, (sum, r) => sum + r.task.accumulatedFocusMilliseconds);
+  int get focusMilliseconds =>
+      records.fold(0, (sum, r) => sum + r.task.accumulatedFocusMilliseconds);
 }
 
 class JourneyBucket {
@@ -50,7 +49,7 @@ class JourneyData {
     required DateTime now,
   }) : today = journeyDay(now),
        records = List.unmodifiable(
-         _records(areas, history, todayPlan, journeyDay(now)),
+         _records(areas, history, todayPlan, journeyDay(now), now),
        );
 
   static Iterable<JourneyRecord> _records(
@@ -58,6 +57,7 @@ class JourneyData {
     PlanHistory history,
     DailyPlan live,
     DateTime today,
+    DateTime now,
   ) sync* {
     final days = {
       for (final plan in history.plans)
@@ -66,7 +66,11 @@ class JourneyData {
     // Preserve an immutable historical snapshot after a backwards clock change.
     // The live plan is included only when this date has no historical snapshot.
     if (live.date == today && !days.containsKey(today)) {
-      days[today] = HistoricalDailyPlan.capture(live, settleFocus: false);
+      days[today] = HistoricalDailyPlan.capture(
+        live,
+        settleFocus: false,
+        recordedAt: now,
+      );
     }
     final dates = days.keys.toList()..sort((a, b) => b.compareTo(a));
     for (final date in dates) {

@@ -157,6 +157,7 @@ void main() {
         name: 'Read',
         type: TaskType.focus,
         areaId: null,
+        isCompleted: true,
         minimumFocusMinutes: 5,
         accumulatedFocusMilliseconds: 300000,
       );

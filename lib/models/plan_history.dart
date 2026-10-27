@@ -6,6 +6,8 @@ DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
 
 // Immutable execution snapshots: no timer or completion setters are exposed.
 class HistoricalTask {
+  final String id;
+  final Map<String, dynamic>? _source;
   final String name;
   final String? areaId;
   final TaskType type;
@@ -17,8 +19,10 @@ class HistoricalTask {
   final String? focusTarget;
   final int accumulatedFocusMilliseconds;
 
-  HistoricalTask._(Task task)
-    : name = task.name,
+  HistoricalTask._(Task task, {Map<String, dynamic>? source})
+    : id = task.id,
+      _source = source == null ? null : Map.unmodifiable(source),
+      name = task.name,
       areaId = task.areaId,
       type = task.type,
       outcome = task.outcome,
@@ -31,40 +35,56 @@ class HistoricalTask {
     Task task,
     DateTime dayEndsAt, {
     bool settleFocus = true,
+    DateTime? recordedAt,
   }) {
     final copy = Task.fromJson(task.toJson());
     if (settleFocus) {
-      copy.pauseFocus(dayEndsAt);
+      copy.accumulatedFocusMilliseconds = task.millisecondsAtBoundary(
+        dayEndsAt,
+      );
+      copy.focusStartedAt = null;
     } else {
+      if (recordedAt != null) {
+        copy.accumulatedFocusMilliseconds = task.focusMillisecondsAt(
+          recordedAt,
+        );
+      }
       // A missed committed draft was never Today. Do not infer timer activity.
       copy.focusStartedAt = null;
     }
     return HistoricalTask._(copy);
   }
 
-  Map<String, dynamic> toJson() => {
-    'name': name,
-    'type': type.name,
-    'isCompleted': isCompleted,
-    'outcome': outcome.name,
-    'excuseReason': excuseReason,
-    if (areaId != null) 'areaId': areaId,
-    if (type == TaskType.focus) ...{
-      'minimumFocusMinutes': minimumFocusMinutes,
-      'focusTarget': focusTarget,
-      'accumulatedFocusMilliseconds': accumulatedFocusMilliseconds,
-      'focusStartedAt': null,
-    },
-  };
+  Map<String, dynamic> toJson() => _source != null
+      ? Map.of(_source)
+      : {
+          'id': id,
+          'name': name,
+          'type': type.name,
+          'isCompleted': isCompleted,
+          'outcome': outcome.name,
+          'excuseReason': excuseReason,
+          if (areaId != null) 'areaId': areaId,
+          if (minimumFocusMinutes != null)
+            'minimumFocusMinutes': minimumFocusMinutes,
+          if (focusTarget != null) 'focusTarget': focusTarget,
+          'accumulatedFocusMilliseconds': accumulatedFocusMilliseconds,
+          'focusStartedAt': null,
+          'stopwatchVersion': 1,
+        };
 
-  factory HistoricalTask.fromJson(Map<String, dynamic> json) {
-    final task = Task.fromJson(json);
-    if (task.isFocusRunning || task.isCompleted != json['isCompleted']) {
+  factory HistoricalTask.fromJson(
+    Map<String, dynamic> json, {
+    String? fallbackId,
+  }) {
+    final task = Task.fromJson(json, fallbackId: fallbackId);
+    if (json['focusStartedAt'] != null ||
+        task.isCompleted != json['isCompleted']) {
       throw const FormatException(
         'Historical tasks must have settled timers and completion',
       );
     }
-    return HistoricalTask._(task);
+    return HistoricalTask._(task, source: json);
   }
 }
 
@@ -82,6 +102,7 @@ class HistoricalDailyPlan {
   factory HistoricalDailyPlan.capture(
     DailyPlan plan, {
     bool settleFocus = true,
+    DateTime? recordedAt,
   }) {
     // Construct the following local midnight, not date + an elapsed 24 hours.
     final end = DateTime(plan.date.year, plan.date.month, plan.date.day + 1);
@@ -89,7 +110,12 @@ class HistoricalDailyPlan {
       date: plan.date,
       isCommitted: plan.isCommitted,
       tasks: plan.tasks.map(
-        (task) => HistoricalTask.capture(task, end, settleFocus: settleFocus),
+        (task) => HistoricalTask.capture(
+          task,
+          end,
+          settleFocus: settleFocus,
+          recordedAt: recordedAt,
+        ),
       ),
     );
   }
@@ -109,9 +135,13 @@ class HistoricalDailyPlan {
     return HistoricalDailyPlan._(
       date: date,
       isCommitted: json['isCommitted'] as bool,
-      tasks: (json['tasks'] as List).map(
-        (task) => HistoricalTask.fromJson(task as Map<String, dynamic>),
-      ),
+      tasks: [
+        for (final entry in (json['tasks'] as List).indexed)
+          HistoricalTask.fromJson(
+            entry.$2 as Map<String, dynamic>,
+            fallbackId: 'legacy-${json['date']}-${entry.$1}',
+          ),
+      ],
     );
   }
 }
@@ -132,9 +162,10 @@ class DailyCompletionSummary {
       progress = CommitmentProgress.fromOutcomes(
         plan.tasks.map((task) => task.outcome),
       ),
-      accumulatedFocusMilliseconds = plan.tasks
-          .where((task) => task.type == TaskType.focus)
-          .fold(0, (total, task) => total + task.accumulatedFocusMilliseconds);
+      accumulatedFocusMilliseconds = plan.tasks.fold(
+        0,
+        (total, task) => total + task.accumulatedFocusMilliseconds,
+      );
 
   int get eligibleCount => progress.eligibleCount;
   int get excusedCount => progress.excusedCount;

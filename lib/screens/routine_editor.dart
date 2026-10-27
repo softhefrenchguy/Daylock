@@ -113,11 +113,6 @@ class _RoutineEditorState extends State<RoutineEditor> {
                   '${index + 1}. ${_steps[index].name}',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                Text(
-                  _steps[index].type == TaskType.goal
-                      ? 'Goal'
-                      : 'Focus · ${_steps[index].minimumFocusMinutes} min',
-                ),
                 if (_steps[index].focusTarget != null)
                   Text(_steps[index].focusTarget!),
                 if (widget.areas != null)
@@ -155,7 +150,7 @@ class _RoutineEditorState extends State<RoutineEditor> {
             key: const ValueKey('add-routine-step'),
             onPressed: () => _addStep(),
             icon: const Icon(Icons.add),
-            label: const Text('Add Goal or Focus step'),
+            label: const Text('Add commitment step'),
           ),
           const SizedBox(height: 16),
           FilledButton(

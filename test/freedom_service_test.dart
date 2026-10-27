@@ -149,7 +149,7 @@ void main() {
     );
   }
 
-  test('Focus requires earned minimum; excuse keeps elapsed time but is ineligible', () {
+  test('Manual completion earns Freedom independently of elapsed time; excuse remains ineligible', () {
     final focus = Task(
       name: 'Read',
       type: TaskType.focus,
@@ -157,6 +157,8 @@ void main() {
     );
     expect(evaluate(tasks: [focus]).earned, isFalse);
     focus.accumulatedFocusMilliseconds = 30 * 60000;
+    expect(evaluate(tasks: [focus]).earned, isFalse);
+    focus.isCompleted = true;
     expect(evaluate(tasks: [focus]).earned, isTrue);
     focus.changeOutcome(
       TaskOutcome.excused,

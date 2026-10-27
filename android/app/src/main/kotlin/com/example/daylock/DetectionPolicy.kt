@@ -88,13 +88,11 @@ object DetectionPolicy {
                 false, false), now)
             return reconciled.copy(reason = "rollover_reconciled")
         }
-        // The visible conditions also change when a timestamp-based Focus finishes.
-        val nextChangeInMs = snapshot.focusCompletesAtMs?.minus(now.wallMs)?.takeIf { it > 0 }
-        val focusDue = snapshot.runningFocus && snapshot.focusCompletesAtMs != null && now.wallMs >= snapshot.focusCompletesAtMs
-        val completedCount = snapshot.completedCount + if (focusDue) 1 else 0
+        // Legacy deadlines remain decodable, but time never completes a commitment.
+        val nextChangeInMs: Long? = null
+        val completedCount = snapshot.completedCount
         val conditions = NativeFreedomConditions(now.minuteOfDay >= snapshot.hour * 60 + snapshot.minute,
             snapshot.hour, snapshot.minute, completedCount, snapshot.eligibleCount, snapshot.tomorrowCommitted)
-        if (snapshot.runningFocus && snapshot.focusCompletesAtMs == null) return NativeFreedomResult("unknown", "focus_needs_refresh")
         if (snapshot.eligibleCount == 0) return NativeFreedomResult("notEarned", "no_eligible_commitments", conditions, nextChangeInMs, now.date)
         val ready = now.minuteOfDay >= snapshot.hour * 60 + snapshot.minute &&
             completedCount == snapshot.eligibleCount && snapshot.tomorrowCommitted

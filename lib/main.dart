@@ -30,6 +30,8 @@ import 'models/highlight.dart';
 import 'services/journey_service.dart';
 import 'screens/journey_screen.dart';
 import 'screens/past_chapters_screen.dart';
+import 'services/stopwatch_clock.dart';
+import 'services/commitment_stopwatches.dart';
 import 'screens/area_journey_screen.dart';
 import 'screens/highlight_editor.dart';
 import 'design/daylock_journey.dart';
@@ -58,6 +60,7 @@ class MainApp extends StatefulWidget {
   final AppearanceStorage? appearanceStorage;
   final InstagramDetectionBridge? detectionBridge;
   final NotificationService? notificationService;
+  final StopwatchClock? stopwatchClock;
 
   const MainApp({
     super.key,
@@ -67,6 +70,7 @@ class MainApp extends StatefulWidget {
     this.appearanceStorage,
     this.detectionBridge,
     this.notificationService,
+    this.stopwatchClock,
   });
 
   @override
@@ -76,6 +80,9 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   late final LocalStorage _storage;
   late final DateTime Function() _now;
+  late final StopwatchClock _stopwatchClock;
+  late final CommitmentStopwatches _stopwatches;
+  Future<void> _stopwatchOperations = Future.value();
   final _messengerKey = GlobalKey<ScaffoldMessengerState>();
   final _navigatorKey = GlobalKey<NavigatorState>();
   final _appearance = ValueNotifier(const AppearancePreferences());
@@ -113,6 +120,10 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     _now = widget.now ?? DateTime.now;
+    _stopwatchClock =
+        widget.stopwatchClock ??
+        (widget.now == null ? StopwatchClock() : InjectedStopwatchClock(_now));
+    _stopwatches = CommitmentStopwatches(_stopwatchClock);
     _notifications = widget.notificationService ?? defaultNotificationService();
     _notifications.onTap = _notificationTapped;
     unawaited(_notifications.start());
@@ -169,11 +180,12 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     final wasForeground = _foreground;
     _foreground = state == AppLifecycleState.resumed;
     if (_foreground) {
-      _refreshClock();
+      unawaited(_synchronizeStopwatches());
       _publishNativeFreedom(force: true);
       unawaited(_detectionBridge.refresh());
       unawaited(_notifications.refresh());
     } else {
+      if (wasForeground) unawaited(_synchronizeStopwatches(checkpoint: true));
       if (wasForeground) _publishNativeFreedom(force: true);
       _clockRefreshTimer?.cancel();
       _clockRefreshTimer = null;
@@ -181,23 +193,14 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   }
 
   bool _reconcileFocus(DaylockState state, DateTime now) {
-    var changed = false;
-    var hasRunningFocus = false;
-    for (final task in state.todayPlan.tasks) {
-      changed = task.finishFocusIfDue(now) || changed;
-      if (task.isFocusRunning) {
-        if (hasRunningFocus) {
-          changed = task.pauseFocus(now) || changed;
-        } else {
-          hasRunningFocus = true;
-        }
-      }
-    }
-    // Tomorrow is planning only; its commitments cannot run a timer yet.
-    for (final task in state.tomorrowPlan.tasks) {
-      changed = task.pauseFocus(now) || changed;
-    }
-    return changed;
+    return _stopwatches.reconcile(state);
+  }
+
+  Future<void> _synchronizeStopwatches({bool checkpoint = false}) async {
+    await _stopwatchClock.synchronize();
+    if (!mounted || _isLoading || _loadFailed) return;
+    _refreshClock();
+    if (checkpoint && _stopwatches.checkpoint(_snapshot())) await _saveState();
   }
 
   void _configureClockRefresh() {
@@ -219,6 +222,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     if (_isLoading || _loadFailed) return;
     _checkRollover();
     final changed = _reconcileFocus(_snapshot(), _now());
+    if (todayPlan.tasks.any((t) => t.isFocusRunning)) _cachedJourney = null;
     setState(() {});
     _journeyChanges.value++;
     if (changed) unawaited(_saveState());
@@ -253,28 +257,40 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     );
   }
 
-  void _toggleFocus(Task task, DailyPlan sourcePlan) {
-    _refreshClock();
-    if (!identical(sourcePlan, todayPlan) ||
-        !todayPlan.tasks.contains(task) ||
-        task.type != TaskType.focus ||
-        task.isCompleted ||
-        task.isExcused) {
-      return;
-    }
-    final now = _now();
-    setState(() {
-      if (task.isFocusRunning) {
-        task.pauseFocus(now);
-      } else {
-        for (final other in todayPlan.tasks) {
-          other.pauseFocus(now);
+  void _toggleFocus(Task task, DailyPlan sourcePlan) =>
+      _queueStopwatch(() async {
+        _refreshClock();
+        if (!identical(sourcePlan, todayPlan) ||
+            !todayPlan.tasks.contains(task) ||
+            task.isCompleted ||
+            task.isExcused) {
+          return;
         }
-        task.startFocus(now);
+        setState(() => _stopwatches.toggle(_snapshot(), task));
+        await _saveState();
+        _configureClockRefresh();
+      });
+
+  void _queueStopwatch(Future<void> Function() operation) {
+    _stopwatchOperations = _stopwatchOperations.then((_) async {
+      await _stopwatchClock.synchronize();
+      if (!mounted || _isLoading || _loadFailed) return;
+      if (_nativeSaveFailed) {
+        _messengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Save your pending changes before changing a stopwatch.',
+            ),
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: () => unawaited(_saveState()),
+            ),
+          ),
+        );
+        return;
       }
+      await operation();
     });
-    unawaited(_saveState());
-    _configureClockRefresh();
   }
 
   void _checkRollover() {
@@ -297,24 +313,29 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     DailyPlan sourcePlan,
     TaskOutcome outcome,
     String? reason,
-  ) {
+  ) => _queueStopwatch(() async {
     _refreshClock();
     if (!identical(sourcePlan, todayPlan) || !todayPlan.tasks.contains(task)) {
       return;
     }
     setState(() => task.changeOutcome(outcome, now: _now(), reason: reason));
-    unawaited(_saveState());
+    await _saveState();
     _configureClockRefresh();
-  }
+  });
 
   Future<void> _loadState() async {
     try {
       await _appearanceReady;
       final saved = await _storage.load();
       final previous = saved ?? _snapshot();
+      await _stopwatchClock.synchronize();
+      final recovered = _stopwatches.reconcile(previous, recovering: true);
       final current = previous.rollOver(_now());
       final focusChanged = _reconcileFocus(current, _now());
-      if (saved == null || !identical(previous, current) || focusChanged) {
+      if (saved == null ||
+          !identical(previous, current) ||
+          focusChanged ||
+          recovered) {
         await _storage.save(current);
       }
       if (!mounted) return;

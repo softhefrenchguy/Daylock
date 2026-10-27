@@ -173,64 +173,49 @@ void main() {
     },
   );
 
-  testWidgets(
-    'Focus shows elapsed seconds, target and a large accessible control without a checkbox',
-    (tester) async {
-      final focus = Task(
-        name: 'Read',
-        type: TaskType.focus,
-        minimumFocusMinutes: 60,
-        focusTarget: 'Finish Chapter 7',
-        accumulatedFocusMilliseconds: 23 * 60000 + 12000,
-      );
-      final semantics = tester.ensureSemantics();
-      await tester.pumpWidget(_screen(tasks: [focus]));
-      await tester.pumpAndSettle();
-      expect(find.text('23:12'), findsOneWidget);
-      expect(find.text('23 / 60 min'), findsOneWidget);
-      expect(find.text('Finish Chapter 7'), findsOneWidget);
-      expect(find.byType(Checkbox), findsNothing);
-      final control = find.widgetWithText(FilledButton, 'Start');
-      await tester.ensureVisible(control);
-      expect(tester.getSize(control).height, greaterThanOrEqualTo(48));
-      expect(tester.getSize(control).width, greaterThan(200));
-      expect(find.bySemanticsLabel(RegExp('Start focus: Read')), findsWidgets);
-      await _tap(tester, control);
-      expect(find.text('Pause'), findsOneWidget);
-      expect(find.text('FOCUS / RUNNING'), findsOneWidget);
-      expect(focus.isCompleted, isFalse);
-      await _tap(tester, find.widgetWithText(FilledButton, 'Pause'));
-      expect(focus.isFocusRunning, isFalse);
-      semantics.dispose();
-    },
-  );
+  testWidgets('Commitments expose a stopwatch and independent checkbox', (
+    tester,
+  ) async {
+    final task = Task(
+      name: 'Read',
+      type: TaskType.focus,
+      focusTarget: 'Finish Chapter 7',
+      accumulatedFocusMilliseconds: 1392000,
+    );
+    await tester.pumpWidget(_screen(tasks: [task]));
+    await tester.pumpAndSettle();
+    expect(find.text('23:12'), findsOneWidget);
+    expect(find.text('Finish Chapter 7'), findsOneWidget);
+    expect(find.byType(Checkbox), findsOneWidget);
+    final control = find.byKey(ValueKey('stopwatch-toggle-${task.id}'));
+    await _tap(tester, control);
+    expect(task.isFocusRunning, isTrue);
+    expect(task.isCompleted, isFalse);
+    await _tap(tester, control);
+    expect(task.isFocusRunning, isFalse);
+    await _tap(tester, find.text('Read'));
+    expect(task.isCompleted, isTrue);
+    expect(find.byKey(ValueKey('stopwatch-toggle-${task.id}')), findsNothing);
+    expect(find.text('23:12'), findsOneWidget);
+  });
 
-  testWidgets(
-    'Completed Focus is disabled and reduced motion skips progress/completion animations',
-    (tester) async {
-      final focus = Task(
-        name: 'Read',
-        type: TaskType.focus,
-        minimumFocusMinutes: 1,
-        accumulatedFocusMilliseconds: 60000,
-      );
-      await tester.pumpWidget(_screen(tasks: [focus], reducedMotion: true));
-      await tester.pump();
-      final control = find.widgetWithText(FilledButton, 'Complete');
-      expect(tester.widget<FilledButton>(control).onPressed, isNull);
-      expect(find.text('Day complete'), findsOneWidget);
-      for (final animation in tester.widgetList<TweenAnimationBuilder<double>>(
-        find.byType(TweenAnimationBuilder<double>),
-      )) {
-        expect(animation.duration, Duration.zero);
-      }
-      for (final indicator in tester.widgetList<LinearProgressIndicator>(
-        find.byType(LinearProgressIndicator),
-      )) {
-        expect(indicator.value, 1);
-      }
-    },
-  );
+  testWidgets('Manual completion respects reduced motion', (tester) async {
+    final task = Task(
+      name: 'Read',
+      type: TaskType.focus,
+      isCompleted: true,
+      accumulatedFocusMilliseconds: 60000,
+    );
+    await tester.pumpWidget(_screen(tasks: [task], reducedMotion: true));
+    await tester.pump();
+    expect(find.byKey(ValueKey('stopwatch-toggle-${task.id}')), findsNothing);
+    expect(find.text('Day complete'), findsOneWidget);
+    for (final animation in tester.widgetList<TweenAnimationBuilder<double>>(
+      find.byType(TweenAnimationBuilder<double>),
+    )) {
+      expect(animation.duration, Duration.zero);
+    }
+  });
 
   for (final brightness in Brightness.values) {
     for (final scale in [1.0, 1.6, 2.0]) {
@@ -259,8 +244,14 @@ void main() {
             _screen(tasks: tasks, brightness: brightness, scale: scale),
           );
           await tester.pumpAndSettle();
-          await _tap(tester, find.widgetWithText(FilledButton, 'Start'));
-          await _tap(tester, find.widgetWithText(FilledButton, 'Pause'));
+          await _tap(
+            tester,
+            find.byKey(ValueKey('stopwatch-toggle-${tasks[1].id}')),
+          );
+          await _tap(
+            tester,
+            find.byKey(ValueKey('stopwatch-toggle-${tasks[1].id}')),
+          );
           await _tap(tester, find.text('Another goal'));
           expect(tasks.last.isCompleted, isTrue);
           tasks[1].accumulatedFocusMilliseconds = 180 * 60000;
@@ -268,14 +259,11 @@ void main() {
             _screen(tasks: tasks, brightness: brightness, scale: scale),
           );
           await tester.pumpAndSettle();
-          final completedControl = find.widgetWithText(
-            FilledButton,
-            'Complete',
-          );
-          await tester.ensureVisible(completedControl);
+          await _tap(tester, find.text(tasks[1].name));
+          expect(tasks[1].isCompleted, isTrue);
           expect(
-            tester.widget<FilledButton>(completedControl).onPressed,
-            isNull,
+            find.byKey(ValueKey('stopwatch-toggle-${tasks[1].id}')),
+            findsNothing,
           );
           await tester.ensureVisible(
             find.byKey(const ValueKey('freedom-status')),
