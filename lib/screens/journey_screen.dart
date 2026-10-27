@@ -55,7 +55,7 @@ class JourneyScreen extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 720),
             child: ListView(
               key: const ValueKey('journey-content'),
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
               children: [
                 Row(
                   children: [
@@ -82,13 +82,13 @@ class JourneyScreen extends StatelessWidget {
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 JourneyProgressSummary(
                   key: const ValueKey('journey-effort-summary'),
                   summary: summary,
                   highlights: highlights.highlights.length,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 4),
                 Wrap(
                   alignment: WrapAlignment.spaceBetween,
                   crossAxisAlignment: WrapCrossAlignment.center,
@@ -108,12 +108,13 @@ class JourneyScreen extends StatelessWidget {
                 ),
                 JourneyAreaGrid(
                   key: const ValueKey('journey-area-grid'),
+                  compact: true,
                   areas: areas.active,
                   data: data,
                   highlights: highlights,
                   onAreaOpened: onAreaOpened,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 JourneyFeaturedHighlight(
                   highlights: highlights.newestFirst,
                   areas: areas,
@@ -122,7 +123,7 @@ class JourneyScreen extends StatelessWidget {
                   onOpened: onHighlightOpened,
                   onEdited: onHighlightEdited,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 JourneyHistoryLinks(
                   onDailyHistory: onDailyHistory,
                   onPastChapters: onPastChapters,

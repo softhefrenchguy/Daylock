@@ -31,7 +31,7 @@ class JourneyProgressSummary extends StatelessWidget {
       label: semantics,
       excludeSemantics: true,
       child: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -98,7 +98,7 @@ class JourneyProgressSummary extends StatelessWidget {
     ];
     return JourneySurface(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
+        padding: EdgeInsets.zero,
         child: LayoutBuilder(
           builder: (context, constraints) {
             final stacked = MediaQuery.textScalerOf(context).scale(14) > 20;
@@ -160,7 +160,7 @@ class JourneyHistoryLinks extends StatelessWidget {
           radius: 16,
           onTap: action,
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
               children: [
                 Icon(icon, size: 24, color: theme.colorScheme.primary),
@@ -213,7 +213,7 @@ class JourneyHistoryLinks extends StatelessWidget {
     );
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < 330 ||
+        if (constraints.maxWidth < 320 ||
             MediaQuery.textScalerOf(context).scale(14) > 20) {
           return Column(
             children: [daily, const SizedBox(height: 10), chapters],

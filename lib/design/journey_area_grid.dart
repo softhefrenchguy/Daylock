@@ -13,12 +13,14 @@ class JourneyAreaGrid extends StatelessWidget {
   final JourneyData data;
   final HighlightBook highlights;
   final ValueChanged<String> onAreaOpened;
+  final bool compact;
   const JourneyAreaGrid({
     super.key,
     required this.areas,
     required this.data,
     required this.highlights,
     required this.onAreaOpened,
+    this.compact = false,
   });
 
   @override
@@ -27,7 +29,7 @@ class JourneyAreaGrid extends StatelessWidget {
       final largeText = MediaQuery.textScalerOf(context).scale(16) > 24;
       final columns = largeText && constraints.maxWidth < 560 ? 1 : 2;
       final width = (constraints.maxWidth - 10 * (columns - 1)) / columns;
-      final minHeight = (width * .78).clamp(126.0, 170.0);
+      final minHeight = compact ? 100.0 : (width * .78).clamp(126.0, 170.0);
       final latest = <String, Highlight>{};
       for (final highlight in highlights.newestFirst) {
         if (highlight.areaId != null) {
@@ -60,6 +62,7 @@ class JourneyAreaGrid extends StatelessWidget {
                               latestHighlight: latest[areas[row + column].id],
                               minHeight: minHeight,
                               expandText: largeText,
+                              compact: compact,
                               onTap: () => onAreaOpened(areas[row + column].id),
                             ),
                     ),
@@ -81,6 +84,7 @@ class JourneyAreaTile extends StatelessWidget {
   final Highlight? latestHighlight;
   final double minHeight;
   final bool expandText;
+  final bool compact;
   final VoidCallback onTap;
   const JourneyAreaTile({
     super.key,
@@ -90,6 +94,7 @@ class JourneyAreaTile extends StatelessWidget {
     this.latestHighlight,
     required this.minHeight,
     required this.expandText,
+    this.compact = false,
     required this.onTap,
   });
 
@@ -128,7 +133,10 @@ class JourneyAreaTile extends StatelessWidget {
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: minHeight),
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: compact ? 6 : 12,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -159,7 +167,7 @@ class JourneyAreaTile extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: compact ? 4 : 8),
                   Text(
                     progress,
                     maxLines: expandText ? null : 2,
@@ -180,7 +188,10 @@ class JourneyAreaTile extends StatelessWidget {
                         ),
                       ),
                     ),
-                  if (chart.hasActivity) ...[const SizedBox(height: 6), chart],
+                  if (chart.hasActivity) ...[
+                    SizedBox(height: compact ? 4 : 6),
+                    chart,
+                  ],
                 ],
               ),
             ),

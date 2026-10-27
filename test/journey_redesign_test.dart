@@ -196,7 +196,7 @@ void main() {
       expect(tiles[2].top, tiles[3].top);
       expect(tiles[0].left, tiles[2].left);
       expect(tiles[1].left, greaterThan(tiles[0].right));
-      expect(tiles[0].width / tiles[0].height, inInclusiveRange(.7, 1.5));
+      expect(tiles[0].width / tiles[0].height, inInclusiveRange(.7, 1.8));
       final card = tester.getRect(key('featured-highlights'));
       expect(
         card.bottom,
