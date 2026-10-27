@@ -104,6 +104,7 @@ void main() {
       ]);
       await tester.pumpWidget(MainApp(now: () => _date));
       await tester.pumpAndSettle();
+      await _tap(tester, find.byKey(const ValueKey('today-expand')));
       await _actions(tester, 'Sell car');
       expect(
         (await _saved(tester)).todayPlan.tasks.last.outcome,
@@ -206,7 +207,9 @@ void main() {
       expect(find.text('67%'), findsOneWidget);
       expect(find.text('1 excused'), findsOneWidget);
       expect(find.text('Day complete'), findsNothing);
+      await _tap(tester, find.byKey(const ValueKey('freedom-indicator')));
       expect(find.text('2 / 3 eligible commitments complete'), findsOneWidget);
+      await _tap(tester, find.text('Close'));
     },
   );
 
@@ -226,10 +229,12 @@ void main() {
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
       expect(find.text('No eligible commitments'), findsOneWidget);
+      await _tap(tester, find.byKey(const ValueKey('freedom-indicator')));
       expect(
         find.textContaining('completion is required to earn Freedom'),
         findsOneWidget,
       );
+      await _tap(tester, find.text('Close'));
       expect(find.text('Day complete'), findsNothing);
       expect(find.text('100%'), findsNothing);
       expect(find.text('0%'), findsNothing);

@@ -6,12 +6,14 @@ class JourneySurface extends StatelessWidget {
   final Color? accent;
   final VoidCallback? onTap;
   final double radius;
+  final bool emphasized;
   const JourneySurface({
     super.key,
     required this.child,
     this.accent,
     this.onTap,
     this.radius = 20,
+    this.emphasized = false,
   });
 
   @override
@@ -36,7 +38,7 @@ class JourneySurface extends StatelessWidget {
           borderRadius: BorderRadius.circular(radius),
           side: BorderSide(
             color: Color.alphaBlend(
-              tint.withValues(alpha: .25),
+              tint.withValues(alpha: emphasized ? .65 : .25),
               scheme.outlineVariant,
             ),
           ),

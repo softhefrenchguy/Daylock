@@ -98,6 +98,8 @@ void main() {
           await tester.tap(button);
           expect(started, isTrue);
           expect(focus.isCompleted, isFalse);
+          await tester.tap(find.byKey(const ValueKey('freedom-indicator')));
+          await tester.pumpAndSettle();
           final status = tester.widget<AnimatedContainer>(
             find.byKey(const ValueKey('freedom-status')),
           );

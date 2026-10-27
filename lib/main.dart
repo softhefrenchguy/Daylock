@@ -937,6 +937,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       TodayScreen(
         key: _todayScreenKey,
         plan: planForToday,
+        areas: areas,
         freedomEligibility: const FreedomService().evaluate(
           now: _now(),
           settings: freedomSettings,
@@ -962,6 +963,32 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         areas: areas,
         onTaskAreaChanged: (task, id) =>
             _changeTaskArea(task, id, planForTomorrow),
+        onTaskEdited: (old, edited) {
+          _refreshClock();
+          if (!identical(planForTomorrow, tomorrowPlan) ||
+              tomorrowPlan.isCommitted) {
+            return;
+          }
+          final index = tomorrowPlan.tasks.indexOf(old);
+          if (index < 0 || edited.id != old.id) return;
+          setState(() {
+            edited.areaId = areas.resolve(old.areaId).id == edited.areaId
+                ? old.areaId
+                : areas.forNewCommitment(edited.areaId).id;
+            tomorrowPlan.tasks[index] = edited;
+          });
+          unawaited(_saveState());
+        },
+        onTaskRemoved: (task) {
+          _refreshClock();
+          if (!identical(planForTomorrow, tomorrowPlan) ||
+              tomorrowPlan.isCommitted ||
+              !tomorrowPlan.tasks.contains(task)) {
+            return;
+          }
+          setState(() => tomorrowPlan.tasks.remove(task));
+          unawaited(_saveState());
+        },
         routineSuggestions: const RoutineService().suggestions(
           routines,
           planForTomorrow.date,

@@ -7,6 +7,7 @@ import 'package:daylock/models/task.dart';
 import 'package:daylock/services/local_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:daylock/services/calendar_credentials.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -106,6 +107,9 @@ void main() {
           backup,
         );
         expect(find.text('Go to the gym'), findsOneWidget);
+        await tester.ensureVisible(find.byKey(const ValueKey('today-expand')));
+        await tester.tap(find.byKey(const ValueKey('today-expand')));
+        await tester.pumpAndSettle();
         expect(find.text('User-created commitment'), findsOneWidget);
       }
     },

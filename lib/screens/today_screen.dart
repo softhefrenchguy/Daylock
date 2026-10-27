@@ -6,6 +6,8 @@ import '../design/daylock_theme.dart';
 import '../design/daylock_widgets.dart';
 import '../models/daily_plan.dart';
 import '../models/task.dart';
+import '../models/area.dart';
+import '../design/journey_surface.dart';
 import 'task_actions_sheet.dart';
 import '../services/freedom_service.dart';
 import '../models/freedom_settings.dart';
@@ -13,6 +15,7 @@ import '../design/daylock_freedom_status.dart';
 
 class TodayScreen extends StatefulWidget {
   final DailyPlan plan;
+  final AreaBook? areas;
   final VoidCallback onTaskChanged;
   final ValueChanged<Task> onFocusToggled;
   final VoidCallback? onPlanRequested;
@@ -25,6 +28,7 @@ class TodayScreen extends StatefulWidget {
   const TodayScreen({
     super.key,
     required this.plan,
+    this.areas,
     required this.onTaskChanged,
     required this.onFocusToggled,
     required this.currentTime,
@@ -41,6 +45,22 @@ class TodayScreen extends StatefulWidget {
 class TodayScreenState extends State<TodayScreen> {
   final Set<ModalRoute<dynamic>> _ownedModals = {};
   bool _openingModal = false;
+  bool _showAll = false;
+  late final ValueNotifier<FreedomEligibility> _freedom;
+  FreedomEligibility get _currentFreedom =>
+      widget.freedomEligibility ??
+      const FreedomService().evaluate(
+        now: widget.currentTime,
+        settings: const FreedomSettings(),
+        todayPlan: widget.plan,
+      );
+
+  @override
+  void initState() {
+    super.initState();
+    _freedom = ValueNotifier(_currentFreedom);
+  }
+
   DailyPlan get plan => widget.plan;
   DateTime get currentTime => widget.currentTime;
   VoidCallback get onTaskChanged => widget.onTaskChanged;
@@ -74,13 +94,20 @@ class TodayScreenState extends State<TodayScreen> {
   @override
   void dispose() {
     _dismissModal();
+    _freedom.dispose();
     super.dispose();
   }
 
   @override
   void didUpdateWidget(covariant TodayScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!identical(oldWidget.plan, widget.plan)) _dismissModal();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _freedom.value = _currentFreedom;
+    });
+    if (!identical(oldWidget.plan, widget.plan)) {
+      _showAll = false;
+      _dismissModal();
+    }
   }
 
   Future<void> _showActions(Task task) async {
@@ -136,6 +163,40 @@ class TodayScreenState extends State<TodayScreen> {
     }
   }
 
+  Future<void> _showFreedom() async {
+    if (_openingModal) return;
+    _openingModal = true;
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          final route = ModalRoute.of(dialogContext);
+          if (route != null) _ownedModals.add(route);
+          return AlertDialog(
+            key: const ValueKey('freedom-dialog'),
+            contentPadding: const EdgeInsets.all(12),
+            content: SingleChildScrollView(
+              child: ValueListenableBuilder<FreedomEligibility>(
+                valueListenable: _freedom,
+                builder: (context, eligibility, _) =>
+                    DaylockFreedomStatus(eligibility: eligibility),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Close'),
+              ),
+            ],
+          );
+        },
+      );
+    } finally {
+      _ownedModals.removeWhere((route) => !route.isActive);
+      _openingModal = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -165,12 +226,25 @@ class TodayScreenState extends State<TodayScreen> {
       'DECEMBER',
     ];
     final summary = plan.progress;
-    final completedCount = summary.completedCount;
     final empty = plan.tasks.isEmpty;
-    final allCompleted = summary.isComplete;
     final noEligible = !empty && summary.isNeutral;
     final progress = summary.fraction ?? 0.0;
-
+    final eligibility = _currentFreedom;
+    final visible = <Task>[];
+    if (_showAll || plan.tasks.length <= 3) {
+      visible.addAll(plan.tasks);
+    } else {
+      final running = plan.tasks
+          .where((task) => task.isFocusRunning)
+          .firstOrNull;
+      visible.addAll(plan.tasks.take(3));
+      if (running != null && !visible.contains(running)) {
+        visible[2] = running;
+        visible.sort(
+          (a, b) => plan.tasks.indexOf(a).compareTo(plan.tasks.indexOf(b)),
+        );
+      }
+    }
     return SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -178,17 +252,13 @@ class TodayScreenState extends State<TodayScreen> {
               ? DaylockSpace.md
               : DaylockSpace.lg;
           return SingleChildScrollView(
+            key: const ValueKey('today-content'),
             child: Align(
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 640),
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    padding,
-                    DaylockSpace.lg,
-                    padding,
-                    DaylockSpace.xl,
-                  ),
+                  padding: EdgeInsets.fromLTRB(padding, 12, padding, 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -197,20 +267,38 @@ class TodayScreenState extends State<TodayScreen> {
                         style: theme.textTheme.labelLarge!.copyWith(
                           color: colors.primary,
                           fontSize: 13,
-                          letterSpacing: 1,
                         ),
                       ),
-                      const SizedBox(height: DaylockSpace.sm),
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Expanded(
                             child: Semantics(
                               header: true,
                               child: Text(
                                 'Today',
-                                style: theme.textTheme.displayLarge,
+                                style: theme.textTheme.headlineLarge!.copyWith(
+                                  fontSize: 40,
+                                ),
                               ),
+                            ),
+                          ),
+                          IconButton(
+                            key: const ValueKey('freedom-indicator'),
+                            tooltip: !eligibility.settings.enabled
+                                ? 'Freedom Control is off'
+                                : eligibility.earned
+                                ? 'Freedom earned'
+                                : 'Freedom not yet earned',
+                            onPressed: _showFreedom,
+                            icon: Icon(
+                              !eligibility.settings.enabled
+                                  ? Icons.lock_outline_rounded
+                                  : eligibility.earned
+                                  ? Icons.lock_open_rounded
+                                  : Icons.lock_rounded,
+                              color: eligibility.settings.enabled
+                                  ? colors.primary
+                                  : colors.onSurfaceVariant,
                             ),
                           ),
                           if (onSettingsRequested != null)
@@ -219,114 +307,133 @@ class TodayScreenState extends State<TodayScreen> {
                               tooltip: 'Settings',
                               onPressed: onSettingsRequested,
                               icon: const Icon(Icons.settings_outlined),
-                              style: IconButton.styleFrom(
-                                minimumSize: const Size(48, 48),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      JourneySurface(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      noEligible
+                                          ? 'No eligible commitments'
+                                          : '${summary.completedCount} / ${summary.eligibleCount} complete',
+                                      style: theme.textTheme.titleMedium,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    noEligible
+                                        ? '—'
+                                        : '${(progress * 100).round()}%',
+                                    style: theme.textTheme.titleMedium!
+                                        .copyWith(color: colors.primary),
+                                  ),
+                                ],
                               ),
-                            ),
-                        ],
+                              if (!noEligible) ...[
+                                const SizedBox(height: 10),
+                                DaylockProgress(
+                                  value: progress,
+                                  label: 'Commitments complete',
+                                ),
+                              ],
+                              if (summary.excusedCount > 0) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  '${summary.excusedCount} excused',
+                                  key: const ValueKey('today-excused-count'),
+                                  style: theme.textTheme.bodySmall,
+                                ),
+                              ],
+                              if (summary.isComplete) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Day complete',
+                                  style: theme.textTheme.labelLarge!.copyWith(
+                                    color: colors.primary,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: DaylockSpace.lg),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              noEligible
-                                  ? 'No eligible commitments'
-                                  : '$completedCount / ${summary.eligibleCount} complete',
-                              style: theme.textTheme.labelLarge,
-                            ),
-                          ),
-                          const SizedBox(width: DaylockSpace.sm),
-                          Text(
-                            noEligible ? '—' : '${(progress * 100).round()}%',
-                            style: theme.textTheme.labelLarge!.copyWith(
-                              color: colors.primary,
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 18),
+                      Text(
+                        'Your commitments',
+                        style: theme.textTheme.titleLarge,
                       ),
-                      const SizedBox(height: DaylockSpace.sm),
-                      if (!noEligible)
-                        DaylockProgress(
-                          value: progress,
-                          label: 'Commitments complete',
-                        ),
-                      if (summary.excusedCount > 0) ...[
-                        const SizedBox(height: DaylockSpace.sm),
-                        Text(
-                          '${summary.excusedCount} excused',
-                          key: const ValueKey('today-excused-count'),
-                          style: theme.textTheme.bodyMedium!.copyWith(
-                            color: colors.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                      if (allCompleted) ...[
-                        const SizedBox(height: DaylockSpace.sm),
-                        Text(
-                          'Day complete',
-                          style: theme.textTheme.labelLarge!.copyWith(
-                            color: colors.primary,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: DaylockSpace.xl),
-                      const DaylockLabel('YOUR COMMITMENTS'),
-                      const SizedBox(height: DaylockSpace.sm),
+                      const SizedBox(height: 10),
                       if (empty)
                         _EmptyToday(onPlanRequested: onPlanRequested)
                       else ...[
-                        const Divider(),
-                        for (final task in plan.tasks) ...[
-                          Semantics(
-                            customSemanticsActions: {
-                              const CustomSemanticsAction(
-                                label: 'Task actions',
-                              ): () =>
-                                  _showActions(task),
-                            },
-                            child: GestureDetector(
-                              onLongPress: () => _showActions(task),
-                              child: DaylockTaskRow(
-                                key: ObjectKey(task),
-                                task: task,
-                                currentTime: currentTime,
-                                onGoalChanged: () {
-                                  final outcome = task.isCompleted
-                                      ? TaskOutcome.incomplete
-                                      : TaskOutcome.completed;
-                                  if (widget.onOutcomeChanged != null) {
-                                    widget.onOutcomeChanged!(
-                                      task,
-                                      outcome,
-                                      null,
-                                    );
-                                  } else {
-                                    task.changeOutcome(
-                                      outcome,
-                                      now: currentTime,
-                                    );
-                                    onTaskChanged();
-                                  }
-                                },
-                                onFocusToggled: () => onFocusToggled(task),
-                                onDetailsRequested: () => _showActions(task),
+                        for (final task in visible)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Semantics(
+                              customSemanticsActions: {
+                                const CustomSemanticsAction(
+                                  label: 'Task actions',
+                                ): () =>
+                                    _showActions(task),
+                              },
+                              child: GestureDetector(
+                                onLongPress: () => _showActions(task),
+                                child: DaylockTaskRow(
+                                  key: ObjectKey(task),
+                                  task: task,
+                                  currentTime: currentTime,
+                                  area: widget.areas?.resolve(task.areaId),
+                                  onGoalChanged: () {
+                                    final outcome = task.isCompleted
+                                        ? TaskOutcome.incomplete
+                                        : TaskOutcome.completed;
+                                    if (widget.onOutcomeChanged != null) {
+                                      widget.onOutcomeChanged!(
+                                        task,
+                                        outcome,
+                                        null,
+                                      );
+                                    } else {
+                                      task.changeOutcome(
+                                        outcome,
+                                        now: currentTime,
+                                      );
+                                      onTaskChanged();
+                                    }
+                                  },
+                                  onFocusToggled: () => onFocusToggled(task),
+                                  onDetailsRequested: () => _showActions(task),
+                                ),
                               ),
                             ),
                           ),
-                          const Divider(),
-                        ],
-                      ],
-                      const SizedBox(height: DaylockSpace.xl),
-                      DaylockFreedomStatus(
-                        eligibility:
-                            widget.freedomEligibility ??
-                            const FreedomService().evaluate(
-                              now: currentTime,
-                              settings: const FreedomSettings(),
-                              todayPlan: plan,
+                        if (plan.tasks.length > 3)
+                          Center(
+                            child: TextButton.icon(
+                              key: const ValueKey('today-expand'),
+                              onPressed: () =>
+                                  setState(() => _showAll = !_showAll),
+                              icon: Icon(
+                                _showAll
+                                    ? Icons.expand_less
+                                    : Icons.expand_more,
+                              ),
+                              label: Text(
+                                _showAll
+                                    ? 'Show fewer commitments'
+                                    : 'Show all ${plan.tasks.length} commitments',
+                              ),
                             ),
-                      ),
+                          ),
+                      ],
                     ],
                   ),
                 ),

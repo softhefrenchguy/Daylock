@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../models/event.dart';
 import '../models/task.dart';
+import '../models/area.dart';
+import 'daylock_areas.dart';
 import 'daylock_theme.dart';
 
 // Descriptive type icons, never completion controls. No fixed row height.
 class DaylockPlanTaskRow extends StatelessWidget {
   final Task task;
-  const DaylockPlanTaskRow({super.key, required this.task});
+  final Area? area;
+  const DaylockPlanTaskRow({super.key, required this.task, this.area});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +26,9 @@ class DaylockPlanTaskRow extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(top: 2),
                 child: Icon(
-                  Icons.check_box_outline_blank_rounded,
+                  area == null
+                      ? Icons.task_alt_rounded
+                      : (areaIcons[area!.icon] ?? Icons.task_alt_rounded),
                   color: theme.colorScheme.primary,
                   size: DaylockSpace.icon,
                 ),

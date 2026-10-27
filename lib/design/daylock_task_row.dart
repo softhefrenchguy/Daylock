@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../models/task.dart';
-import 'daylock_theme.dart';
-import 'daylock_palette.dart';
+import '../models/area.dart';
+import 'daylock_areas.dart';
+import 'journey_surface.dart';
 
 String stopwatchLabel(int milliseconds) {
   final seconds = milliseconds ~/ 1000;
@@ -16,12 +17,14 @@ String stopwatchLabel(int milliseconds) {
 
 class DaylockTaskRow extends StatelessWidget {
   final Task task;
+  final Area? area;
   final DateTime currentTime;
   final VoidCallback onGoalChanged, onFocusToggled;
   final VoidCallback? onDetailsRequested;
   const DaylockTaskRow({
     super.key,
     required this.task,
+    this.area,
     required this.currentTime,
     required this.onGoalChanged,
     required this.onFocusToggled,
@@ -33,16 +36,12 @@ class DaylockTaskRow extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final elapsed = task.focusMillisecondsAt(currentTime);
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: DaylockSpace.sm),
-        decoration: BoxDecoration(
-          color: task.isFocusRunning
-              ? DaylockColors.of(context).focusActiveSurface
-              : null,
-          borderRadius: BorderRadius.circular(DaylockSpace.radius),
-        ),
+    return JourneySurface(
+      accent: task.isFocusRunning ? colors.primary : null,
+      emphasized: task.isFocusRunning,
+      radius: 16,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -54,7 +53,7 @@ class DaylockTaskRow extends StatelessWidget {
                   Icons.shield_outlined,
                   color: colors.onSurfaceVariant,
                 ),
-                title: Text(task.name, style: theme.textTheme.titleLarge),
+                title: Text(task.name, style: theme.textTheme.titleMedium),
                 subtitle: const Text('Excused'),
                 trailing: const Icon(
                   Icons.more_horiz_rounded,
@@ -62,38 +61,53 @@ class DaylockTaskRow extends StatelessWidget {
                 ),
               )
             else
-              Material(
-                color: Colors.transparent,
-                child: CheckboxListTile(
-                  key: ValueKey('complete-${task.id}'),
-                  contentPadding: EdgeInsets.zero,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  title: Text(
-                    task.name,
-                    style: theme.textTheme.titleLarge!.copyWith(
-                      color: task.isCompleted
-                          ? colors.onSurfaceVariant
-                          : colors.onSurface,
-                      decoration: task.isCompleted
-                          ? TextDecoration.lineThrough
-                          : null,
-                    ),
+              CheckboxListTile(
+                key: ValueKey('complete-${task.id}'),
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: Text(
+                  task.name,
+                  style: theme.textTheme.titleMedium!.copyWith(
+                    color: task.isCompleted
+                        ? colors.onSurfaceVariant
+                        : colors.onSurface,
+                    decoration: task.isCompleted
+                        ? TextDecoration.lineThrough
+                        : null,
                   ),
-                  value: task.isCompleted,
-                  onChanged: (_) => onGoalChanged(),
                 ),
+                value: task.isCompleted,
+                onChanged: (_) => onGoalChanged(),
+                secondary: onDetailsRequested == null
+                    ? null
+                    : IconButton(
+                        tooltip: 'Actions for ${task.name}',
+                        icon: const Icon(Icons.more_horiz_rounded),
+                        onPressed: onDetailsRequested,
+                      ),
               ),
-            if (task.focusTarget != null)
+            if (area != null || task.focusTarget != null)
               Padding(
-                padding: const EdgeInsets.only(left: 16, right: 16),
-                child: Text(
-                  task.focusTarget!,
-                  style: theme.textTheme.bodySmall,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (area != null)
+                      AreaBadge(
+                        area: area!,
+                        iconSize: 16,
+                        textStyle: theme.textTheme.bodySmall,
+                      ),
+                    if (task.focusTarget != null)
+                      Text(task.focusTarget!, style: theme.textTheme.bodySmall),
+                  ],
                 ),
               ),
             if (task.outcome == TaskOutcome.incomplete || elapsed > 0)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Wrap(
                   spacing: 12,
                   crossAxisAlignment: WrapCrossAlignment.center,
@@ -131,6 +145,13 @@ class DaylockTaskRow extends StatelessWidget {
                       )
                     else
                       Text('Recorded time', style: theme.textTheme.bodySmall),
+                    if (task.isFocusRunning)
+                      Text(
+                        'Tracking',
+                        style: theme.textTheme.labelMedium!.copyWith(
+                          color: colors.primary,
+                        ),
+                      ),
                   ],
                 ),
               ),

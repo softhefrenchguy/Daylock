@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../design/daylock_palette.dart';
+import '../design/journey_surface.dart';
 import '../design/daylock_plan_rows.dart';
 import '../design/daylock_theme.dart';
 import '../design/daylock_widgets.dart';
@@ -19,6 +20,8 @@ class PlanScreen extends StatefulWidget {
   final DailyPlan plan;
   final AreaBook? areas;
   final void Function(Task, String)? onTaskAreaChanged;
+  final void Function(Task, Task)? onTaskEdited;
+  final ValueChanged<Task>? onTaskRemoved;
   final List<Event> events;
   final CalendarCache? calendarCache;
   final ValueChanged<Task> onTaskCreated;
@@ -30,6 +33,8 @@ class PlanScreen extends StatefulWidget {
     required this.plan,
     this.areas,
     this.onTaskAreaChanged,
+    this.onTaskEdited,
+    this.onTaskRemoved,
     this.events = const [],
     this.calendarCache,
     required this.onTaskCreated,
@@ -101,6 +106,72 @@ class _PlanScreenState extends State<PlanScreen> {
     _openingModal = false;
     if (task == null || !_editable(plan)) return;
     widget.onTaskCreated(task);
+  }
+
+  Future<void> _editCommitment(Task task) async {
+    final plan = widget.plan;
+    if (!_editable(plan) || _openingModal || !plan.tasks.contains(task)) return;
+    _openingModal = true;
+    final edited = await showModalBottomSheet<Task>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      constraints: const BoxConstraints(maxWidth: 640),
+      builder: (sheetContext) {
+        _activeModal = ModalRoute.of(sheetContext);
+        return Theme(
+          data: Theme.of(Navigator.of(sheetContext).context),
+          child: CommitmentEditor(
+            initialTask: task,
+            areas: widget.areas,
+            heading: 'Edit commitment',
+            submitLabel: 'Save changes',
+            canCreate: () => _editable(plan) && plan.tasks.contains(task),
+          ),
+        );
+      },
+    );
+    _activeModal = null;
+    _openingModal = false;
+    if (edited != null && _editable(plan) && plan.tasks.contains(task)) {
+      widget.onTaskEdited?.call(task, edited);
+    }
+  }
+
+  Future<void> _removeCommitment(Task task) async {
+    final plan = widget.plan;
+    if (!_editable(plan) || _openingModal || !plan.tasks.contains(task)) return;
+    _openingModal = true;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        _activeModal = ModalRoute.of(dialogContext);
+        return AlertDialog(
+          title: const Text('Remove commitment?'),
+          content: Text('Remove ${task.name} from tomorrow?s draft?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              key: const ValueKey('confirm-remove-commitment'),
+              onPressed: () {
+                if (_editable(plan) && plan.tasks.contains(task)) {
+                  Navigator.pop(dialogContext, true);
+                }
+              },
+              child: const Text('Remove'),
+            ),
+          ],
+        );
+      },
+    );
+    _activeModal = null;
+    _openingModal = false;
+    if (confirmed == true && _editable(plan) && plan.tasks.contains(task)) {
+      widget.onTaskRemoved?.call(task);
+    }
   }
 
   Future<void> _changeArea(Task task) async {
@@ -235,7 +306,7 @@ class _PlanScreenState extends State<PlanScreen> {
                           ),
                           sliver: SliverToBoxAdapter(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Semantics(
                                   header: true,
@@ -252,34 +323,61 @@ class _PlanScreenState extends State<PlanScreen> {
                                     color: colors.onSurfaceVariant,
                                   ),
                                 ),
-                                const SizedBox(height: DaylockSpace.lg),
+                                const SizedBox(height: DaylockSpace.xs),
+                                Text(
+                                  plan.isCommitted ? 'Committed' : 'Draft',
+                                  style: theme.textTheme.labelMedium!.copyWith(
+                                    color: colors.primary,
+                                  ),
+                                ),
+                                const SizedBox(height: DaylockSpace.md),
                                 if (!plan.isCommitted &&
                                     widget.routineSuggestions.isNotEmpty &&
                                     widget.onRoutineAction != null) ...[
-                                  DaylockRoutineSuggestions(
-                                    areas: widget.areas,
-                                    suggestions: widget.routineSuggestions,
-                                    onAction: (suggestion, action) {
-                                      if (_editable(plan)) {
-                                        widget.onRoutineAction!(
-                                          suggestion,
-                                          action,
-                                        );
-                                      }
-                                    },
+                                  JourneySurface(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                      ),
+                                      child: DaylockRoutineSuggestions(
+                                        areas: widget.areas,
+                                        suggestions: widget.routineSuggestions,
+                                        onAction: (suggestion, action) {
+                                          if (_editable(plan)) {
+                                            widget.onRoutineAction!(
+                                              suggestion,
+                                              action,
+                                            );
+                                          }
+                                        },
+                                      ),
+                                    ),
                                   ),
                                   const SizedBox(height: DaylockSpace.md),
                                 ],
-                                const DaylockLabel('SCHEDULE'),
-                                if (scheduled.isEmpty) ...[
-                                  const SizedBox(height: DaylockSpace.sm),
-                                  Text(
-                                    'No scheduled events for tomorrow.',
-                                    style: theme.textTheme.bodyMedium!.copyWith(
-                                      color: colors.onSurfaceVariant,
+                                JourneySurface(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(14),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const DaylockLabel('SCHEDULE'),
+                                        if (scheduled.isEmpty) ...[
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            'No scheduled events for tomorrow.',
+                                            style: theme.textTheme.bodyMedium!
+                                                .copyWith(
+                                                  color:
+                                                      colors.onSurfaceVariant,
+                                                ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                   ),
-                                ],
+                                ),
                               ],
                             ),
                           ),
@@ -288,11 +386,21 @@ class _PlanScreenState extends State<PlanScreen> {
                           padding: EdgeInsets.symmetric(horizontal: padding),
                           sliver: SliverList.builder(
                             itemCount: scheduled.length,
-                            itemBuilder: (context, index) =>
-                                DaylockPlanEventRow(
-                                  event: scheduled[index],
-                                  date: plan.date,
+                            itemBuilder: (context, index) => Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: JourneySurface(
+                                radius: 14,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  child: DaylockPlanEventRow(
+                                    event: scheduled[index],
+                                    date: plan.date,
+                                  ),
                                 ),
+                              ),
+                            ),
                           ),
                         ),
                         SliverPadding(
@@ -349,37 +457,108 @@ class _PlanScreenState extends State<PlanScreen> {
                           ),
                           sliver: SliverList.builder(
                             itemCount: plan.tasks.length,
-                            itemBuilder: (context, index) => Column(
-                              key: ValueKey('plan-task-$index'),
-                              children: [
-                                DaylockPlanTaskRow(task: plan.tasks[index]),
-                                if (widget.areas != null)
-                                  Align(
-                                    alignment: Alignment.centerLeft,
-                                    child:
-                                        !plan.isCommitted &&
-                                            widget.onTaskAreaChanged != null
-                                        ? TextButton(
-                                            key: ValueKey(
-                                              'edit-task-area-$index',
-                                            ),
-                                            onPressed: () =>
-                                                _changeArea(plan.tasks[index]),
-                                            child: AreaBadge(
-                                              area: widget.areas!.resolve(
-                                                plan.tasks[index].areaId,
+                            itemBuilder: (context, index) {
+                              final task = plan.tasks[index];
+                              return Padding(
+                                key: ValueKey('plan-task-$index'),
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: JourneySurface(
+                                  radius: 16,
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      12,
+                                      0,
+                                      8,
+                                      8,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: DaylockPlanTaskRow(
+                                                task: task,
+                                                area: widget.areas?.resolve(
+                                                  task.areaId,
+                                                ),
                                               ),
                                             ),
-                                          )
-                                        : AreaBadge(
-                                            area: widget.areas!.resolve(
-                                              plan.tasks[index].areaId,
-                                            ),
-                                          ),
+                                            if (!plan.isCommitted &&
+                                                (widget.onTaskEdited != null ||
+                                                    widget.onTaskRemoved !=
+                                                        null))
+                                              PopupMenuButton<String>(
+                                                key: ValueKey(
+                                                  'plan-task-actions-$index',
+                                                ),
+                                                tooltip:
+                                                    'Actions for ${task.name}',
+                                                onSelected: (action) {
+                                                  if (action == 'edit') {
+                                                    _editCommitment(task);
+                                                  }
+                                                  if (action == 'remove') {
+                                                    _removeCommitment(task);
+                                                  }
+                                                },
+                                                itemBuilder: (_) => [
+                                                  if (widget.onTaskEdited !=
+                                                      null)
+                                                    const PopupMenuItem(
+                                                      value: 'edit',
+                                                      child: Text(
+                                                        'Edit commitment',
+                                                      ),
+                                                    ),
+                                                  if (widget.onTaskRemoved !=
+                                                      null)
+                                                    const PopupMenuItem(
+                                                      value: 'remove',
+                                                      child: Text(
+                                                        'Remove commitment',
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                          ],
+                                        ),
+                                        if (widget.areas != null)
+                                          !plan.isCommitted &&
+                                                  widget.onTaskAreaChanged !=
+                                                      null
+                                              ? TextButton(
+                                                  key: ValueKey(
+                                                    'edit-task-area-$index',
+                                                  ),
+                                                  onPressed: () =>
+                                                      _changeArea(task),
+                                                  child: AreaBadge(
+                                                    area: widget.areas!.resolve(
+                                                      task.areaId,
+                                                    ),
+                                                  ),
+                                                )
+                                              : Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                      ),
+                                                  child: AreaBadge(
+                                                    area: widget.areas!.resolve(
+                                                      task.areaId,
+                                                    ),
+                                                  ),
+                                                ),
+                                      ],
+                                    ),
                                   ),
-                                const Divider(),
-                              ],
-                            ),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ],

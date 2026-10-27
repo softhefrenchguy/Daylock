@@ -119,7 +119,7 @@ void main() {
       await _seed(tester, state);
       await tester.pumpWidget(MainApp(now: () => _date));
       await tester.pumpAndSettle();
-      expect(find.text('Freedom Control is off'), findsOneWidget);
+      expect(find.byTooltip('Freedom Control is off'), findsOneWidget);
       await _tap(tester, find.byTooltip('Settings'));
       await _tap(tester, _key('freedom-enabled'));
       expect(
@@ -167,19 +167,21 @@ void main() {
       await _seed(tester, _state());
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      expect(find.text('Freedom not yet earned'), findsOneWidget);
+      expect(find.byTooltip('Freedom not yet earned'), findsOneWidget);
       now = _date;
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
-      expect(find.text('Freedom earned'), findsOneWidget);
+      expect(find.byTooltip('Freedom earned'), findsOneWidget);
+      await _tap(tester, _key('freedom-indicator'));
       expect(
         find.text('Instagram control is configured in Settings.'),
         findsOneWidget,
       );
+      await _tap(tester, find.text('Close'));
       now = DateTime(2026, 10, 13, 17);
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
-      expect(find.text('Freedom not yet earned'), findsOneWidget);
+      expect(find.byTooltip('Freedom not yet earned'), findsOneWidget);
     },
   );
 
@@ -192,11 +194,11 @@ void main() {
       await _seed(tester, _state());
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      expect(find.text('Freedom earned'), findsOneWidget);
+      expect(find.byTooltip('Freedom earned'), findsOneWidget);
       now = tz.TZDateTime.from(instant, tz.getLocation('Europe/London'));
       _resume(tester);
       await tester.pumpAndSettle();
-      expect(find.text('Freedom not yet earned'), findsOneWidget);
+      expect(find.byTooltip('Freedom not yet earned'), findsOneWidget);
       now = tz.TZDateTime.from(instant, tz.getLocation('Pacific/Auckland'));
       _resume(tester);
       await tester.pumpAndSettle();
@@ -204,7 +206,7 @@ void main() {
       expect(saved.todayPlan.date, DateTime(2026, 10, 14));
       expect(saved.tomorrowPlan.isCommitted, isFalse);
       expect(saved.freedomSettings.enabled, isTrue);
-      expect(find.text('Freedom not yet earned'), findsOneWidget);
+      expect(find.byTooltip('Freedom not yet earned'), findsOneWidget);
     },
   );
 
@@ -218,14 +220,14 @@ void main() {
       await tester.pumpWidget(MainApp(now: () => _date));
       await tester.pumpAndSettle();
       await _tap(tester, find.text('Today goal'));
-      expect(find.text('Freedom not yet earned'), findsOneWidget);
+      expect(find.byTooltip('Freedom not yet earned'), findsOneWidget);
       await _page(tester, 'Plan');
       await _tap(tester, _key('commit-tomorrow'));
       await confirmPlanCommit(tester);
       await _page(tester, 'Today');
-      expect(find.text('Freedom earned'), findsOneWidget);
+      expect(find.byTooltip('Freedom earned'), findsOneWidget);
       await _tap(tester, find.text('Today goal'));
-      expect(find.text('Freedom not yet earned'), findsOneWidget);
+      expect(find.byTooltip('Freedom not yet earned'), findsOneWidget);
     },
   );
 
@@ -240,24 +242,28 @@ void main() {
       );
       await tester.pumpWidget(MainApp(now: () => _date));
       await tester.pumpAndSettle();
-      expect(find.text('Freedom not yet earned'), findsOneWidget);
+      expect(find.byTooltip('Freedom not yet earned'), findsOneWidget);
       await tester.longPress(find.text('Unavailable'));
       await tester.pumpAndSettle();
       await _tap(tester, _key('task-excuse'));
       await tester.enterText(_key('excuse-reason'), 'Buyer did not arrive');
       await _tap(tester, _key('confirm-excuse'));
-      expect(find.text('Freedom earned'), findsOneWidget);
+      expect(find.byTooltip('Freedom earned'), findsOneWidget);
+      await _tap(tester, _key('freedom-indicator'));
       expect(find.text('1 / 1 eligible commitments complete'), findsOneWidget);
+      await _tap(tester, find.text('Close'));
       await tester.longPress(find.text('Done'));
       await tester.pumpAndSettle();
       await _tap(tester, _key('task-excuse'));
       await tester.enterText(_key('excuse-reason'), 'Not possible');
       await _tap(tester, _key('confirm-excuse'));
-      expect(find.text('Freedom not yet earned'), findsOneWidget);
+      expect(find.byTooltip('Freedom not yet earned'), findsOneWidget);
+      await _tap(tester, _key('freedom-indicator'));
       expect(
         find.textContaining('completion is required to earn Freedom'),
         findsOneWidget,
       );
+      await _tap(tester, find.text('Close'));
     },
   );
 
@@ -276,13 +282,13 @@ void main() {
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
       await _tap(tester, find.text('Start stopwatch'));
-      expect(find.text('Freedom not yet earned'), findsOneWidget);
+      expect(find.byTooltip('Freedom not yet earned'), findsOneWidget);
       now = now.add(const Duration(minutes: 2));
       _resume(tester);
       await tester.pumpAndSettle();
-      expect(find.text('Freedom not yet earned'), findsOneWidget);
+      expect(find.byTooltip('Freedom not yet earned'), findsOneWidget);
       await _tap(tester, find.text('Read'));
-      expect(find.text('Freedom earned'), findsOneWidget);
+      expect(find.byTooltip('Freedom earned'), findsOneWidget);
       final task = (await _saved(tester)).todayPlan.tasks.single;
       expect(task.isCompleted, isTrue);
       expect(task.isFocusRunning, isFalse);

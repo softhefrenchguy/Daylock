@@ -137,9 +137,11 @@ void main() {
     expect(find.text('A clear day.'), findsOneWidget);
     expect(find.text('0 / 0 complete'), findsOneWidget);
     expect(find.text('Day complete'), findsNothing);
+    expect(find.byTooltip('Freedom Control is off'), findsOneWidget);
+    await _tap(tester, find.byKey(const ValueKey('freedom-indicator')));
     expect(find.textContaining('18:00'), findsOneWidget);
-    expect(find.text('Freedom Control is off'), findsOneWidget);
     expect(find.textContaining('No eligible commitments'), findsOneWidget);
+    await _tap(tester, find.text('Close'));
     expect(find.byType(CheckboxListTile), findsNothing);
     await _tap(tester, find.text('Plan tomorrow'));
     expect(openPlan, isTrue);
@@ -151,14 +153,18 @@ void main() {
       final goal = Task(name: 'Take a walk', type: TaskType.goal);
       await tester.pumpWidget(_screen(tasks: [goal]));
       await tester.pumpAndSettle();
-      expect(find.text('Freedom Control is off'), findsOneWidget);
+      expect(find.byTooltip('Freedom Control is off'), findsOneWidget);
+      await _tap(tester, find.byKey(const ValueKey('freedom-indicator')));
       expect(find.text('0 / 1 eligible commitments complete'), findsOneWidget);
+      await _tap(tester, find.text('Close'));
       await _tap(tester, find.text('Take a walk'));
       expect(goal.isCompleted, isTrue);
       expect(find.text('1 / 1 complete'), findsOneWidget);
       expect(find.text('100%'), findsOneWidget);
       expect(find.text('Day complete'), findsOneWidget);
+      await _tap(tester, find.byKey(const ValueKey('freedom-indicator')));
       expect(find.text('1 / 1 eligible commitments complete'), findsOneWidget);
+      await _tap(tester, find.text('Close'));
       expect(
         tester
             .widget<LinearProgressIndicator>(
@@ -266,7 +272,7 @@ void main() {
             findsNothing,
           );
           await tester.ensureVisible(
-            find.byKey(const ValueKey('freedom-status')),
+            find.byKey(const ValueKey('freedom-indicator')),
           );
           expect(tester.takeException(), isNull);
           expect(find.byType(DaylockTaskRow), findsNWidgets(3));
