@@ -4,66 +4,6 @@ import '../models/area.dart';
 import '../models/highlight.dart';
 import '../services/journey_service.dart';
 import 'daylock_areas.dart';
-import 'daylock_theme.dart';
-
-class JourneyAreaCard extends StatelessWidget {
-  final Area area;
-  final JourneySummary summary;
-  final VoidCallback onTap;
-  const JourneyAreaCard({
-    super.key,
-    required this.area,
-    required this.summary,
-    required this.onTap,
-  });
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
-    child: Material(
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DaylockSpace.radius),
-        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AreaBadge(
-                      area: area,
-                      iconSize: 28,
-                      textStyle: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '${summary.completedCount} completed ${summary.completedCount == 1 ? 'commitment' : 'commitments'}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    if (summary.focusMilliseconds > 0)
-                      Text(
-                        '${journeyFocusLabel(summary.focusMilliseconds)} recorded Focus',
-                      ),
-                    if (summary.records.isEmpty)
-                      const Text('Your story here is just beginning.'),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.chevron_right),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
 
 class JourneyHighlightTile extends StatelessWidget {
   final Highlight highlight;

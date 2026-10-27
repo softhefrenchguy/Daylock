@@ -108,10 +108,13 @@ void main() {
             .map((d) => d.label),
         ['Today', 'Plan', 'Journey'],
       );
-      expect(find.text("What you've been building"), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('journey-effort-summary')),
+        findsOneWidget,
+      );
       expect(find.text('Life'), findsOneWidget);
-      expect(find.text('Your story here is just beginning.'), findsOneWidget);
-      expect(find.textContaining('Big milestones'), findsOneWidget);
+      expect(find.text('Open space'), findsOneWidget);
+      expect(find.text('Keep a moment that matters.'), findsOneWidget);
       await navigateApp(tester, 'Calendar');
       expect(find.byType(CalendarScreen), findsOneWidget);
       expect(find.byTooltip('Calendar accounts'), findsOneWidget);
@@ -213,7 +216,7 @@ void main() {
           Highlight.create(title: 'Travel', date: now, areaId: 'missing'),
         ]).toJson();
       await launch(tester, DaylockState.fromJson(original));
-      expect(find.text('Area unavailable'), findsOneWidget);
+      expect(find.textContaining('Area unavailable'), findsOneWidget);
       await tap(tester, find.byKey(const ValueKey('add-highlight')));
       await tester.enterText(
         find.byKey(const ValueKey('highlight-title')),
@@ -236,6 +239,7 @@ void main() {
     (tester) async {
       final initial = fixture(archived: true);
       await launch(tester, initial);
+      await tap(tester, find.byKey(const ValueKey('past-chapters')));
       await tap(tester, find.byKey(ValueKey('journey-area-${area.id}')));
       expect(
         tester
@@ -383,6 +387,14 @@ void main() {
           await tester.scrollUntilVisible(
             find.byKey(const ValueKey('daily-history')),
             220,
+            scrollable: find.descendant(
+              of: find.byKey(const ValueKey('journey-content')),
+              matching: find.byWidgetPredicate(
+                (widget) =>
+                    widget is Scrollable &&
+                    widget.axisDirection == AxisDirection.down,
+              ),
+            ),
             maxScrolls: 40,
           );
           await tester.pumpAndSettle();

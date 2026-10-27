@@ -29,6 +29,7 @@ import 'screens/areas_screen.dart';
 import 'models/highlight.dart';
 import 'services/journey_service.dart';
 import 'screens/journey_screen.dart';
+import 'screens/past_chapters_screen.dart';
 import 'screens/area_journey_screen.dart';
 import 'screens/highlight_editor.dart';
 import 'design/daylock_journey.dart';
@@ -589,6 +590,21 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     ),
   );
 
+  void _openPastChapters() => _navigatorKey.currentState!.push(
+    MaterialPageRoute<void>(
+      builder: (_) => ValueListenableBuilder<int>(
+        valueListenable: _journeyChanges,
+        builder: (context, revision, _) => PastChaptersScreen(
+          areas: areas,
+          highlights: highlights,
+          data: _journeyData(),
+          onAreaOpened: _openAreaJourney,
+          onManageAreas: _openAreas,
+        ),
+      ),
+    ),
+  );
+
   void _openAreaJourney(String id) => _navigatorKey.currentState!.push(
     MaterialPageRoute<void>(
       builder: (_) => ValueListenableBuilder<int>(
@@ -966,6 +982,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         onAreaOpened: _openAreaJourney,
         onHighlightOpened: _openHighlight,
         onAddHighlight: () => _editHighlight(),
+        onHighlightEdited: (highlight) => _editHighlight(original: highlight),
+        onPastChapters: _openPastChapters,
+        onManageAreas: _openAreas,
         onAllHighlights: _openHighlights,
         onDailyHistory: () => _openCalendar(),
       ),

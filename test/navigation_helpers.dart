@@ -21,7 +21,11 @@ Future<void> navigateApp(WidgetTester tester, String destination) async {
       300,
       scrollable: find.descendant(
         of: find.byKey(const ValueKey('journey-content')),
-        matching: find.byType(Scrollable),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        ),
       ),
     );
     await tester.ensureVisible(entry);
