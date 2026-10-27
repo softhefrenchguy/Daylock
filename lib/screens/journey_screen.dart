@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../design/journey_area_grid.dart';
 import '../design/journey_featured_highlight.dart';
+import '../design/journey_dashboard_cards.dart';
 import '../models/area.dart';
 import '../models/highlight.dart';
 import '../services/journey_service.dart';
@@ -34,118 +35,100 @@ class JourneyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final summary = JourneySummary(data.records);
-    Widget metric(String key, String value, String label, String semantics) =>
-        Semantics(
-          label: semantics,
-          excludeSemantics: true,
-          child: Text.rich(
-            key: ValueKey(key),
-            TextSpan(
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.alphaBlend(
+              theme.colorScheme.primary.withValues(alpha: .025),
+              theme.colorScheme.surface,
+            ),
+            theme.colorScheme.surface,
+          ],
+        ),
+      ),
+      child: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: ListView(
+              key: const ValueKey('journey-content'),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
               children: [
-                TextSpan(
-                  text: value,
-                  style: theme.textTheme.titleMedium!.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Journey',
+                        style: theme.textTheme.headlineLarge!.copyWith(
+                          fontSize: 30,
+                        ),
+                      ),
+                    ),
+                    if (onManageAreas != null)
+                      IconButton(
+                        key: const ValueKey('journey-manage-areas'),
+                        tooltip: 'Manage Areas',
+                        onPressed: onManageAreas,
+                        icon: const Icon(Icons.tune_rounded, size: 22),
+                      ),
+                  ],
                 ),
-                TextSpan(
-                  text: ' $label',
+                Text(
+                  'Progress in the areas that matter',
                   style: theme.textTheme.bodySmall!.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-              ],
-            ),
-          ),
-        );
-    return SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: ListView(
-            key: const ValueKey('journey-content'),
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Journey',
-                      style: theme.textTheme.headlineLarge!.copyWith(
-                        fontSize: 28,
+                const SizedBox(height: 8),
+                JourneyProgressSummary(
+                  key: const ValueKey('journey-effort-summary'),
+                  summary: summary,
+                  highlights: highlights.highlights.length,
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      'Your Areas',
+                      style: theme.textTheme.titleMedium!.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ),
-                  if (onManageAreas != null)
-                    IconButton(
-                      key: const ValueKey('journey-manage-areas'),
-                      tooltip: 'Manage Areas',
-                      onPressed: onManageAreas,
-                      icon: const Icon(Icons.tune_rounded, size: 22),
-                    ),
-                ],
-              ),
-              Wrap(
-                key: const ValueKey('journey-effort-summary'),
-                spacing: 16,
-                runSpacing: 4,
-                children: [
-                  metric(
-                    'journey-total-completed',
-                    '${summary.completedCount}',
-                    'completed',
-                    '${summary.completedCount} completed commitments',
-                  ),
-                  metric(
-                    'journey-total-focus',
-                    journeyFocusLabel(summary.focusMilliseconds),
-                    'Focus',
-                    '${journeyFocusLabel(summary.focusMilliseconds)} recorded Focus',
-                  ),
-                  metric(
-                    'journey-total-highlights',
-                    '${highlights.highlights.length}',
-                    'Highlights',
-                    '${highlights.highlights.length} Highlights',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              JourneyAreaGrid(
-                key: const ValueKey('journey-area-grid'),
-                areas: areas.active,
-                data: data,
-                highlights: highlights,
-                onAreaOpened: onAreaOpened,
-              ),
-              const SizedBox(height: 8),
-              JourneyFeaturedHighlight(
-                highlights: highlights.newestFirst,
-                areas: areas,
-                onAdd: onAddHighlight,
-                onAll: onAllHighlights,
-                onOpened: onHighlightOpened,
-                onEdited: onHighlightEdited,
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  TextButton.icon(
-                    key: const ValueKey('daily-history'),
-                    onPressed: onDailyHistory,
-                    icon: const Icon(Icons.calendar_month_outlined, size: 18),
-                    label: const Text('Daily history'),
-                  ),
-                  TextButton.icon(
-                    key: const ValueKey('past-chapters'),
-                    onPressed: onPastChapters,
-                    icon: const Icon(Icons.inventory_2_outlined, size: 18),
-                    label: const Text('Past Chapters'),
-                  ),
-                ],
-              ),
-            ],
+                    if (onManageAreas != null)
+                      TextButton(
+                        onPressed: onManageAreas,
+                        child: const Text('View all'),
+                      ),
+                  ],
+                ),
+                JourneyAreaGrid(
+                  key: const ValueKey('journey-area-grid'),
+                  areas: areas.active,
+                  data: data,
+                  highlights: highlights,
+                  onAreaOpened: onAreaOpened,
+                ),
+                const SizedBox(height: 8),
+                JourneyFeaturedHighlight(
+                  highlights: highlights.newestFirst,
+                  areas: areas,
+                  onAdd: onAddHighlight,
+                  onAll: onAllHighlights,
+                  onOpened: onHighlightOpened,
+                  onEdited: onHighlightEdited,
+                ),
+                const SizedBox(height: 8),
+                JourneyHistoryLinks(
+                  onDailyHistory: onDailyHistory,
+                  onPastChapters: onPastChapters,
+                ),
+              ],
+            ),
           ),
         ),
       ),

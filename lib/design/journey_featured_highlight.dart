@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../models/area.dart';
 import '../models/highlight.dart';
+import '../models/highlight_illustration.dart';
+import 'highlight_illustration.dart';
+import 'journey_surface.dart';
 
 /// Stable selection follows the Highlight ID across saves, reordering and ticks.
 class JourneyFeaturedHighlight extends StatefulWidget {
@@ -132,7 +135,7 @@ class _JourneyFeaturedHighlightState extends State<JourneyFeaturedHighlight> {
                   key: const ValueKey('add-highlight'),
                   tooltip: 'Add Highlight',
                   onPressed: widget.onAdd,
-                  icon: const Icon(Icons.add_rounded),
+                  icon: const Icon(Icons.add_circle_outline_rounded),
                 ),
                 Tooltip(
                   message: 'All Highlights',
@@ -173,7 +176,8 @@ class _JourneyFeaturedHighlightState extends State<JourneyFeaturedHighlight> {
                   titleLines * _lineHeight(titleStyle) +
                   10 +
                   metaLines * _lineHeight(detailStyle) +
-                  (description ? 6 + _lineHeight(detailStyle) : 0);
+                  (description ? 6 + _lineHeight(detailStyle) : 0) +
+                  (large ? 72 : 0);
               return SizedBox(
                 height: height,
                 child: PageView.builder(
@@ -199,6 +203,59 @@ class _JourneyFeaturedHighlightState extends State<JourneyFeaturedHighlight> {
                         .formatMediumDate(highlight.date);
                     final metadata =
                         '$date${areaName == null ? '' : ' · $areaName'}';
+                    final area = matches.firstOrNull;
+                    final accent = area == null
+                        ? colors.primary
+                        : Color(area.colour);
+                    final illustration = SizedBox(
+                      width: large
+                          ? 68
+                          : constraints.maxWidth >= 320
+                          ? 100
+                          : 72,
+                      height: large ? 68 : 100,
+                      child: HighlightIllustration(
+                        key: ValueKey('highlight-illustration-${highlight.id}'),
+                        iconId: resolveHighlightIllustration(
+                          title: highlight.title,
+                          explicitIcon: highlight.illustrationIcon,
+                          areaIcon: area?.icon,
+                        ),
+                        accent: accent,
+                      ),
+                    );
+                    final text = Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: Text(
+                              highlight.title,
+                              style: titleStyle,
+                              maxLines: titleLines,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          metadata,
+                          style: detailStyle,
+                          maxLines: metaLines,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (description && highlight.description != null) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            highlight.description!,
+                            style: detailStyle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    );
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 1),
                       child: Semantics(
@@ -206,55 +263,32 @@ class _JourneyFeaturedHighlightState extends State<JourneyFeaturedHighlight> {
                         label: '${highlight.title}. $metadata. Open Highlight',
                         onTap: () => widget.onOpened(highlight),
                         child: ExcludeSemantics(
-                          child: Material(
-                            color: Color.alphaBlend(
-                              colors.primary.withValues(alpha: .07),
-                              colors.surfaceContainerLow,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
-                              side: BorderSide(color: colors.outlineVariant),
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: InkWell(
-                              key: ValueKey('highlight-${highlight.id}'),
-                              onTap: () => widget.onOpened(highlight),
-                              child: Padding(
-                                padding: const EdgeInsets.all(14),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: Align(
-                                        alignment: Alignment.topLeft,
-                                        child: Text(
-                                          highlight.title,
-                                          style: titleStyle,
-                                          maxLines: titleLines,
-                                          overflow: TextOverflow.ellipsis,
+                          child: JourneySurface(
+                            accent: accent,
+                            key: ValueKey('highlight-${highlight.id}'),
+                            onTap: () => widget.onOpened(highlight),
+                            child: Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: large
+                                  ? Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(child: text),
+                                        Align(
+                                          alignment: Alignment.centerRight,
+                                          child: illustration,
                                         ),
-                                      ),
+                                        const SizedBox(height: 4),
+                                      ],
+                                    )
+                                  : Row(
+                                      children: [
+                                        Expanded(child: text),
+                                        const SizedBox(width: 8),
+                                        illustration,
+                                      ],
                                     ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      metadata,
-                                      style: detailStyle,
-                                      maxLines: metaLines,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    if (description &&
-                                        highlight.description != null) ...[
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        highlight.description!,
-                                        style: detailStyle,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
                             ),
                           ),
                         ),

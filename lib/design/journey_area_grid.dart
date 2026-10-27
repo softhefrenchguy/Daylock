@@ -4,6 +4,8 @@ import '../models/area.dart';
 import '../models/highlight.dart';
 import '../services/journey_service.dart';
 import 'daylock_areas.dart';
+import 'journey_activity_strip.dart';
+import 'journey_surface.dart';
 
 /// Intrinsic row heights let large type grow instead of clipping grid cells.
 class JourneyAreaGrid extends StatelessWidget {
@@ -51,6 +53,10 @@ class JourneyAreaGrid extends StatelessWidget {
                               ),
                               area: areas[row + column],
                               summary: data.forArea(areas[row + column].id),
+                              buckets: data.activity(
+                                areas[row + column].id,
+                                last30Days: true,
+                              ),
                               latestHighlight: latest[areas[row + column].id],
                               minHeight: minHeight,
                               expandText: largeText,
@@ -71,6 +77,7 @@ class JourneyAreaGrid extends StatelessWidget {
 class JourneyAreaTile extends StatelessWidget {
   final Area area;
   final JourneySummary summary;
+  final List<JourneyBucket> buckets;
   final Highlight? latestHighlight;
   final double minHeight;
   final bool expandText;
@@ -79,6 +86,7 @@ class JourneyAreaTile extends StatelessWidget {
     super.key,
     required this.area,
     required this.summary,
+    this.buckets = const [],
     this.latestHighlight,
     required this.minHeight,
     required this.expandText,
@@ -103,74 +111,77 @@ class JourneyAreaTile extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final accent = Color(area.colour);
-    final radius = BorderRadius.circular(18);
+    final chart = JourneyActivityStrip(
+      buckets: buckets,
+      accent: accent,
+      key: ValueKey('area-activity-${area.id}'),
+    );
     return Semantics(
       button: true,
-      label: '${area.name}. $progress. Open Area',
+      label:
+          '${area.name}. $progress. ${chart.hasActivity ? '${chart.description(context)}. ' : ''}Open Area',
       onTap: onTap,
       child: ExcludeSemantics(
-        child: Material(
-          color: Color.alphaBlend(
-            accent.withValues(alpha: .09),
-            colors.surfaceContainerLow,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: radius,
-            side: BorderSide(
-              color: Color.alphaBlend(
-                accent.withValues(alpha: .28),
-                colors.outlineVariant,
-              ),
-            ),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onTap,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: minHeight),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          areaIcons[area.icon] ?? areaIcons['life'],
-                          color: accent,
-                          size: 26,
-                        ),
-                        const Spacer(),
-                        Icon(
-                          Icons.north_east_rounded,
-                          size: 16,
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      area.name,
-                      maxLines: expandText ? null : 2,
-                      overflow: expandText ? null : TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium!.copyWith(
-                        fontWeight: FontWeight.w700,
-                        height: 1.2,
+        child: JourneySurface(
+          accent: accent,
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: minHeight),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        areaIcons[area.icon] ?? areaIcons['life'],
+                        color: accent,
+                        size: 26,
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      progress,
-                      maxLines: expandText ? null : 2,
-                      overflow: expandText ? null : TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall!.copyWith(
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          area.name,
+                          maxLines: expandText ? null : 2,
+                          overflow: expandText ? null : TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium!.copyWith(
+                            fontWeight: FontWeight.w700,
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 16,
                         color: colors.onSurfaceVariant,
-                        height: 1.3,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    progress,
+                    maxLines: expandText ? null : 2,
+                    overflow: expandText ? null : TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall!.copyWith(
+                      color: colors.onSurfaceVariant,
+                      height: 1.3,
+                    ),
+                  ),
+                  if (summary.records.isEmpty && latestHighlight != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Text(
+                        'Latest Highlight',
+                        style: theme.textTheme.bodySmall!.copyWith(
+                          color: colors.onSurfaceVariant,
+                          fontSize: 10,
+                        ),
                       ),
                     ),
-                  ],
-                ),
+                  if (chart.hasActivity) ...[const SizedBox(height: 6), chart],
+                ],
               ),
             ),
           ),

@@ -70,7 +70,15 @@ DaylockState fixture({bool archived = false}) => DaylockState(
 Future<void> tap(WidgetTester tester, Finder finder) async {
   await tester.pumpAndSettle();
   if (finder.evaluate().isEmpty) {
-    final scrollable = find.byType(Scrollable).last;
+    final scrollable = find
+        .byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        )
+        .last;
+    tester.state<ScrollableState>(scrollable).position.jumpTo(0);
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       finder,
       220,

@@ -218,18 +218,18 @@ void main() {
             .widget<Text>(key('journey-total-completed'))
             .textSpan!
             .toPlainText(),
-        '3 completed',
+        '3',
       );
       expect(
         tester.widget<Text>(key('journey-total-focus')).textSpan!.toPlainText(),
-        '2 min Focus',
+        '2 min',
       );
       expect(
         tester
             .widget<Text>(key('journey-total-highlights'))
             .textSpan!
             .toPlainText(),
-        '3 Highlights',
+        '3',
       );
       expect(
         find.descendant(
@@ -394,6 +394,7 @@ void main() {
   testWidgets('Empty Highlights offer Add and All without an empty carousel', (
     tester,
   ) async {
+    phone(tester);
     var added = false;
     await tester.pumpWidget(
       shell(

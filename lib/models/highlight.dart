@@ -8,7 +8,7 @@ class Highlight {
   static const maxDescriptionLength = 2000;
   final String id, title;
   final DateTime date;
-  final String? description, areaId;
+  final String? description, areaId, illustrationIcon;
 
   Highlight({
     required this.id,
@@ -16,6 +16,7 @@ class Highlight {
     required DateTime date,
     String? description,
     this.areaId,
+    this.illustrationIcon,
   }) : title = title.trim(),
        date = DateTime(date.year, date.month, date.day),
        description = description?.trim().isEmpty == true
@@ -36,6 +37,7 @@ class Highlight {
     required DateTime date,
     String? description,
     String? areaId,
+    String? illustrationIcon,
   }) {
     final random = Random.secure();
     final id = List.generate(
@@ -48,6 +50,7 @@ class Highlight {
       date: date,
       description: description,
       areaId: areaId,
+      illustrationIcon: illustrationIcon,
     );
   }
   Map<String, dynamic> toJson() => {
@@ -57,6 +60,7 @@ class Highlight {
         '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
     'description': description,
     if (areaId != null) 'areaId': areaId,
+    if (illustrationIcon != null) 'illustrationIcon': illustrationIcon,
   };
   factory Highlight.fromJson(Map<String, dynamic> json) {
     final raw = json['date'] as String;
@@ -67,6 +71,9 @@ class Highlight {
       date: date,
       description: json['description'] as String?,
       areaId: readAreaId(json['areaId']),
+      illustrationIcon: json['illustrationIcon'] is String
+          ? json['illustrationIcon'] as String
+          : null,
     );
     if (result.toJson()['date'] != raw) {
       throw const FormatException('Invalid Highlight date');

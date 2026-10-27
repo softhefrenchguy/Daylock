@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../design/daylock_areas.dart';
 import '../design/daylock_theme.dart';
+import '../design/highlight_illustration.dart';
 import '../models/area.dart';
 import '../models/highlight.dart';
+import '../models/highlight_illustration.dart';
 
 class HighlightEditor extends StatefulWidget {
   final Highlight? highlight;
@@ -25,6 +27,8 @@ class _HighlightEditorState extends State<HighlightEditor> {
   late final TextEditingController _title, _description;
   late DateTime _date;
   String? _areaId;
+  String? _illustrationIcon;
+  bool _choosingIllustration = false;
   bool _submitted = false;
   @override
   void initState() {
@@ -35,6 +39,7 @@ class _HighlightEditorState extends State<HighlightEditor> {
     _areaId = widget.highlight == null
         ? widget.initialAreaId
         : widget.highlight!.areaId;
+    _illustrationIcon = widget.highlight?.illustrationIcon;
   }
 
   @override
@@ -70,6 +75,7 @@ class _HighlightEditorState extends State<HighlightEditor> {
               date: _date,
               description: _description.text,
               areaId: _areaId,
+              illustrationIcon: _illustrationIcon,
             )
           : Highlight(
               id: old.id,
@@ -77,6 +83,7 @@ class _HighlightEditorState extends State<HighlightEditor> {
               date: _date,
               description: _description.text,
               areaId: _areaId,
+              illustrationIcon: _illustrationIcon,
             ),
     );
   }
@@ -163,6 +170,8 @@ class _HighlightEditorState extends State<HighlightEditor> {
               ),
             ],
             const SizedBox(height: 16),
+            _illustrationPicker(context),
+            const SizedBox(height: 16),
             FilledButton(
               key: const ValueKey('save-highlight'),
               onPressed: _valid ? _save : null,
@@ -173,4 +182,61 @@ class _HighlightEditorState extends State<HighlightEditor> {
       ),
     ),
   );
+
+  Widget _illustrationPicker(BuildContext context) {
+    final area = widget.areas.areas.where((a) => a.id == _areaId).firstOrNull;
+    final resolved = resolveHighlightIllustration(
+      title: _title.text,
+      explicitIcon: _illustrationIcon,
+      areaIcon: area?.icon,
+    );
+    final automatic = !highlightIllustrationLabels.containsKey(
+      _illustrationIcon,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        OutlinedButton.icon(
+          key: const ValueKey('select-highlight-illustration'),
+          onPressed: () =>
+              setState(() => _choosingIllustration = !_choosingIllustration),
+          icon: Icon(highlightIllustrationIcons[resolved]),
+          label: Text(
+            'Illustration: ${automatic ? 'Automatic · ' : ''}${highlightIllustrationLabels[resolved]}',
+          ),
+        ),
+        if (_choosingIllustration) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Choose a look, or let the title and Area suggest one.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              ChoiceChip(
+                key: const ValueKey('highlight-icon-automatic'),
+                label: const Text('Automatic'),
+                selected: automatic,
+                materialTapTargetSize: MaterialTapTargetSize.padded,
+                onSelected: (_) => setState(() => _illustrationIcon = null),
+              ),
+              for (final entry in highlightIllustrationLabels.entries)
+                ChoiceChip(
+                  key: ValueKey('highlight-icon-${entry.key}'),
+                  avatar: Icon(highlightIllustrationIcons[entry.key], size: 18),
+                  label: Text(entry.value),
+                  selected: _illustrationIcon == entry.key,
+                  materialTapTargetSize: MaterialTapTargetSize.padded,
+                  onSelected: (_) =>
+                      setState(() => _illustrationIcon = entry.key),
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
 }
