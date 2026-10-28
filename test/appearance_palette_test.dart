@@ -128,8 +128,8 @@ void main() {
       }
     }
     final violet = DaylockTheme.dark;
-    expect(violet.colorScheme.surface, const Color(0xFF171321));
-    expect(violet.colorScheme.primary, const Color(0xFFA78BDB));
+    expect(violet.colorScheme.surface, const Color(0xFF100D1D));
+    expect(violet.colorScheme.primary, const Color(0xFFB988F0));
     expect(
       violet.extension<DaylockColors>()!.statusSurface,
       const Color(0xFF211A2E),

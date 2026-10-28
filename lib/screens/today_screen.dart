@@ -221,10 +221,14 @@ class TodayScreenState extends State<TodayScreen> {
             child: Align(
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 640),
+                constraints: BoxConstraints(
+                  maxWidth: 640,
+                  minHeight: constraints.maxHeight,
+                ),
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(padding, 12, padding, 24),
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -242,7 +246,7 @@ class TodayScreenState extends State<TodayScreen> {
                               child: Text(
                                 'Today',
                                 style: theme.textTheme.headlineLarge!.copyWith(
-                                  fontSize: 40,
+                                  fontSize: 36,
                                 ),
                               ),
                             ),
@@ -275,7 +279,7 @@ class TodayScreenState extends State<TodayScreen> {
                             ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       DailyProgressCard(
                         progress: summary,
                         recordedMilliseconds: plan.tasks.fold<int>(
@@ -284,12 +288,12 @@ class TodayScreenState extends State<TodayScreen> {
                               total + task.focusMillisecondsAt(currentTime),
                         ),
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 12),
                       Text(
                         'Your commitments',
                         style: theme.textTheme.titleLarge,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       if (empty)
                         _EmptyToday(onPlanRequested: onPlanRequested)
                       else ...[

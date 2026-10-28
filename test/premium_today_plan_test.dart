@@ -1,4 +1,7 @@
 import 'dart:convert';
+
+import 'package:daylock/design/daylock_illustrations.dart';
+
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -234,7 +237,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('No commitments planned yet.'), findsOneWidget);
-      expect(find.byIcon(Icons.edit_calendar_rounded), findsOneWidget);
+      expect(find.byType(DaylockIllustration), findsOneWidget);
       expect(
         find.byKey(const ValueKey('open-commitment-editor')),
         findsOneWidget,

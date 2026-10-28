@@ -26,19 +26,21 @@ class JourneySurface extends StatelessWidget {
         borderRadius: BorderRadius.circular(radius),
         boxShadow: [
           BoxShadow(
-            color: tint.withValues(alpha: dark ? .045 : .025),
+            color: tint.withValues(
+              alpha: dark ? (emphasized ? .12 : .045) : .025,
+            ),
             blurRadius: 20,
             offset: const Offset(0, 5),
           ),
         ],
       ),
       child: Material(
-        color: scheme.surfaceContainerLow,
+        color: dark ? scheme.surface : scheme.surfaceContainerLow,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radius),
           side: BorderSide(
             color: Color.alphaBlend(
-              tint.withValues(alpha: emphasized ? .65 : .25),
+              tint.withValues(alpha: emphasized ? .8 : .45),
               scheme.outlineVariant,
             ),
           ),
@@ -50,7 +52,7 @@ class JourneySurface extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                tint.withValues(alpha: dark ? .17 : .09),
+                tint.withValues(alpha: dark ? .22 : .09),
                 tint.withValues(alpha: .035),
                 tint.withValues(alpha: dark ? .10 : .055),
               ],

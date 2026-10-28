@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../design/daylock_palette.dart';
 import '../design/journey_surface.dart';
+import '../design/daylock_illustrations.dart';
 import '../design/daylock_plan_rows.dart';
 import '../design/daylock_theme.dart';
 import '../design/daylock_widgets.dart';
@@ -300,7 +301,7 @@ class _PlanScreenState extends State<PlanScreen> {
                         SliverPadding(
                           padding: EdgeInsets.fromLTRB(
                             padding,
-                            DaylockSpace.md,
+                            36,
                             padding,
                             DaylockSpace.md,
                           ),
@@ -313,7 +314,7 @@ class _PlanScreenState extends State<PlanScreen> {
                                   child: Text(
                                     'Plan',
                                     style: theme.textTheme.headlineLarge!
-                                        .copyWith(fontSize: 40),
+                                        .copyWith(fontSize: 36),
                                   ),
                                 ),
                                 const SizedBox(height: DaylockSpace.xs),
@@ -358,34 +359,39 @@ class _PlanScreenState extends State<PlanScreen> {
                                 JourneySurface(
                                   child: Padding(
                                     padding: const EdgeInsets.all(14),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                    child: Row(
                                       children: [
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.event_outlined,
-                                              color: colors.primary,
-                                              size: 20,
-                                            ),
-                                            const SizedBox(width: 10),
-                                            const Expanded(
-                                              child: DaylockLabel('SCHEDULE'),
-                                            ),
-                                          ],
+                                        Icon(
+                                          Icons.event_outlined,
+                                          color: colors.primary,
+                                          size: 28,
                                         ),
-                                        if (scheduled.isEmpty) ...[
-                                          const SizedBox(height: 6),
-                                          Text(
-                                            'No scheduled events for tomorrow.',
-                                            style: theme.textTheme.bodyMedium!
-                                                .copyWith(
-                                                  color:
-                                                      colors.onSurfaceVariant,
-                                                ),
+                                        const SizedBox(width: 14),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              DaylockLabel(
+                                                'SCHEDULE',
+                                                color: colors.primary,
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Text(
+                                                scheduled.isEmpty
+                                                    ? 'No scheduled events for tomorrow.'
+                                                    : '${scheduled.length} scheduled events',
+                                                style: theme
+                                                    .textTheme
+                                                    .bodySmall!
+                                                    .copyWith(
+                                                      color: colors
+                                                          .onSurfaceVariant,
+                                                    ),
+                                              ),
+                                            ],
                                           ),
-                                        ],
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -418,7 +424,7 @@ class _PlanScreenState extends State<PlanScreen> {
                         SliverPadding(
                           padding: EdgeInsets.fromLTRB(
                             padding,
-                            DaylockSpace.lg,
+                            0,
                             padding,
                             DaylockSpace.sm,
                           ),
@@ -436,7 +442,13 @@ class _PlanScreenState extends State<PlanScreen> {
                                       crossAxisAlignment:
                                           WrapCrossAlignment.center,
                                       children: [
-                                        const DaylockLabel('COMMITMENTS'),
+                                        Text(
+                                          'Commitments',
+                                          style: theme.textTheme.titleMedium!
+                                              .copyWith(
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                        ),
                                         Text(
                                           '${plan.tasks.length}',
                                           style: theme.textTheme.labelLarge,
@@ -449,6 +461,9 @@ class _PlanScreenState extends State<PlanScreen> {
                                           'open-commitment-editor',
                                         ),
                                         onPressed: _addCommitment,
+                                        style: daylockGradientActionStyle(
+                                          context,
+                                        ),
                                         child: const Text('+ Add commitment'),
                                       )
                                     else if (!plan.isCommitted)
@@ -464,60 +479,43 @@ class _PlanScreenState extends State<PlanScreen> {
                                 if (plan.tasks.isEmpty) ...[
                                   const SizedBox(height: 8),
                                   JourneySurface(
-                                    radius: 16,
+                                    radius: 20,
                                     child: Padding(
-                                      padding: const EdgeInsets.all(14),
-                                      child: Row(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                        vertical: 20,
+                                      ),
+                                      child: Column(
                                         children: [
-                                          ExcludeSemantics(
-                                            child: Container(
-                                              padding: const EdgeInsets.all(12),
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                gradient: RadialGradient(
-                                                  colors: [
-                                                    colors.primary.withValues(
-                                                      alpha: .3,
-                                                    ),
-                                                    colors.primary.withValues(
-                                                      alpha: .05,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              child: Icon(
-                                                Icons.edit_calendar_rounded,
-                                                color: colors.primary,
-                                              ),
+                                          SizedBox(
+                                            width: 136,
+                                            child: DaylockIllustration(
+                                              accent: colors.primary,
+                                              planner: true,
                                             ),
                                           ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'No commitments planned yet.',
-                                                  style: theme
-                                                      .textTheme
-                                                      .titleSmall,
+                                          const SizedBox(height: 12),
+                                          Text(
+                                            'No commitments planned yet.',
+                                            textAlign: TextAlign.center,
+                                            style: theme.textTheme.titleMedium!
+                                                .copyWith(
+                                                  fontWeight: FontWeight.w700,
                                                 ),
-                                                Text(
-                                                  plan.isCommitted
-                                                      ? 'Tomorrow is locked.'
-                                                      : 'Add one small step for tomorrow.',
-                                                  style: theme
-                                                      .textTheme
-                                                      .bodySmall!
-                                                      .copyWith(
-                                                        color: colors
-                                                            .onSurfaceVariant,
-                                                      ),
-                                                ),
-                                              ],
-                                            ),
                                           ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            plan.isCommitted
+                                                ? 'Tomorrow is locked.'
+                                                : 'Add one small step for tomorrow.',
+                                            textAlign: TextAlign.center,
+                                            style: theme.textTheme.bodyMedium!
+                                                .copyWith(
+                                                  color:
+                                                      colors.onSurfaceVariant,
+                                                ),
+                                          ),
+                                          const SizedBox(height: 12),
                                         ],
                                       ),
                                     ),
@@ -548,6 +546,10 @@ class _PlanScreenState extends State<PlanScreen> {
                                 key: ValueKey('plan-task-$index'),
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: JourneySurface(
+                                  accent: selectedArea == null
+                                      ? colors.primary
+                                      : Color(selectedArea.colour),
+                                  emphasized: true,
                                   radius: 16,
                                   child: Padding(
                                     padding: const EdgeInsets.fromLTRB(

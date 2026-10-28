@@ -49,6 +49,30 @@ class DaylockProgress extends StatelessWidget {
   );
 }
 
+/// A palette-derived highlight for featured primary actions.
+ButtonStyle daylockGradientActionStyle(BuildContext context) {
+  final colors = Theme.of(context).colorScheme;
+  return FilledButton.styleFrom(
+    backgroundBuilder: (context, states, child) {
+      if (states.contains(WidgetState.disabled)) return child!;
+      return Ink(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(DaylockSpace.radius),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color.lerp(colors.primary, Colors.white, .22)!,
+              colors.primary,
+            ],
+          ),
+        ),
+        child: child,
+      );
+    },
+  );
+}
+
 // A shared primary action with a comfortable touch target and a leading icon.
 class DaylockAction extends StatelessWidget {
   final String label;

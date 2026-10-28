@@ -113,11 +113,11 @@ abstract final class DaylockPalettes {
   static const _palettes = <ColourTheme, _Palette>{
     ColourTheme.violet: _Palette(
       dark: _Tone(
-        background: 0xFF171321,
-        surface: 0xFF211A2E,
+        background: 0xFF100D1D,
+        surface: 0xFF1B152B,
         ink: 0xFFF8F6FC,
         muted: 0xFFBEB5CF,
-        accent: 0xFFA78BDB,
+        accent: 0xFFB988F0,
         onAccent: 0xFF171321,
         border: 0xFF3C324D,
         outline: 0xFF8C819E,

@@ -91,7 +91,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         tester.getTopLeft(find.text('SCHEDULE')).dy,
-        lessThan(tester.getTopLeft(find.text('COMMITMENTS')).dy),
+        lessThan(tester.getTopLeft(find.text('Commitments')).dy),
       );
       expect(find.textContaining('Tomorrow ·'), findsOneWidget);
       expect(find.text('PREPARING TOMORROW'), findsNothing);

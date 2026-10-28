@@ -23,9 +23,10 @@ class DaylockRoutineSuggestions extends StatelessWidget {
       duration: daylockMotion(context),
       reverseDuration: daylockMotion(context),
     ),
-    dense: true,
+    dense: false,
     leading: Icon(
       Icons.tips_and_updates_outlined,
+      size: 30,
       color: Theme.of(context).colorScheme.primary,
     ),
     tilePadding: EdgeInsets.zero,

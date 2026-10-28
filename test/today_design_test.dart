@@ -87,7 +87,7 @@ void main() {
       }
     }
     expect(DaylockTheme.light.scaffoldBackgroundColor, const Color(0xFFF8F6FC));
-    expect(DaylockTheme.dark.scaffoldBackgroundColor, const Color(0xFF171321));
+    expect(DaylockTheme.dark.scaffoldBackgroundColor, const Color(0xFF100D1D));
   });
 
   testWidgets(

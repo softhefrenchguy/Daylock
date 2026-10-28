@@ -129,6 +129,7 @@ class JourneyAreaTile extends StatelessWidget {
       child: ExcludeSemantics(
         child: JourneySurface(
           accent: accent,
+          emphasized: true,
           onTap: onTap,
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: minHeight),

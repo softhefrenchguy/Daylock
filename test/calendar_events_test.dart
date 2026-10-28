@@ -255,7 +255,7 @@ void main() {
       expect(find.text('Later event'), findsNothing);
       expect(
         tester.getTopLeft(find.text('SCHEDULE')).dy,
-        lessThan(tester.getTopLeft(find.text('COMMITMENTS')).dy),
+        lessThan(tester.getTopLeft(find.text('Commitments')).dy),
       );
       expect(
         tester

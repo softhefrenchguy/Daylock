@@ -114,7 +114,6 @@ class JourneyScreen extends StatelessWidget {
                   highlights: highlights,
                   onAreaOpened: onAreaOpened,
                 ),
-                const SizedBox(height: 4),
                 JourneyFeaturedHighlight(
                   highlights: highlights.newestFirst,
                   areas: areas,
@@ -123,7 +122,6 @@ class JourneyScreen extends StatelessWidget {
                   onOpened: onHighlightOpened,
                   onEdited: onHighlightEdited,
                 ),
-                const SizedBox(height: 4),
                 JourneyHistoryLinks(
                   onDailyHistory: onDailyHistory,
                   onPastChapters: onPastChapters,

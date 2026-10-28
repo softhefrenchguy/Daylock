@@ -34,20 +34,20 @@ class DailyProgressCard extends StatelessWidget {
         : '${progress.remainingCount} remaining today';
     return JourneySurface(
       key: const ValueKey('daily-summary'),
-      emphasized: progress.isComplete,
+      emphasized: true,
       radius: 20,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
         child: Column(
           children: [
             Row(
               children: [
                 SizedBox(
-                  width: 46,
-                  height: 46,
+                  width: 54,
+                  height: 54,
                   child: CircularProgressIndicator(
                     value: fraction ?? 0,
-                    strokeWidth: 5,
+                    strokeWidth: 6,
                     strokeCap: StrokeCap.round,
                     backgroundColor: colors.primary.withValues(alpha: .18),
                     valueColor: AlwaysStoppedAnimation(colors.primary),
@@ -94,7 +94,7 @@ class DailyProgressCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 9),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Icon(Icons.schedule_rounded, size: 18, color: colors.primary),

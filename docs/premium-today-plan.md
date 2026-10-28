@@ -1,5 +1,7 @@
 ﻿# Premium Today and Plan
 
+The later [three-screen visual reproduction](visual-reproduction.md) refines this design and includes actual Android captures.
+
 Today shows a compact progress ring and actual stopwatch time across all commitments, including recorded work on incomplete and excused items. The visible list retains the previous three-item expansion behavior and keeps the running commitment visible. A permanent Freedom card presents the existing eligibility result directly after the commitments. The waiting appearance is selected only when Freedom Control is enabled, the dated plans are current, commitments and tomorrow are satisfied, and Freedom Time is the only remaining condition. Disabled and earned states use the same existing service result; no Instagram-access claim is inferred.
 
 Plan retains the existing schedule, routine actions, draft editing and committed-plan locks. Its compact cards, routine header and empty-state illustration use the active palette and the shared Journey surface. Stopwatch, Freedom, history and persistence implementations are unchanged.
