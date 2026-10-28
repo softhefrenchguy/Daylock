@@ -108,24 +108,24 @@ class DetectionPolicyTest {
         )) try { create(); fail("Invalid state accepted") } catch (_: IllegalArgumentException) { }
     }
     @Test fun InstagramWindowEventIsAccepted() {
-        assertTrue(InstagramEventGate().accept("com.instagram.android", 32, 0))
+        assertTrue(InstagramEventGate().accept("com.instagram.android", 32, 0, setOf("com.instagram.android")))
     }
     @Test fun unrelatedPackagesAndEventTypesAreIgnored() {
         val gate = InstagramEventGate()
-        assertFalse(gate.accept("com.example.daylock", 32, 0))
-        assertFalse(gate.accept("com.instagram.android", 2048, 0))
-        assertFalse(gate.accept(null, 32, 0))
-        assertTrue(gate.accept("com.instagram.android", 32, 0))
+        assertFalse(gate.accept("com.example.daylock", 32, 0, setOf("com.instagram.android")))
+        assertFalse(gate.accept("com.instagram.android", 2048, 0, setOf("com.instagram.android")))
+        assertFalse(gate.accept(null, 32, 0, setOf("com.instagram.android")))
+        assertTrue(gate.accept("com.instagram.android", 32, 0, setOf("com.instagram.android")))
     }
     @Test fun repeatedBurstIsCoalescedAndLaterOpeningIsAccepted() {
         val gate = InstagramEventGate()
-        assertTrue(gate.accept("com.instagram.android", 32, 1000))
-        for (now in listOf(1000L, 1100L, 2000L, 3999L)) assertFalse(gate.accept("com.instagram.android", 32, now))
-        assertTrue(gate.accept("com.instagram.android", 32, 4000))
+        assertTrue(gate.accept("com.instagram.android", 32, 1000, setOf("com.instagram.android")))
+        for (now in listOf(1000L, 1100L, 2000L, 3999L)) assertFalse(gate.accept("com.instagram.android", 32, now, setOf("com.instagram.android")))
+        assertTrue(gate.accept("com.instagram.android", 32, 4000, setOf("com.instagram.android")))
     }
     @Test fun restartedServiceHasAnIndependentGate() {
-        assertTrue(InstagramEventGate().accept("com.instagram.android", 32, 1000))
-        assertTrue(InstagramEventGate().accept("com.instagram.android", 32, 1100))
+        assertTrue(InstagramEventGate().accept("com.instagram.android", 32, 1000, setOf("com.instagram.android")))
+        assertTrue(InstagramEventGate().accept("com.instagram.android", 32, 1100, setOf("com.instagram.android")))
     }
     @Test fun recoveryPromptDoesNotRepeatForSameUnknownState() {
         val gate = InstagramRecoveryGate()

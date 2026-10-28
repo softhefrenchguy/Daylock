@@ -18,7 +18,9 @@ import org.json.JSONObject
 
 /** Fixed diagnostic fields only: no screen contents, task names, or app history. */
 object InstagramLockLog {
+    @Volatile var enabled = false
     fun event(name: String, attempt: Long = 0, detail: String = "") {
+        if (!enabled) return
         Log.i("DaylockInstagramLock", "event=$name attempt=$attempt sdk=${Build.VERSION.SDK_INT} $detail")
     }
 }
@@ -32,19 +34,22 @@ object InstagramLockFeedback {
 
     // Called only on DetectionRuntime.worker; cancellation uses the same queue.
     fun reconcile(context: Context) {
+        val selectedTarget = context.getSharedPreferences("daylock.instagram_detection.v1", Context.MODE_PRIVATE)
+            .getString("lockNoticePackage", null)
+        if (!DetectionRuntime.isSelected(selectedTarget)) { cancel(context); return }
         if (!DetectionRuntime.connected || InstagramBlockingPolicy.decide(DetectionRuntime.blockingEnabled,
                 DetectionRuntime.isEnabled(), DetectionRuntime.store.eligibility()) != InstagramRestriction.BLOCK) cancel(context)
     }
 
-    fun show(context: Context, attempt: Long?) {
-        if (!DetectionRuntime.connected || DetectionRuntime.lockVisible ||
-            (attempt != null && (!DetectionRuntime.lockFlow.isCurrent(attempt) || DetectionRuntime.lockFlow.confirmed)) ||
+    fun show(context: Context, attempt: Long?, packageName: String) {
+        if (!DetectionRuntime.canRestrict(packageName) || !DetectionRuntime.connected || DetectionRuntime.lockVisible ||
+            (attempt != null && (!DetectionRuntime.lockFlow.matchesTarget(attempt, packageName) || DetectionRuntime.lockFlow.confirmed)) ||
             InstagramBlockingPolicy.decide(DetectionRuntime.blockingEnabled, DetectionRuntime.isEnabled(),
                 DetectionRuntime.store.eligibility()) != InstagramRestriction.BLOCK) return
         val manager = context.getSystemService(NotificationManager::class.java)
         if (Build.VERSION.SDK_INT >= 26) manager.createNotificationChannel(NotificationChannel(
-            CHANNEL, "Instagram lock notices", NotificationManager.IMPORTANCE_DEFAULT).apply {
-            description = "Explains Instagram blocking when the Daylock lock screen could not be shown"
+            CHANNEL, "App restriction notices", NotificationManager.IMPORTANCE_DEFAULT).apply {
+            description = "Explains selected app restrictions when the Daylock lock screen could not be shown"
         })
         val permitted = NotificationManagerCompat.from(context).areNotificationsEnabled() &&
             (Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) &&
@@ -60,7 +65,7 @@ object InstagramLockFeedback {
             }
         }, reserve = { value ->
             val stamp = JSONObject().put("wall", value.wallMs).put("elapsed", value.elapsedMs).put("boot", value.boot).toString()
-            prefs.edit().putString(STAMP, stamp).commit()
+            prefs.edit().putString(STAMP, stamp).putString("lockNoticePackage", packageName).commit()
         }, post = {
         val tap = PendingIntent.getActivity(context, ID,
             Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
@@ -68,7 +73,7 @@ object InstagramLockFeedback {
         // Direct user-tapped activity PendingIntent. No trampoline, full-screen
         // intent, manual send(), or grant of unrestricted background launch rights.
         manager.notify(ID, NotificationCompat.Builder(context, CHANNEL)
-            .setSmallIcon(R.drawable.ic_stat_daylock).setContentTitle("Instagram is locked")
+            .setSmallIcon(R.drawable.ic_stat_daylock).setContentTitle("${DetectionRuntime.catalog.label(packageName)} is locked")
             .setContentText("Complete your Daylock commitments to earn Freedom.")
             .setStyle(NotificationCompat.BigTextStyle().bigText("Complete your Daylock commitments to earn Freedom."))
             .setContentIntent(tap).setAutoCancel(true).setOnlyAlertOnce(true)

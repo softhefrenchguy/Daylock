@@ -20,6 +20,13 @@ class _Bridge extends InstagramDetectionBridge {
     );
   }
   @override
+  Future<List<InstalledRestrictedApp>> loadInstalledApps() async => [
+    const InstalledRestrictedApp(
+      packageName: 'com.instagram.android',
+      name: 'Instagram',
+    ),
+  ];
+  @override
   Future<void> setBlockingEnabled(bool enabled) async {
     status.value = InstagramDetectionStatus(
       supported: true,

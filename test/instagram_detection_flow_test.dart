@@ -182,7 +182,7 @@ void main() {
         tester,
         find.byKey(const ValueKey('open-accessibility-settings')),
       );
-      expect(find.text('Instagram detection permission'), findsOneWidget);
+      expect(find.text('App restriction permission'), findsOneWidget);
       expect(
         find.textContaining('does not read screen content'),
         findsOneWidget,
@@ -234,7 +234,10 @@ void main() {
         find.text('Accessibility service: enabled and connected'),
         findsOneWidget,
       );
-      expect(find.textContaining('Last Instagram detection:'), findsOneWidget);
+      expect(
+        find.textContaining('Last restricted-app detection:'),
+        findsOneWidget,
+      );
       bridge.status.value = InstagramDetectionStatus(
         supported: true,
         enabled: false,

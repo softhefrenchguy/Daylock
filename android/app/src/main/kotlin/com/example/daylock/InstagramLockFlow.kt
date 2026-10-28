@@ -9,6 +9,8 @@ class InstagramLockFlow {
     }
     @Volatile var attempt = 0L
         private set
+    @Volatile var targetPackage: String? = null
+        private set
     @Volatile var confirmed = false
         private set
     private var pending = false
@@ -17,9 +19,10 @@ class InstagramLockFlow {
     private var drawn = false
     private var lastLaunchMs: Long? = null
 
-    fun begin(id: Long, now: Long): Boolean {
+    fun begin(id: Long, now: Long, packageName: String? = null): Boolean {
         if (pending || lastLaunchMs?.let { now >= it && now - it < LAUNCH_COOLDOWN_MS } == true) return false
         attempt = id
+        targetPackage = packageName
         lastLaunchMs = now
         pending = true
         resumed = false
@@ -28,6 +31,9 @@ class InstagramLockFlow {
         confirmed = false
         return true
     }
+    fun matchesTarget(id: Long, packageName: String?) = isCurrent(id) && packageName != null && packageName == targetPackage
+    fun mayPresent(id: Long, packageName: String?, foregroundPackage: String?) =
+        matchesTarget(id, packageName) && packageName == foregroundPackage
     fun isCurrent(id: Long) = id != 0L && attempt == id
     fun resumed(id: Long) { if (isCurrent(id)) resumed = true }
     fun paused(id: Long) { if (isCurrent(id)) { resumed = false; focused = false } }
@@ -48,6 +54,7 @@ class InstagramLockFlow {
     }
     fun disconnect() {
         attempt = 0
+        targetPackage = null
         pending = false
         resumed = false
         focused = false

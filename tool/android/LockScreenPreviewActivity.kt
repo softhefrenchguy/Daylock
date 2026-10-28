@@ -16,9 +16,14 @@ class LockScreenPreviewActivity : Activity() {
         DetectionRuntime.attach(this)
         DetectionRuntime.worker.execute {
             runOnUiThread {
+                val target = DetectionRuntime.selection.packages.keys.firstOrNull()
+                if (target == null) { finish(); return@runOnUiThread }
+                // Debug-only preview simulates the selected app being foreground.
+                DetectionRuntime.foregroundRestrictedPackage = target
                 val attempt = DetectionRuntime.nextLockAttempt()
-                if (DetectionRuntime.lockFlow.begin(attempt, SystemClock.elapsedRealtime())) {
-                    startActivity(Intent(this, InstagramLockActivity::class.java).putExtra("attempt", attempt))
+                if (DetectionRuntime.lockFlow.begin(attempt, SystemClock.elapsedRealtime(), target)) {
+                    startActivity(Intent(this, InstagramLockActivity::class.java).putExtra("attempt", attempt)
+                        .putExtra("restrictedPackage", target))
                     DetectionRuntime.lockFlow.settle(attempt)
                 }
                 finish()

@@ -102,14 +102,13 @@ object DetectionPolicy {
 
 class InstagramEventGate {
     companion object {
-        const val PACKAGE_NAME = "com.instagram.android"
         const val WINDOW_STATE_CHANGED = 32
         const val COOLDOWN_MS = 3000L
     }
     private var lastAcceptedMs: Long? = null
     fun reset() { lastAcceptedMs = null }
-    fun accept(packageName: String?, eventType: Int, elapsedMs: Long): Boolean {
-        if (packageName != PACKAGE_NAME || eventType != WINDOW_STATE_CHANGED || elapsedMs < 0) return false
+    fun accept(packageName: String?, eventType: Int, elapsedMs: Long, selectedPackages: Set<String>): Boolean {
+        if (packageName == null || packageName !in selectedPackages || eventType != WINDOW_STATE_CHANGED || elapsedMs < 0) return false
         val previous = lastAcceptedMs
         if (previous != null && elapsedMs >= previous && elapsedMs - previous < COOLDOWN_MS) return false
         lastAcceptedMs = elapsedMs
@@ -144,11 +143,12 @@ class InstagramRecoveryGate {
 
 // No app names/history retained. A pending navigation is cancelled on any other window.
 class InstagramForegroundGuard {
-    @Volatile var targetActive = false
+    @Volatile var targetPackage: String? = null
         private set
+    val targetActive get() = targetPackage != null
     @Volatile private var revision = 0L
-    fun observe(isInstagram: Boolean) {
-        if (targetActive != isInstagram) { targetActive = isInstagram; revision++ }
+    fun observe(selectedPackage: String?) {
+        if (targetPackage != selectedPackage) { targetPackage = selectedPackage; revision++ }
     }
     fun token(): Long = revision
     fun matches(token: Long): Boolean = targetActive && revision == token

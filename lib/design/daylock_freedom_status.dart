@@ -190,7 +190,7 @@ class DaylockFreedomStatus extends StatelessWidget {
               ),
             ),
           Text(
-            'Instagram control is configured in Settings.',
+            'App restrictions are configured in Settings.',
             style: theme.textTheme.bodySmall!.copyWith(
               color: colors.onStatusMuted,
             ),

@@ -27,6 +27,7 @@ class InstagramLockActivity : Activity() {
     private val main = Handler(Looper.getMainLooper())
     private var resumed = false
     private var attempt = 0L
+    private var restrictedPackage: String? = null
     private val observer: () -> Unit = { refresh() }
     private val clockBoundary = Runnable { refresh() }
     private var lastRender: String? = null
@@ -36,8 +37,9 @@ class InstagramLockActivity : Activity() {
         super.onCreate(savedInstanceState)
         DetectionRuntime.attach(this)
         attempt = intent.getLongExtra("attempt", 0)
+        restrictedPackage = intent.getStringExtra("restrictedPackage")
         InstagramLockLog.event("activity_created", attempt)
-        if (!DetectionRuntime.lockFlow.isCurrent(attempt)) { finish(); return }
+        if (!DetectionRuntime.lockFlow.mayPresent(attempt, restrictedPackage, DetectionRuntime.foregroundRestrictedPackage)) { finish(); return }
         if (Build.VERSION.SDK_INT >= 30) window.setDecorFitsSystemWindows(false)
         if (Build.VERSION.SDK_INT >= 33) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) { goHome() }
@@ -48,7 +50,8 @@ class InstagramLockActivity : Activity() {
         super.onNewIntent(intent)
         setIntent(intent)
         attempt = intent.getLongExtra("attempt", 0)
-        if (!DetectionRuntime.lockFlow.isCurrent(attempt)) { finish(); return }
+        restrictedPackage = intent.getStringExtra("restrictedPackage")
+        if (!DetectionRuntime.lockFlow.mayPresent(attempt, restrictedPackage, DetectionRuntime.foregroundRestrictedPackage)) { finish(); return }
         lastRender = null // The new attempt needs its own draw acknowledgement.
         if (resumed) {
             DetectionRuntime.lockResumed(attempt)
@@ -59,7 +62,7 @@ class InstagramLockActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
-        if (!DetectionRuntime.lockFlow.isCurrent(attempt)) { finish(); return }
+        if (!DetectionRuntime.lockFlow.mayPresent(attempt, restrictedPackage, DetectionRuntime.foregroundRestrictedPackage)) { finish(); return }
         resumed = true
         DetectionRuntime.addObserver(observer)
         DetectionRuntime.lockResumed(attempt)
@@ -88,13 +91,15 @@ class InstagramLockActivity : Activity() {
         main.removeCallbacks(clockBoundary)
         DetectionRuntime.worker.execute {
             val freedom = DetectionRuntime.store.eligibility()
-            val blocked = InstagramBlockingPolicy.decide(DetectionRuntime.blockingEnabled,
+            val target = restrictedPackage ?: return@execute
+            val appName = DetectionRuntime.catalog.label(target)
+            val blocked = DetectionRuntime.canRestrict(target) && InstagramBlockingPolicy.decide(DetectionRuntime.blockingEnabled,
                 DetectionRuntime.isEnabled(), freedom) == InstagramRestriction.BLOCK
             val appearance = DetectionRuntime.store.lockAppearance()
             main.post {
                 if (!resumed || isFinishing) return@post
-                val signature = "$blocked|${freedom.state}|${freedom.reason}|${freedom.conditions?.toMap()}|$appearance"
-                if (signature != lastRender) { lastRender = signature; render(blocked, freedom, appearance) }
+                val signature = "$blocked|${freedom.state}|${freedom.reason}|${freedom.conditions?.toMap()}|$appearance|$appName"
+                if (signature != lastRender) { lastRender = signature; render(blocked, freedom, appearance, appName) }
                 // Only while this screen is visible. At most one update per minute;
                 // broadcasts/save/permission changes notify us immediately.
                 main.removeCallbacks(clockBoundary)
@@ -104,7 +109,7 @@ class InstagramLockActivity : Activity() {
         }
     }
 
-    private fun render(blocked: Boolean, freedom: NativeFreedomResult, appearance: JSONObject?) {
+    private fun render(blocked: Boolean, freedom: NativeFreedomResult, appearance: JSONObject?, appName: String) {
         val useDark = when (appearance?.optString("mode", "dark")) {
             "light" -> false
             "system" -> resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
@@ -163,14 +168,13 @@ class InstagramLockActivity : Activity() {
         }
         text("DAYLOCK", 13f, accent, true, 8, centered = true)
         body.addView(DaylockLockArtwork(this, accent), LinearLayout.LayoutParams(dp(144), dp(144)).apply { gravity = Gravity.CENTER_HORIZONTAL })
-        val appName = "Instagram" // The only supported app; no installed-app discovery.
         text(if (blocked) "Not yet." else if (freedom.state == "earned") "Freedom earned." else if (freedom.state == "unknown") "Refresh Freedom status." else "Restriction paused.", 36f, ink, true, 8, centered = true)
         text(when {
             blocked -> "You've made a commitment."
             freedom.state == "earned" -> "Your Freedom conditions are satisfied."
             freedom.state == "disabled" -> "Freedom Control is off."
             freedom.state == "unknown" -> "Open Daylock to reconcile your plans."
-            else -> "Instagram blocking or Accessibility access is off."
+            else -> "App restrictions are paused or this app is no longer selected."
         }, 17f, muted, spacing = 12, centered = true)
         text(if (blocked) "$appName is restricted until Freedom is earned."
             else if (freedom.state == "unknown") "$appName is available while recovery is needed."
@@ -227,7 +231,7 @@ class InstagramLockActivity : Activity() {
         body.addView(secondary)
         text("Return Home, disable blocking or change Accessibility access.", 13f, muted)
         button("Return to Home", false, secondary) { goHome() }
-        if (DetectionRuntime.blockingEnabled) button("Disable Instagram blocking", false, secondary) {
+        if (DetectionRuntime.blockingEnabled) button("Disable app restrictions", false, secondary) {
             DetectionRuntime.stateRevision.incrementAndGet()
             DetectionRuntime.worker.execute {
                 val saved = DetectionRuntime.changeBlocking(false)

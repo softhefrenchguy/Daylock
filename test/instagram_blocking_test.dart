@@ -154,7 +154,7 @@ void main() {
       final toggle = find.byKey(const ValueKey('instagram-blocking-enabled'));
       expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
       await tap(tester, toggle);
-      expect(find.text('Enable Instagram blocking?'), findsOneWidget);
+      expect(find.text('Enable app restrictions?'), findsOneWidget);
       await tap(tester, find.text('Cancel'));
       expect(storedChoice, isFalse);
       await tap(tester, toggle);
@@ -188,9 +188,9 @@ void main() {
         ),
       );
       const cases = [
-        ('notEarned', true, 'Instagram restriction ready'),
-        ('earned', true, 'Instagram allowed — Freedom earned'),
-        ('disabled', true, 'Instagram allowed — Freedom Control is off'),
+        ('notEarned', true, 'App restrictions ready'),
+        ('earned', true, 'Selected apps allowed — Freedom earned'),
+        ('disabled', true, 'Selected apps allowed — Freedom Control is off'),
         ('unknown', true, 'Blocking paused'),
         ('notEarned', false, 'waiting for Accessibility'),
       ];
@@ -223,10 +223,7 @@ void main() {
         error: 'Native unavailable',
       );
       await tester.pumpAndSettle();
-      expect(
-        find.text('Instagram blocking status unavailable'),
-        findsOneWidget,
-      );
+      expect(find.text('App restriction status unavailable'), findsOneWidget);
       expect(find.text('Turn blocking off'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       await service.close();
@@ -248,7 +245,7 @@ void main() {
       const messages = {
         'lock_launch_requested': 'display not yet confirmed',
         'lock_fallback_posted': 'Android controls its delivery',
-        'lock_fallback_unavailable': 'Instagram lock notices channel',
+        'lock_fallback_unavailable': 'App restriction notices channel',
       };
       for (final entry in messages.entries) {
         service.status.value = InstagramDetectionStatus(

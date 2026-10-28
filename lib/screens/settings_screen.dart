@@ -176,7 +176,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Instagram is the currently supported restricted app.',
+                    'Choose which supported Android apps to restrict until Freedom is earned.',
                   ),
                 ],
               ),
@@ -190,7 +190,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               mode: DetectionSectionMode.restricted,
             )
           else
-            const Text('Instagram controls are available on Android.'),
+            const Text('App restrictions are available on Android.'),
         ],
         SettingsDestination.diagnostics => [
           if (bridge != null)
@@ -241,11 +241,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     id: 'settings-restricted',
                     icon: Icons.lock_outline_rounded,
                     title: 'Restricted Apps',
-                    subtitle: status.error != null
-                        ? 'Instagram status unavailable'
+                    subtitle:
+                        status.error != null || status.selectionError != null
+                        ? 'App restriction status needs attention'
                         : status.blockingEnabled
-                        ? 'Instagram blocking on'
-                        : 'Instagram blocking off',
+                        ? '${status.selectedPackages.length} selected, switch on'
+                        : '${status.selectedPackages.length} selected, switch off',
                     onTap: () => _open(SettingsDestination.restricted),
                   ),
                   const SizedBox(height: 12),
@@ -272,7 +273,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               id: 'settings-restricted',
               icon: Icons.lock_outline_rounded,
               title: 'Restricted Apps',
-              subtitle: 'Instagram only',
+              subtitle: 'Choose installed Android apps',
               onTap: () => _open(SettingsDestination.restricted),
             ),
         ],
@@ -342,12 +343,13 @@ class SettingsPage extends StatelessWidget {
               children: [
                 const BackButton(),
                 const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.headlineLarge,
+                if (MediaQuery.textScalerOf(context).scale(32) <= 72)
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: Theme.of(context).textTheme.headlineLarge,
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -362,6 +364,14 @@ class SettingsPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        if (MediaQuery.textScalerOf(context).scale(32) >
+                            72) ...[
+                          Text(
+                            title,
+                            style: Theme.of(context).textTheme.headlineLarge,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
                         for (final child in children) ...[
                           child,
                           const SizedBox(height: 12),

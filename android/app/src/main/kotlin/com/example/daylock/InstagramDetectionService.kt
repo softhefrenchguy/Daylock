@@ -18,6 +18,7 @@ class InstagramDetectionService : AccessibilityService() {
     private val recoveryGate = InstagramRecoveryGate()
     private var serviceActive = false
     private var lastEnforcedToken = -1L
+    private var windowRevision = 0L
 
     override fun onCreate() {
         super.onCreate()
@@ -41,42 +42,58 @@ class InstagramDetectionService : AccessibilityService() {
         if (event == null || event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
         // Pane appearance/disappearance/title changes are not app foreground changes.
         if (event.contentChangeTypes != 0) return
-        val target = event.packageName?.toString() == InstagramEventGate.PACKAGE_NAME &&
-            InstagramBlockingPolicy.isForegroundWindow(event.isFullScreen, event.contentChangeTypes)
-        // Only a boolean survives this comparison. Non-Instagram names are not retained.
-        if (!target) {
-            foreground.observe(false)
+        val packageName = event.packageName?.toString()
+        val fullScreen = InstagramBlockingPolicy.isForegroundWindow(event.isFullScreen, event.contentChangeTypes)
+        val revision = ++windowRevision
+        if (!DetectionRuntime.restrictionsReady) {
+            // Startup is queued behind native selection loading. No app history is retained.
+            DetectionRuntime.worker.execute {
+                main.post { if (serviceActive && revision == windowRevision) handleWindow(packageName, fullScreen) }
+            }
+        } else handleWindow(packageName, fullScreen)
+    }
+
+    private fun handleWindow(packageName: String?, fullScreen: Boolean) {
+        val target = packageName?.takeIf { fullScreen && it != this.packageName && DetectionRuntime.isSelected(it) }
+        // Daylock's own Activity can appear while its attempt is being delivered.
+        // Keep the selected target across that transition, but invalidate it for any
+        // other foreground package so a late Activity cannot name the wrong app.
+        if (target == null && packageName == this.packageName) {
+            // Start a fresh session if the user opens a selected app again from Daylock.
+            foreground.observe(null)
             gate.reset()
             return
         }
-        foreground.observe(true)
-        if (!DetectionRuntime.isEnabled()) return
+        if (foreground.targetPackage != target) gate.reset()
+        foreground.observe(target)
+        DetectionRuntime.foregroundRestrictedPackage = target
+        if (target == null || !DetectionRuntime.blockingEnabled || !DetectionRuntime.isEnabled()) return
         // Never access event.text, event.source, rootInActiveWindow or window contents.
-        if (gate.accept(event.packageName?.toString(), event.eventType, SystemClock.elapsedRealtime())) {
-            InstagramLockLog.event("instagram_foreground", detail = "session=${foreground.token()}")
+        if (gate.accept(target, AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED, SystemClock.elapsedRealtime(), DetectionRuntime.selection.packages.keys)) {
+            InstagramLockLog.event("restricted_app_foreground", detail = "session=${foreground.token()}")
             DetectionRuntime.setConnected(true)
             val token = foreground.token()
             DetectionRuntime.worker.execute {
-                if (!foreground.matches(token) || !DetectionRuntime.isEnabled()) return@execute
-                DetectionRuntime.recordDetectionOnWorker()
+                if (!foreground.matches(token) || !DetectionRuntime.isEnabled() || !DetectionRuntime.canRestrict(target)) return@execute
+                DetectionRuntime.recordDetectionOnWorker(target)
                 DetectionRuntime.emit()
             }
-            evaluateAndEnforce(token)
+            evaluateAndEnforce(token, target)
         }
     }
 
-    private fun evaluateAndEnforce(token: Long, retries: Int = 0) {
+    private fun evaluateAndEnforce(token: Long, packageName: String, retries: Int = 0) {
         DetectionRuntime.worker.execute {
-            if (!foreground.matches(token) || !DetectionRuntime.isEnabled()) return@execute
+            if (!foreground.matches(token) || !DetectionRuntime.isEnabled() || !DetectionRuntime.canRestrict(packageName)) return@execute
             val stateRevision = DetectionRuntime.stateRevision.get()
             // Load/validate on the worker. The UI-thread recheck uses the in-memory cache.
             DetectionRuntime.store.eligibility()
             main.post {
                 if (!serviceActive || !foreground.matches(token) || !unlockedAndInteractive() ||
-                    !DetectionRuntime.isEnabled() || DetectionRuntime.lockVisible) return@post
+                    !DetectionRuntime.isEnabled() || !DetectionRuntime.isSelected(packageName) || DetectionRuntime.lockVisible) return@post
                 if (stateRevision != DetectionRuntime.stateRevision.get()) {
                     // One bounded retry behind the queued state write, not a polling loop.
-                    if (retries == 0) evaluateAndEnforce(token, 1)
+                    if (retries == 0) evaluateAndEnforce(token, packageName, 1)
                     return@post
                 }
                 val freedom = DetectionRuntime.store.eligibility()
@@ -85,7 +102,7 @@ class InstagramDetectionService : AccessibilityService() {
                     InstagramRestriction.ALLOW -> recoveryGate.reset()
                     InstagramRestriction.RECOVER -> {
                         if (recoveryGate.offer(DetectionRuntime.store.revision(), DetectionRuntime.store.clock().date, freedom.reason)) {
-                            leaveInstagram(token, stateRevision)
+                            leaveSelectedApp(token, stateRevision, packageName)
                             return@post
                         }
                         DetectionRuntime.reportRestriction("state_unknown")
@@ -95,21 +112,21 @@ class InstagramDetectionService : AccessibilityService() {
                             Toast.makeText(this, "Daylock: blocking paused. Open Daylock to refresh Freedom status.", Toast.LENGTH_LONG).show()
                         }
                     }
-                    InstagramRestriction.BLOCK -> { recoveryGate.reset(); leaveInstagram(token, stateRevision) }
+                    InstagramRestriction.BLOCK -> { recoveryGate.reset(); leaveSelectedApp(token, stateRevision, packageName) }
                 }
             }
         }
     }
 
-    private fun leaveInstagram(token: Long, stateRevision: Long) {
-        // One navigation attempt per observed Instagram foreground session.
+    private fun leaveSelectedApp(token: Long, stateRevision: Long, packageName: String) {
+        // One navigation attempt per observed selected-app foreground session.
         if (lastEnforcedToken == token) return
         lastEnforcedToken = token
         val attempt = DetectionRuntime.nextLockAttempt()
-        if (!DetectionRuntime.lockFlow.begin(attempt, SystemClock.elapsedRealtime())) {
+        if (!DetectionRuntime.lockFlow.begin(attempt, SystemClock.elapsedRealtime(), packageName)) {
             InstagramLockLog.event("launch_throttled", attempt)
-            requestHome(token, stateRevision, attempt)
-            DetectionRuntime.lockFallback(null)
+            requestHome(token, stateRevision, attempt, packageName)
+            DetectionRuntime.lockFallback(null, packageName)
             return
         }
         // Do not issue HOME and startActivity back-to-back: HOME is asynchronous
@@ -120,6 +137,7 @@ class InstagramDetectionService : AccessibilityService() {
             startActivity(Intent(this, InstagramLockActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 putExtra("attempt", attempt)
+                putExtra("restrictedPackage", packageName)
             })
             InstagramLockLog.event("lock_launch_returned", attempt, "visible=unconfirmed")
         } catch (error: Exception) {
@@ -127,12 +145,12 @@ class InstagramDetectionService : AccessibilityService() {
                 "type=${error.javaClass.simpleName} security_exception=${error is SecurityException}")
             DetectionRuntime.reportRestriction("lock_launch_failed")
             DetectionRuntime.lockFlow.settle(attempt)
-            requestHome(token, stateRevision, attempt)
-            DetectionRuntime.lockFallback(attempt)
+            requestHome(token, stateRevision, attempt, packageName)
+            DetectionRuntime.lockFallback(attempt, packageName)
             return
         }
         main.postDelayed({
-            if (DetectionRuntime.lockFlow.needsHome(attempt)) requestHome(token, stateRevision, attempt)
+            if (DetectionRuntime.lockFlow.needsHome(attempt)) requestHome(token, stateRevision, attempt, packageName)
         }, InstagramLockFlow.HOME_GRACE_MS)
         // Silent BAL denial has no app callback on Android 15. A timeout is an
         // observation, not proof of a particular Android/OEM denial reason.
@@ -140,14 +158,14 @@ class InstagramDetectionService : AccessibilityService() {
             if (serviceActive && DetectionRuntime.lockFlow.settle(attempt)) {
                 InstagramLockLog.event("lock_launch_unconfirmed", attempt, "cause=unknown_bal_or_oem_possible")
                 DetectionRuntime.reportRestriction("lock_launch_unconfirmed")
-                DetectionRuntime.lockFallback(attempt)
+                DetectionRuntime.lockFallback(attempt, packageName)
             }
         }, InstagramLockFlow.CONFIRM_MS)
     }
 
-    private fun requestHome(token: Long, revision: Long, attempt: Long) {
+    private fun requestHome(token: Long, revision: Long, attempt: Long, packageName: String) {
         if (!serviceActive || !foreground.matches(token) || !unlockedAndInteractive() ||
-            revision != DetectionRuntime.stateRevision.get() || !DetectionRuntime.isEnabled() ||
+            revision != DetectionRuntime.stateRevision.get() || !DetectionRuntime.isEnabled() || !DetectionRuntime.isSelected(packageName) ||
             InstagramBlockingPolicy.decide(DetectionRuntime.blockingEnabled, true,
                 DetectionRuntime.store.eligibility()) == InstagramRestriction.ALLOW) {
             InstagramLockLog.event("home_skipped", attempt, "reason=foreground_screen_or_state_changed")
@@ -174,7 +192,8 @@ class InstagramDetectionService : AccessibilityService() {
         serviceActive = false
         main.removeCallbacksAndMessages(null)
         InstagramLockLog.event("service_unbound")
-        foreground.observe(false)
+        foreground.observe(null)
+        DetectionRuntime.foregroundRestrictedPackage = null
         DetectionRuntime.setConnected(false)
         return super.onUnbind(intent)
     }
@@ -182,7 +201,8 @@ class InstagramDetectionService : AccessibilityService() {
         serviceActive = false
         main.removeCallbacksAndMessages(null)
         InstagramLockLog.event("service_destroyed")
-        foreground.observe(false)
+        foreground.observe(null)
+        DetectionRuntime.foregroundRestrictedPackage = null
         DetectionRuntime.setConnected(false)
         super.onDestroy()
     }

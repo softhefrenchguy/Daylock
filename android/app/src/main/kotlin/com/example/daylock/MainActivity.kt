@@ -35,20 +35,27 @@ class MainActivity : FlutterActivity() {
                         startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                         result.success(null)
                     } catch (_: Exception) { result.error("SETTINGS_UNAVAILABLE", "Open Android Accessibility Settings manually.", null) }
-                } else if (call.method in listOf("getStatus", "publishSnapshot", "invalidateSnapshot", "setBlockingEnabled", "publishAppearance")) {
-                    if (call.method in listOf("publishSnapshot", "invalidateSnapshot", "setBlockingEnabled")) {
+                } else if (call.method in listOf("getStatus", "publishSnapshot", "invalidateSnapshot", "setBlockingEnabled", "publishAppearance", "getInstalledApps", "setRestrictedApp")) {
+                    if (call.method in listOf("publishSnapshot", "invalidateSnapshot", "setBlockingEnabled", "setRestrictedApp")) {
                         DetectionRuntime.stateRevision.incrementAndGet()
                     }
                     DetectionRuntime.worker.execute {
                         try {
+                            var apps: List<Map<String, Any?>>? = null
                             when (call.method) {
+                                "getInstalledApps" -> apps = DetectionRuntime.refreshApps().map { DetectionRuntime.catalog.row(it) }
+                                "getStatus" -> runCatching { DetectionRuntime.refreshApps() }
+                                "setRestrictedApp" -> {
+                                    val args = call.arguments as Map<*, *>
+                                    DetectionRuntime.selectApp(args["packageName"] as String, args["selected"] as Boolean)
+                                }
                                 "publishSnapshot" -> check(DetectionRuntime.store.publish(call.arguments as Map<*, *>))
                                 "invalidateSnapshot" -> check(DetectionRuntime.store.invalidate("planner_refresh_required"))
                                 "setBlockingEnabled" -> check(DetectionRuntime.changeBlocking((call.arguments as Map<*, *>)["enabled"] as Boolean))
                                 "publishAppearance" -> check(DetectionRuntime.store.publishAppearance(call.arguments as Map<*, *>))
                             }
                             val status = DetectionRuntime.status()
-                            main.post { result.success(status) }
+                            main.post { result.success(if (apps == null) status else mapOf("status" to status, "apps" to apps)) }
                             DetectionRuntime.emit()
                         } catch (it: Exception) {
                             if (call.method in listOf("publishSnapshot", "invalidateSnapshot") && it !is NativeRevisionConflict) DetectionRuntime.store.invalidate("save_failed")

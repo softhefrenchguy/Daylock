@@ -19,6 +19,11 @@ class DetectionStore(private val context: Context) {
         hasLegacySnapshot = { preferences.contains("snapshot") },
     )
 
+    fun selectionRepository(catalog: RestrictedAppCatalog) = RestrictedAppsRepository(
+        read = { preferences.getString("restrictedApps.v1", null) },
+        write = { preferences.edit().putString("restrictedApps.v1", it).commit() },
+        legacyEnabled = { blockingEnabled() }, installedAt = { catalog.installedAt(it) })
+
     fun clock(): DetectionClock {
         val wall = System.currentTimeMillis()
         val zone = TimeZone.getDefault()
@@ -52,12 +57,12 @@ class DetectionStore(private val context: Context) {
         preferences.getString("lockAppearance", null)?.let { JSONObject(it) }
     }.getOrNull()
 
-    fun recordDetection(): Boolean {
+    fun recordDetection(packageName: String): Boolean {
         val now = clock()
         val result = eligibility(now)
         // One overwritten record, no package history, screen text or node content.
         val json = JSONObject().apply {
-            put("detectedAtMs", now.wallMs)
+            put("detectedAtMs", now.wallMs); put("packageName", packageName)
             put("freedomState", result.state); put("freedomReason", result.reason)
         }
         return preferences.edit().putString("lastDetection", json.toString()).commit()
@@ -66,7 +71,7 @@ class DetectionStore(private val context: Context) {
     fun lastDetection(): Map<String, Any?>? = try {
         preferences.getString("lastDetection", null)?.let {
             val json = JSONObject(it)
-            mapOf("detectedAtMs" to json.getLong("detectedAtMs"), "freedomState" to json.getString("freedomState"),
+            mapOf("packageName" to json.optString("packageName", RestrictedAppsRepository.LEGACY_INSTAGRAM), "detectedAtMs" to json.getLong("detectedAtMs"), "freedomState" to json.getString("freedomState"),
                 "freedomReason" to json.getString("freedomReason"))
         }
     } catch (_: Exception) { null }

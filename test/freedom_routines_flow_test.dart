@@ -176,7 +176,7 @@ void main() {
       expect(find.byTooltip('Freedom earned'), findsOneWidget);
       await _tap(tester, _key('freedom-indicator'));
       expect(
-        find.text('Instagram control is configured in Settings.'),
+        find.text('App restrictions are configured in Settings.'),
         findsOneWidget,
       );
       now = DateTime(2026, 10, 13, 17);

@@ -79,27 +79,27 @@ class InstagramBlockingPolicyTest {
     }
     @Test fun repeatedTargetEventsDoNotCreateNewForegroundSessions() {
         val scope = InstagramForegroundGuard()
-        scope.observe(true)
+        scope.observe("com.instagram.android")
         val token = scope.token()
-        repeat(100) { scope.observe(true) }
+        repeat(100) { scope.observe("com.instagram.android") }
         assertTrue(scope.matches(token))
     }
     @Test fun switchingToAnyOtherApplicationCancelsPendingNavigation() {
         val scope = InstagramForegroundGuard()
-        scope.observe(true)
+        scope.observe("com.instagram.android")
         val token = scope.token()
-        scope.observe(false)
+        scope.observe(null)
         assertFalse(scope.matches(token))
-        scope.observe(true)
+        scope.observe("com.instagram.android")
         assertFalse(scope.matches(token))
         assertTrue(scope.matches(scope.token()))
     }
     @Test fun quickReentryFromHomeOrLockScreenIsNotSuppressedByOldCooldown() {
         val gate = InstagramEventGate()
-        assertTrue(gate.accept(InstagramEventGate.PACKAGE_NAME, 32, 1000))
-        assertFalse(gate.accept(InstagramEventGate.PACKAGE_NAME, 32, 1100))
+        assertTrue(gate.accept(RestrictedAppsRepository.LEGACY_INSTAGRAM, 32, 1000, setOf("com.instagram.android")))
+        assertFalse(gate.accept(RestrictedAppsRepository.LEGACY_INSTAGRAM, 32, 1100, setOf("com.instagram.android")))
         gate.reset()
-        assertTrue(gate.accept(InstagramEventGate.PACKAGE_NAME, 32, 1200))
+        assertTrue(gate.accept(RestrictedAppsRepository.LEGACY_INSTAGRAM, 32, 1200, setOf("com.instagram.android")))
     }
     @Test fun serviceRestartBeginsWithNoForegroundOrNavigationAuthority() {
         val scope = InstagramForegroundGuard()
