@@ -80,6 +80,8 @@ void main() {
         initial.toJson(),
       );
       await tap(tester, find.byTooltip('Settings'));
+      await tap(tester, find.byKey(const ValueKey('settings-freedom')));
+      await tap(tester, find.byKey(const ValueKey('settings-diagnostics')));
       expect(find.byType(InstagramDetectionSection), findsOneWidget);
       expect(find.text('Accessibility service: disabled'), findsOneWidget);
     },

@@ -121,6 +121,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byTooltip('Freedom Control is off'), findsOneWidget);
       await _tap(tester, find.byTooltip('Settings'));
+      await _tap(tester, _key('settings-freedom'));
       await _tap(tester, _key('freedom-enabled'));
       expect(
         tester.widget<SwitchListTile>(_key('freedom-enabled')).value,
@@ -155,6 +156,7 @@ void main() {
             .toJson(),
         saved.freedomSettings.toJson(),
       );
+      await _tap(tester, _key('settings-freedom'));
       await _tap(tester, _key('freedom-enabled'));
       expect((await _saved(tester)).freedomSettings.enabled, isFalse);
     },
@@ -412,6 +414,7 @@ void main() {
       await tester.pumpWidget(MainApp(now: () => _date));
       await tester.pumpAndSettle();
       await _tap(tester, find.byTooltip('Settings'));
+      await _tap(tester, _key('settings-planning'));
       await _tap(tester, _key('manage-routines'));
       await _tap(tester, _key('create-routine'));
       expect(
@@ -478,6 +481,7 @@ void main() {
       await _tap(tester, _key('routine-accept-training'));
       await _page(tester, 'Today');
       await _tap(tester, find.byTooltip('Settings'));
+      await _tap(tester, _key('settings-planning'));
       await _tap(tester, _key('manage-routines'));
       await _tap(tester, _key('delete-routine-training'));
       await _tap(
@@ -559,8 +563,12 @@ void main() {
         ),
       ),
     );
+    await _tap(tester, _key('settings-freedom'));
     await _tap(tester, _key('freedom-enabled'));
     expect(settings.enabled, isTrue);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await _tap(tester, _key('settings-planning'));
     await _tap(tester, _key('manage-routines'));
     expect(tester.takeException(), isNull);
   });

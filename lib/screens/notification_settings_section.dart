@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../design/daylock_widgets.dart';
 import '../design/daylock_theme.dart';
+import '../design/journey_surface.dart';
 import '../models/notification_preferences.dart';
 import '../services/notifications/notification_service.dart';
 
@@ -78,7 +79,11 @@ class NotificationSettingsSection extends StatelessWidget {
               'Scheduled notifications unavailable',
           }, key: const ValueKey('notification-status')),
           const SizedBox(height: DaylockSpace.sm),
-          Text(status.explanation),
+          ExpansionTile(
+            title: const Text('Permission help'),
+            tilePadding: EdgeInsets.zero,
+            children: [Text(status.explanation)],
+          ),
           if (supported) ...[
             const SizedBox(height: DaylockSpace.sm),
             OutlinedButton.icon(
@@ -97,32 +102,69 @@ class NotificationSettingsSection extends StatelessWidget {
               ),
             ),
           ],
-          toggle(
-            'plan',
-            'Plan Tomorrow',
-            preferences.planTomorrow,
-            (v) => onChanged(preferences.copyWith(planTomorrow: v)),
+          const SizedBox(height: 12),
+          JourneySurface(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Column(
+                children: [
+                  toggle(
+                    'plan',
+                    'Plan Tomorrow',
+                    preferences.planTomorrow,
+                    (v) => onChanged(preferences.copyWith(planTomorrow: v)),
+                  ),
+                  time(
+                    'plan',
+                    preferences.planMinute,
+                    preferences.planTomorrow,
+                    true,
+                  ),
+                ],
+              ),
+            ),
           ),
-          time('plan', preferences.planMinute, preferences.planTomorrow, true),
-          toggle(
-            'commitments',
-            'Commitment Reminder',
-            preferences.commitments,
-            (v) => onChanged(preferences.copyWith(commitments: v)),
+          const SizedBox(height: 12),
+          JourneySurface(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Column(
+                children: [
+                  toggle(
+                    'commitments',
+                    'Commitment Reminder',
+                    preferences.commitments,
+                    (v) => onChanged(preferences.copyWith(commitments: v)),
+                  ),
+                  time(
+                    'commitments',
+                    preferences.commitmentMinute,
+                    preferences.commitments,
+                    false,
+                  ),
+                ],
+              ),
+            ),
           ),
-          time(
-            'commitments',
-            preferences.commitmentMinute,
-            preferences.commitments,
-            false,
+          const SizedBox(height: 12),
+          JourneySurface(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                children: [
+                  toggle(
+                    'freedom',
+                    'Freedom Notifications',
+                    preferences.freedom,
+                    (v) => onChanged(preferences.copyWith(freedom: v)),
+                  ),
+                  const Text(
+                    'Uses Freedom Time when Freedom Control is enabled.',
+                  ),
+                ],
+              ),
+            ),
           ),
-          toggle(
-            'freedom',
-            'Freedom Notifications',
-            preferences.freedom,
-            (v) => onChanged(preferences.copyWith(freedom: v)),
-          ),
-          const Text('Uses Freedom Time when Freedom Control is enabled.'),
         ],
       );
     },

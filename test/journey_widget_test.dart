@@ -262,6 +262,7 @@ void main() {
       expect(find.text('A new chapter'), findsOneWidget);
       await navigateApp(tester, 'Today');
       await tap(tester, find.byTooltip('Settings'));
+      await tap(tester, find.byKey(const ValueKey('settings-appearance')));
       await tap(tester, find.byKey(const ValueKey('manage-areas')));
       await tap(tester, find.byKey(ValueKey('archive-area-${area.id}')));
       await navigateApp(tester, 'Journey');

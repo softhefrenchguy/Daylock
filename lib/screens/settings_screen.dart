@@ -1,8 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../services/freedom_service.dart';
+import '../design/daylock_illustrations.dart';
+import '../design/journey_surface.dart';
+import 'appearance_settings_content.dart';
+export 'appearance_settings_content.dart' show AppearancePreview;
+
 import '../design/appearance_preferences.dart';
-import '../design/daylock_palette.dart';
-import '../design/daylock_theme.dart';
 import '../design/daylock_widgets.dart';
 import '../models/freedom_settings.dart';
 import '../services/instagram_detection_bridge.dart';
@@ -11,7 +17,8 @@ import '../models/notification_preferences.dart';
 import '../services/notifications/notification_service.dart';
 import 'notification_settings_section.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
+  final FreedomEligibility Function()? readFreedom;
   final AppearancePreferences preferences;
   final ValueChanged<AppearancePreferences> onChanged;
   final FreedomSettings freedomSettings;
@@ -26,6 +33,7 @@ class SettingsScreen extends StatelessWidget {
   final NotificationService? notificationService;
   const SettingsScreen({
     super.key,
+    this.readFreedom,
     required this.preferences,
     required this.onChanged,
     this.freedomSettings = const FreedomSettings(),
@@ -40,465 +48,456 @@ class SettingsScreen extends StatelessWidget {
     this.notificationService,
   });
 
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+enum SettingsDestination {
+  freedom,
+  planning,
+  appearance,
+  notifications,
+  about,
+  restricted,
+  diagnostics,
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  final _revision = ValueNotifier(0);
+  Timer? _clock;
+  @override
+  void initState() {
+    super.initState();
+    // Presentation only: re-read existing eligibility while Settings is open.
+    _clock = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted && widget.readFreedom != null) _revision.value++;
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant SettingsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _revision.value++;
+    });
+  }
+
+  @override
+  void dispose() {
+    _clock?.cancel();
+    _revision.dispose();
+    super.dispose();
+  }
+
+  void _open(SettingsDestination destination) => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      settings: RouteSettings(name: '/settings/${destination.name}'),
+      builder: (context) => ValueListenableBuilder<int>(
+        valueListenable: _revision,
+        builder: (context, _, _) => _page(destination),
+      ),
+    ),
+  );
+
   Future<void> _chooseFreedomTime(BuildContext context) async {
+    final current = widget.freedomSettings;
     final time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay(
-        hour: freedomSettings.hour,
-        minute: freedomSettings.minute,
-      ),
+      initialTime: TimeOfDay(hour: current.hour, minute: current.minute),
     );
-    if (context.mounted && time != null) {
-      onFreedomChanged?.call(
-        freedomSettings.copyWith(hour: time.hour, minute: time.minute),
+    if (mounted && time != null) {
+      widget.onFreedomChanged?.call(
+        widget.freedomSettings.copyWith(hour: time.hour, minute: time.minute),
       );
     }
   }
 
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Settings')),
-    body: SafeArea(
-      top: false,
-      child: SingleChildScrollView(
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 640),
+  Widget _page(SettingsDestination destination) {
+    final s = widget;
+    final bridge = s.detectionBridge;
+    return SettingsPage(
+      title: switch (destination) {
+        SettingsDestination.freedom => 'Freedom Control',
+        SettingsDestination.planning => 'Planning & Routines',
+        SettingsDestination.appearance => 'Appearance',
+        SettingsDestination.notifications => 'Notifications',
+        SettingsDestination.about => 'About',
+        SettingsDestination.restricted => 'Restricted Apps',
+        SettingsDestination.diagnostics => 'Permissions & Diagnostics',
+      },
+      children: switch (destination) {
+        SettingsDestination.appearance => [
+          AppearanceSettingsContent(
+            preferences: s.preferences,
+            onChanged: s.onChanged,
+            areaCount: s.areaCount,
+            onAreasRequested: s.onAreasRequested,
+          ),
+        ],
+        SettingsDestination.planning => [
+          SettingsNavigationCard(
+            id: 'manage-routines',
+            icon: Icons.checklist_rounded,
+            title: 'Manage routines',
+            subtitle: '${s.routineCount} routines',
+            onTap: s.onRoutinesRequested,
+          ),
+          const Text(
+            'Plan your next steps with recurring commitments.',
+            style: TextStyle(height: 1.5),
+          ),
+        ],
+        SettingsDestination.notifications => [
+          if (s.notificationService != null && s.onNotificationsChanged != null)
+            NotificationSettingsSection(
+              preferences: s.notificationPreferences,
+              onChanged: s.onNotificationsChanged!,
+              service: s.notificationService!,
+            )
+          else
+            const Text('Notification controls are unavailable on this device.'),
+        ],
+        SettingsDestination.about => [
+          JourneySurface(
             child: Padding(
-              padding: const EdgeInsets.all(DaylockSpace.lg),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const DaylockLabel('APPEARANCE'),
-                  const SizedBox(height: DaylockSpace.sm),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final stacked =
-                          constraints.maxWidth < 280 ||
-                          MediaQuery.textScalerOf(context).scale(14) > 20;
-                      final choices = [
-                        for (final mode in AppearanceMode.values)
-                          _AppearanceChoice(
-                            mode: mode,
-                            selected: preferences.mode == mode,
-                            stacked: stacked,
-                            onTap: () =>
-                                onChanged(preferences.copyWith(mode: mode)),
-                          ),
-                      ];
-                      return stacked
-                          ? Column(
-                              children: [
-                                for (final choice in choices)
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      bottom: DaylockSpace.sm,
-                                    ),
-                                    child: choice,
-                                  ),
-                              ],
-                            )
-                          : Row(
-                              children: [
-                                for (var i = 0; i < choices.length; i++) ...[
-                                  if (i > 0)
-                                    const SizedBox(width: DaylockSpace.sm),
-                                  Expanded(child: choices[i]),
-                                ],
-                              ],
-                            );
-                    },
-                  ),
-                  const SizedBox(height: DaylockSpace.sm),
+                  const DaylockLabel('DAYLOCK'),
+                  const SizedBox(height: 10),
                   Text(
-                    preferences.mode == AppearanceMode.system
-                        ? 'Follows your device appearance.'
-                        : '${preferences.mode.label} appearance, in any device mode.',
-                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                    'Keep your word.',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  const SizedBox(height: DaylockSpace.xl),
-                  const DaylockLabel('COLOUR THEME'),
-                  const SizedBox(height: DaylockSpace.md),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final columns =
-                          MediaQuery.textScalerOf(context).scale(14) > 20 &&
-                              constraints.maxWidth < 560
-                          ? 1
-                          : 2;
-                      final width =
-                          (constraints.maxWidth -
-                              DaylockSpace.sm * (columns - 1)) /
-                          columns;
-                      return Wrap(
-                        spacing: DaylockSpace.sm,
-                        runSpacing: DaylockSpace.sm,
-                        children: [
-                          for (final colour in ColourTheme.values)
-                            SizedBox(
-                              width: width,
-                              child: _PaletteChoice(
-                                colour: colour,
-                                selected: preferences.colour == colour,
-                                onTap: () => onChanged(
-                                  preferences.copyWith(colour: colour),
-                                ),
-                              ),
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: DaylockSpace.xl),
-                  const DaylockLabel('LIVE PREVIEW'),
-                  const SizedBox(height: DaylockSpace.md),
-                  const AppearancePreview(),
-                  const SizedBox(height: DaylockSpace.xl),
-                  const DaylockLabel('FREEDOM'),
-                  SwitchListTile(
-                    key: const ValueKey('freedom-enabled'),
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Freedom Control'),
-                    value: freedomSettings.enabled,
-                    onChanged: onFreedomChanged == null
-                        ? null
-                        : (value) => onFreedomChanged!(
-                            freedomSettings.copyWith(enabled: value),
-                          ),
-                  ),
-                  ListTile(
-                    key: const ValueKey('freedom-time'),
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Freedom Time'),
-                    subtitle: Text(freedomSettings.timeLabel),
-                    trailing: const Icon(Icons.schedule_outlined),
-                    onTap: onFreedomChanged == null
-                        ? null
-                        : () => _chooseFreedomTime(context),
-                  ),
+                  const SizedBox(height: 8),
                   const Text(
-                    'Freedom requires the configured time, completed eligible Today commitments, and a committed tomorrow plan. Instagram blocking is a separate control below.',
+                    'Commitments, optional stopwatches and progress in the areas that matter.',
                   ),
-                  const SizedBox(height: DaylockSpace.xl),
-                  const DaylockLabel('ROUTINES'),
-                  ListTile(
-                    key: const ValueKey('manage-routines'),
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Manage routines'),
-                    subtitle: Text('$routineCount routines'),
-                    trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: onRoutinesRequested,
-                  ),
-                  if (detectionBridge != null) ...[
-                    const SizedBox(height: DaylockSpace.xl),
-                    InstagramDetectionSection(bridge: detectionBridge!),
-                  ],
-                  if (notificationService != null &&
-                      onNotificationsChanged != null) ...[
-                    const SizedBox(height: DaylockSpace.xl),
-                    NotificationSettingsSection(
-                      preferences: notificationPreferences,
-                      onChanged: onNotificationsChanged!,
-                      service: notificationService!,
-                    ),
-                  ],
-                  const SizedBox(height: DaylockSpace.xl),
-                  const DaylockLabel('AREAS'),
-                  ListTile(
-                    key: const ValueKey('manage-areas'),
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Manage Areas'),
-                    subtitle: Text('$areaCount active Areas'),
-                    trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: onAreasRequested,
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Instagram is the currently supported restricted app.',
                   ),
                 ],
               ),
             ),
           ),
+        ],
+        SettingsDestination.restricted => [
+          if (bridge != null)
+            InstagramDetectionSection(
+              bridge: bridge,
+              mode: DetectionSectionMode.restricted,
+            )
+          else
+            const Text('Instagram controls are available on Android.'),
+        ],
+        SettingsDestination.diagnostics => [
+          if (bridge != null)
+            InstagramDetectionSection(
+              bridge: bridge,
+              mode: DetectionSectionMode.diagnostics,
+            )
+          else
+            const Text('Accessibility diagnostics are available on Android.'),
+        ],
+        SettingsDestination.freedom => [
+          _FreedomSettingsHero(
+            eligibility: s.readFreedom?.call(),
+            settings: s.freedomSettings,
+          ),
+          JourneySurface(
+            child: Column(
+              children: [
+                SwitchListTile(
+                  key: const ValueKey('freedom-enabled'),
+                  title: const Text('Freedom Control'),
+                  value: s.freedomSettings.enabled,
+                  onChanged: s.onFreedomChanged == null
+                      ? null
+                      : (value) => s.onFreedomChanged!(
+                          s.freedomSettings.copyWith(enabled: value),
+                        ),
+                ),
+                const Divider(indent: 16, endIndent: 16),
+                ListTile(
+                  key: const ValueKey('freedom-time'),
+                  title: const Text('Freedom Time'),
+                  subtitle: Text(s.freedomSettings.timeLabel),
+                  trailing: const Icon(Icons.schedule_outlined),
+                  onTap: s.onFreedomChanged == null
+                      ? null
+                      : () => _chooseFreedomTime(context),
+                ),
+              ],
+            ),
+          ),
+          if (bridge != null)
+            ValueListenableBuilder<InstagramDetectionStatus>(
+              valueListenable: bridge.status,
+              builder: (context, status, _) => Column(
+                children: [
+                  SettingsNavigationCard(
+                    id: 'settings-restricted',
+                    icon: Icons.lock_outline_rounded,
+                    title: 'Restricted Apps',
+                    subtitle: status.error != null
+                        ? 'Instagram status unavailable'
+                        : status.blockingEnabled
+                        ? 'Instagram blocking on'
+                        : 'Instagram blocking off',
+                    onTap: () => _open(SettingsDestination.restricted),
+                  ),
+                  const SizedBox(height: 12),
+                  SettingsNavigationCard(
+                    id: 'settings-diagnostics',
+                    icon: Icons.accessibility_new_rounded,
+                    title: 'Accessibility',
+                    subtitle: status.error != null
+                        ? 'Status unavailable'
+                        : !status.supported
+                        ? 'Available on Android'
+                        : status.connected
+                        ? 'Service connected'
+                        : status.enabled
+                        ? 'Waiting for connection'
+                        : 'Service disabled',
+                    onTap: () => _open(SettingsDestination.diagnostics),
+                  ),
+                ],
+              ),
+            )
+          else
+            SettingsNavigationCard(
+              id: 'settings-restricted',
+              icon: Icons.lock_outline_rounded,
+              title: 'Restricted Apps',
+              subtitle: 'Instagram only',
+              onTap: () => _open(SettingsDestination.restricted),
+            ),
+        ],
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => SettingsPage(
+    title: 'Settings',
+    children: [
+      for (final item in const [
+        (
+          SettingsDestination.freedom,
+          Icons.lock_outline_rounded,
+          'Freedom Control',
+          'Restricted apps, Freedom Time and permissions',
         ),
+        (
+          SettingsDestination.planning,
+          Icons.checklist_rounded,
+          'Planning & Routines',
+          'Recurring commitments and planning',
+        ),
+        (
+          SettingsDestination.appearance,
+          Icons.palette_outlined,
+          'Appearance',
+          'Theme, colours and Areas',
+        ),
+        (
+          SettingsDestination.notifications,
+          Icons.notifications_outlined,
+          'Notifications',
+          'Reminders and alerts',
+        ),
+        (
+          SettingsDestination.about,
+          Icons.info_outline_rounded,
+          'About',
+          'App information',
+        ),
+      ])
+        SettingsNavigationCard(
+          id: 'settings-${item.$1.name}',
+          icon: item.$2,
+          title: item.$3,
+          subtitle: item.$4,
+          onTap: () => _open(item.$1),
+        ),
+    ],
+  );
+}
+
+class SettingsPage extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+  const SettingsPage({super.key, required this.title, required this.children});
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: SafeArea(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 20, 16),
+            child: Row(
+              children: [
+                const BackButton(),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.headlineLarge,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 640),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final child in children) ...[
+                          child,
+                          const SizedBox(height: 12),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     ),
   );
 }
 
-class _AppearanceChoice extends StatelessWidget {
-  final AppearanceMode mode;
-  final bool selected, stacked;
-  final VoidCallback onTap;
-  const _AppearanceChoice({
-    required this.mode,
-    required this.selected,
-    required this.stacked,
-    required this.onTap,
+class SettingsNavigationCard extends StatelessWidget {
+  final String id, title, subtitle;
+  final IconData icon;
+  final VoidCallback? onTap;
+  const SettingsNavigationCard({
+    super.key,
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    this.onTap,
   });
-
   @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final icon = Icon(
-      switch (mode) {
-        AppearanceMode.dark => Icons.dark_mode_outlined,
-        AppearanceMode.light => Icons.light_mode_outlined,
-        AppearanceMode.system => Icons.brightness_auto_outlined,
-      },
-      color: selected ? scheme.primary : scheme.onSurfaceVariant,
-      size: 24,
-    );
-    final label = Text(
-      mode.label,
-      style: Theme.of(context).textTheme.labelLarge,
-    );
-    return _SelectableSurface(
-      key: ValueKey('appearance-${mode.name}'),
-      selected: selected,
-      onTap: onTap,
-      child: stacked
-          ? Row(
-              children: [
-                icon,
-                const SizedBox(width: DaylockSpace.md),
-                Expanded(child: label),
-                if (selected)
-                  Icon(
-                    Icons.check_rounded,
-                    color: scheme.primary,
-                    size: DaylockSpace.icon,
-                  ),
-              ],
-            )
-          : Column(
-              children: [
-                icon,
-                const SizedBox(height: DaylockSpace.sm),
-                label,
-              ],
-            ),
-    );
-  }
-}
-
-class _PaletteChoice extends StatelessWidget {
-  final ColourTheme colour;
-  final bool selected;
-  final VoidCallback onTap;
-  const _PaletteChoice({
-    required this.colour,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final palette = DaylockPalettes.scheme(
-      colour,
-      Theme.of(context).brightness,
-    );
-    return _SelectableSurface(
-      key: ValueKey('colour-${colour.name}'),
-      selected: selected,
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) => JourneySurface(
+    key: ValueKey(id),
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  colour.label,
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
-              ),
-              const SizedBox(width: DaylockSpace.xs),
-              Icon(
-                selected ? Icons.check_circle_rounded : Icons.circle_outlined,
-                size: DaylockSpace.icon,
-                color: selected ? scheme.primary : scheme.outline,
-              ),
-            ],
-          ),
-          const SizedBox(height: DaylockSpace.md),
-          ExcludeSemantics(
-            child: Row(
+          Icon(icon, size: 24, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (final color in [
-                  palette.primary,
-                  palette.surface,
-                  palette.surfaceContainerHigh,
-                ])
-                  Padding(
-                    padding: const EdgeInsets.only(right: DaylockSpace.sm),
-                    child: Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: scheme.outline),
-                      ),
-                    ),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium!
+                      .copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
+                ),
               ],
             ),
           ),
+          const SizedBox(width: 8),
+          const Icon(Icons.chevron_right_rounded, size: 20),
         ],
       ),
-    );
-  }
+    ),
+  );
 }
 
-class _SelectableSurface extends StatelessWidget {
-  final bool selected;
-  final VoidCallback onTap;
-  final Widget child;
-  const _SelectableSurface({
-    super.key,
-    required this.selected,
-    required this.onTap,
-    required this.child,
+class _FreedomSettingsHero extends StatelessWidget {
+  final FreedomEligibility? eligibility;
+  final FreedomSettings settings;
+  const _FreedomSettingsHero({
+    required this.eligibility,
+    required this.settings,
   });
-
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final radius = BorderRadius.circular(DaylockSpace.radius);
-    return Semantics(
-      button: true,
-      selected: selected,
-      inMutuallyExclusiveGroup: true,
-      child: Material(
-        color: selected
-            ? DaylockColors.of(context).focusSurface
-            : scheme.surfaceContainerLow,
-        borderRadius: radius,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: radius,
-          child: AnimatedContainer(
-            duration: daylockMotion(context),
-            constraints: const BoxConstraints(minHeight: 52),
-            padding: const EdgeInsets.all(DaylockSpace.md),
-            decoration: BoxDecoration(
-              borderRadius: radius,
-              border: Border.all(
-                color: selected ? scheme.primary : scheme.outlineVariant,
-                width: selected ? 1.5 : 1,
-              ),
+    final e = eligibility;
+    final waiting =
+        e != null &&
+        e.settings.enabled &&
+        e.currentPlans &&
+        !e.timeReached &&
+        e.commitmentsCompleted &&
+        e.tomorrowCommitted;
+    final title = !settings.enabled
+        ? 'Freedom Control is off'
+        : e == null
+        ? 'Freedom status unavailable'
+        : e.earned
+        ? 'Freedom earned'
+        : waiting
+        ? 'Waiting for Freedom Time'
+        : 'Freedom not yet earned';
+    final colors = Theme.of(context).colorScheme;
+    return JourneySurface(
+      emphasized: true,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DaylockLabel('FREEDOM', color: colors.primary),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Freedom Time \u00b7 ${settings.timeLabel}',
+                        style: Theme.of(context).textTheme.bodyMedium!
+                            .copyWith(color: colors.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 76,
+                  child: DaylockIllustration(
+                    accent: colors.primary,
+                    lockIcon: e?.earned == true
+                        ? Icons.lock_open_rounded
+                        : waiting
+                        ? Icons.schedule_rounded
+                        : Icons.lock_outline_rounded,
+                  ),
+                ),
+              ],
             ),
-            child: child,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Presentation only. This preview has no Task instances, timers or save callbacks.
-class AppearancePreview extends StatelessWidget {
-  const AppearancePreview({super.key});
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final semantic = DaylockColors.of(context);
-    final text = Theme.of(context).textTheme;
-    return Semantics(
-      label: 'Appearance preview. Example commitment styling.',
-      child: ExcludeSemantics(
-        child: Container(
-          key: const ValueKey('appearance-preview'),
-          width: double.infinity,
-          padding: const EdgeInsets.all(DaylockSpace.md),
-          decoration: BoxDecoration(
-            color: scheme.surface,
-            border: Border.all(color: scheme.outlineVariant),
-            borderRadius: BorderRadius.circular(DaylockSpace.radius),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: DaylockSpace.sm,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text('Today', style: text.titleLarge),
-                  Text(
-                    '1 / 2 complete',
-                    style: text.bodyMedium!.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: DaylockSpace.md),
-              const DaylockProgress(value: 0.5, label: 'Example progress'),
-              const SizedBox(height: DaylockSpace.md),
-              Row(
-                children: [
-                  Icon(
-                    Icons.check_box_rounded,
-                    color: scheme.primary,
-                    size: 24,
-                  ),
-                  const SizedBox(width: DaylockSpace.sm),
-                  Expanded(
-                    child: Text('Keep your word.', style: text.labelLarge),
-                  ),
-                ],
-              ),
-              const SizedBox(height: DaylockSpace.md),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(DaylockSpace.md),
-                decoration: BoxDecoration(
-                  color: semantic.focusActiveSurface,
-                  border: Border.all(color: scheme.primary),
-                  borderRadius: BorderRadius.circular(DaylockSpace.radius),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          DaylockLabel('FOCUS', color: scheme.primary),
-                          const SizedBox(height: DaylockSpace.xs),
-                          Text('23 / 60 min', style: text.labelLarge),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: DaylockSpace.sm),
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: scheme.primary,
-                        borderRadius: BorderRadius.circular(DaylockSpace.sm),
-                      ),
-                      child: Icon(
-                        Icons.pause_rounded,
-                        color: scheme.onPrimary,
-                        size: 24,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: DaylockSpace.md),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(DaylockSpace.md),
-                decoration: BoxDecoration(
-                  color: semantic.statusSurface,
-                  borderRadius: BorderRadius.circular(DaylockSpace.radius),
-                ),
-                child: DaylockLabel('FREEDOM', color: semantic.statusAccent),
-              ),
-            ],
-          ),
+          ],
         ),
       ),
     );

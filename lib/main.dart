@@ -418,6 +418,12 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         builder: (context, preferences, _) => ValueListenableBuilder<int>(
           valueListenable: _planningChanges,
           builder: (context, revision, _) => SettingsScreen(
+            readFreedom: () => const FreedomService().evaluate(
+              now: _now(),
+              settings: freedomSettings,
+              todayPlan: todayPlan,
+              tomorrowPlan: tomorrowPlan,
+            ),
             preferences: preferences,
             onChanged: _changeAppearance,
             freedomSettings: freedomSettings,

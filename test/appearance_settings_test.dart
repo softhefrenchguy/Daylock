@@ -25,7 +25,7 @@ import 'calendar_test_fixtures.dart';
 final _now = DateTime(2026, 10, 8, 9);
 Finder _choice(String name) => find.byKey(ValueKey(name));
 ThemeData _theme(WidgetTester tester) =>
-    Theme.of(tester.element(find.byType(SettingsScreen)));
+    Theme.of(tester.element(find.byType(SettingsScreen, skipOffstage: false)));
 Future<void> _tap(
   WidgetTester tester,
   Finder finder, {
@@ -70,14 +70,17 @@ void main() {
         hasLength(3),
       );
       await _tap(tester, find.byTooltip('Settings'));
+      await _tap(tester, _choice('settings-appearance'));
       final settings = tester.widget<SettingsScreen>(
-        find.byType(SettingsScreen),
+        find.byType(SettingsScreen, skipOffstage: false),
       );
       expect(settings.preferences, const AppearancePreferences());
       for (final colour in ColourTheme.values) {
         expect(_choice('colour-${colour.name}'), findsOneWidget);
       }
       expect(find.byType(AppearancePreview), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
       await tester.pageBack();
       await tester.pumpAndSettle();
       expect(find.byType(NavigationBar), findsOneWidget);
@@ -138,6 +141,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       await _tap(tester, find.byTooltip('Settings'));
+      await _tap(tester, _choice('settings-appearance'));
       await _tap(tester, _choice('appearance-light'));
       for (final colour in ColourTheme.values) {
         await _tap(tester, _choice('colour-${colour.name}'));
@@ -174,13 +178,20 @@ void main() {
         DaylockTheme.forPalette(ColourTheme.mono, Brightness.light).colorScheme,
       );
       await _tap(tester, find.byTooltip('Settings'));
+      await _tap(tester, _choice('settings-appearance'));
       expect(
-        tester.widget<SettingsScreen>(find.byType(SettingsScreen)).preferences,
+        tester
+            .widget<SettingsScreen>(
+              find.byType(SettingsScreen, skipOffstage: false),
+            )
+            .preferences,
         const AppearancePreferences(
           mode: AppearanceMode.light,
           colour: ColourTheme.mono,
         ),
       );
+      await tester.pageBack();
+      await tester.pumpAndSettle();
       await tester.pageBack();
       await tester.pumpAndSettle();
       await _tap(
@@ -204,6 +215,7 @@ void main() {
       await tester.pumpWidget(MainApp(now: () => _now));
       await tester.pumpAndSettle();
       await _tap(tester, find.byTooltip('Settings'));
+      await _tap(tester, _choice('settings-appearance'));
       await _tap(tester, _choice('appearance-system'));
       expect(_theme(tester).brightness, Brightness.light);
       tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
@@ -277,10 +289,13 @@ void main() {
           .first
           .focusStartedAt;
       await _tap(tester, find.byTooltip('Settings'), running: true);
+      await _tap(tester, _choice('settings-appearance'), running: true);
       await _tap(tester, _choice('colour-forest'), running: true);
       await _tap(tester, _choice('appearance-light'), running: true);
       now = now.add(const Duration(minutes: 23));
       await tester.pump(const Duration(seconds: 1));
+      await tester.pageBack();
+      await tester.pumpAndSettle();
       await tester.pageBack();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
@@ -314,6 +329,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(TodayScreen), findsOneWidget);
       await _tap(tester, find.byTooltip('Settings'));
+      await _tap(tester, _choice('settings-appearance'));
       await _tap(tester, _choice('colour-rose'));
       expect(
         _theme(tester).colorScheme.primary,
@@ -363,6 +379,7 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
+        await _tap(tester, _choice('settings-appearance'));
         for (final mode in AppearanceMode.values) {
           await _tap(tester, _choice('appearance-${mode.name}'));
           expect(preferences.mode, mode);
@@ -403,6 +420,7 @@ void main() {
           const FakeAccessibilityFeatures(disableAnimations: true);
       await tester.pump();
       await _tap(tester, find.byTooltip('Settings'));
+      await _tap(tester, _choice('settings-appearance'));
       await _tap(tester, _choice('colour-ember'));
       expect(
         tester

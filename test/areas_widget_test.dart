@@ -56,6 +56,7 @@ void main() {
       await tester.pumpAndSettle();
       await tap(tester, find.byTooltip('Settings'));
       expect(find.byType(SettingsScreen), findsOneWidget);
+      await tap(tester, find.byKey(const ValueKey('settings-appearance')));
       await tap(tester, find.byKey(const ValueKey('manage-areas')));
       expect(
         find.byKey(const ValueKey('archive-area-${Area.defaultId}')),
@@ -159,6 +160,7 @@ void main() {
       await tester.pumpWidget(MainApp(now: () => date));
       await tester.pumpAndSettle();
       await tap(tester, find.byTooltip('Settings'));
+      await tap(tester, find.byKey(const ValueKey('settings-planning')));
       await tap(tester, find.byKey(const ValueKey('manage-routines')));
       await tap(tester, find.byKey(const ValueKey('create-routine')));
       await tester.enterText(
@@ -176,6 +178,8 @@ void main() {
       await tap(tester, find.byKey(const ValueKey('save-routine')));
       final routine = (await LocalStorage().load())!.routines.routines.single;
       expect(routine.steps.single.areaId, health.id);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
       await tester.pageBack();
       await tester.pumpAndSettle();
       await tester.pageBack();
