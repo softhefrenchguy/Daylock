@@ -1,4 +1,4 @@
-package com.example.daylock
+package com.sofien.daylock
 
 import android.app.Activity
 import android.content.Intent

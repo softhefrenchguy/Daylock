@@ -47,7 +47,7 @@ Your existing Google Cloud configuration remains separate.
    tenants that restrict unverified publishers may require further verification.
    Do not create a client secret for this Android public client.
 
-The actual Android package/application ID is **`com.example.daylock`**, unchanged.
+The Android package/application ID is **`com.sofien.daylock`**. The redirect scheme above is intentionally unchanged; check the registered OAuth redirect and Android credentials for the Play build.
 This implementation uses `flutter_appauth` and Android AppAuth's system-browser
 callback. Microsoft's **Android** platform tile and its
 `msauth://package/signature-hash` redirect are for MSAL/broker configuration;

@@ -49,14 +49,14 @@ DailyPlan fixtureToday({bool running = false}) => DailyPlan(
   isCommitted: true,
   tasks: [
     Task(
-      name: 'Pega',
+      name: 'Deep work',
       areaId: 'pega',
       isCompleted: !running,
       accumulatedFocusMilliseconds: running ? 5689000 : 7536000,
       focusStartedAt: running ? fixtureNow : null,
     ),
-    Task(name: 'Wrist exercise', areaId: 'gym', isCompleted: !running),
-    Task(name: 'Weigh yourself', isCompleted: true),
+    Task(name: 'Strength session', areaId: 'gym', isCompleted: !running),
+    Task(name: 'Morning walk', isCompleted: true),
   ],
 );
 
@@ -81,24 +81,24 @@ class _VisualFixtureState extends State<VisualFixture> {
       date: DateTime(2026, 10, 28),
       tasks: state == 3
           ? [
-              Task(name: 'Pega', areaId: 'pega'),
-              Task(name: 'Gym', areaId: 'gym'),
-              Task(name: 'Read'),
-              Task(name: 'Plan weekend', areaId: 'cooking'),
+              Task(name: 'Project proposal', areaId: 'pega'),
+              Task(name: 'Gym session', areaId: 'gym'),
+              Task(name: 'Read 20 pages'),
+              Task(name: 'Cook dinner', areaId: 'cooking'),
             ]
           : [],
     );
     final highlights = HighlightBook([
       Highlight(
         id: 'driving',
-        title: 'Driving licence',
+        title: 'Passed my driving test',
         date: DateTime(2026, 10, 9),
-        description: 'got two minors, very happy',
+        description: 'A big step forward this week.',
         areaId: Area.defaultId,
       ),
       Highlight(
         id: 'cert',
-        title: 'Ba certification',
+        title: 'Finished my certification',
         date: DateTime(2026, 10, 8),
         areaId: 'pega',
       ),

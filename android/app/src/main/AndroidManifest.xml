@@ -5,7 +5,7 @@
     <application
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:label="daylock"
+        android:label="Daylock"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -33,7 +33,7 @@
             android:name=".InstagramLockActivity"
             android:exported="false"
             android:launchMode="singleTask"
-            android:taskAffinity="com.example.daylock.instagramLock"
+            android:taskAffinity="${applicationId}.instagramLock"
             android:excludeFromRecents="true"
             android:noHistory="true"
             android:enableOnBackInvokedCallback="true"
