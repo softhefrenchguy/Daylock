@@ -150,7 +150,12 @@ object DetectionRuntime {
         else context.registerReceiver(receiver, filter)
     }
 
-    fun isEnabled(): Boolean = runCatching {
+    fun isEnabled(): Boolean {
+        // onServiceConnected is Android's authoritative confirmation that this
+        // exact installed component is enabled and bound. Do not let a stale
+        // OEM AccessibilityManager snapshot turn a live service into "disabled".
+        if (connected) return true
+        return runCatching {
         val target = ComponentName(context, InstagramDetectionService::class.java)
         val applicationId = context.packageName
         val serviceClassName = target.className
@@ -172,7 +177,8 @@ object DetectionRuntime {
             AccessibilityServiceComponentPolicy.matches(applicationId, serviceClassName, it)
         } == true
         managerMatch || settingsMatch
-    }.getOrDefault(false)
+        }.getOrDefault(false)
+    }
 
     private fun notifyPermissionChange() {
         val enabled = isEnabled()
