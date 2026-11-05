@@ -290,6 +290,8 @@ object DetectionRuntime {
     fun status(): Map<String, Any?> {
         val enabled = isEnabled()
         return mapOf("supported" to true, "enabled" to enabled, "connected" to (enabled && connected),
+            "xiaomiDevice" to listOf(Build.MANUFACTURER, Build.BRAND).any {
+                it.lowercase(java.util.Locale.ROOT) in setOf("xiaomi", "redmi", "poco") },
             "lastDetection" to store.lastDetection(), "freedom" to runCatching { store.eligibility() }
                 .getOrDefault(NativeFreedomResult("unknown", "native_unavailable")).toMap(),
             "selectedPackages" to selection.packages.keys.toList(), "selectionRevision" to selection.revision,

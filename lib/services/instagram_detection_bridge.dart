@@ -55,6 +55,7 @@ class InstagramDetectionStatus {
   final String freedomState, freedomReason;
   final String? error;
   final bool blockingEnabled;
+  final bool xiaomiDevice;
   final String? lastRestriction, lastHomeAction, lastLockLaunch;
   final bool blockingSaveFailed;
   final int revision;
@@ -74,6 +75,7 @@ class InstagramDetectionStatus {
     this.freedomReason = 'missing',
     this.error,
     this.blockingEnabled = false,
+    this.xiaomiDevice = false,
     this.lastRestriction,
     this.lastHomeAction,
     this.lastLockLaunch,
@@ -103,6 +105,7 @@ class InstagramDetectionStatus {
       freedomState: freedom['state'] as String,
       freedomReason: freedom['reason'] as String,
       blockingEnabled: map['blockingEnabled'] == true,
+      xiaomiDevice: map['xiaomiDevice'] == true,
       lastRestriction: map['lastRestriction'] as String?,
       lastHomeAction: map['lastHomeAction'] as String?,
       lastLockLaunch: map['lastLockLaunch'] as String?,
@@ -197,6 +200,7 @@ class InstagramDetectionBridge {
       error: 'Could not read native detection status. Refresh or open Android Settings manually.',
       freedomReason: 'native_unavailable',
       blockingEnabled: old.blockingEnabled,
+      xiaomiDevice: old.xiaomiDevice,
       lastRestriction: old.lastRestriction,
       lastHomeAction: old.lastHomeAction,
       lastLockLaunch: old.lastLockLaunch,
@@ -224,6 +228,17 @@ class InstagramDetectionBridge {
   Future<void> refresh() => _call('getStatus');
   Future<void> testRestrictedApp(String packageName) =>
       _call('testRestrictedApp', {'packageName': packageName});
+
+  Future<void> openAppSettings() async {
+    await start();
+    if (!_available || _closed) return;
+    try {
+      await _methods.invokeMethod('openAppSettings');
+    } catch (_) {
+      _failed();
+    }
+  }
+
   Future<void> setRestrictedApp(String packageName, bool selected) => _call(
     'setRestrictedApp',
     {'packageName': packageName, 'selected': selected},

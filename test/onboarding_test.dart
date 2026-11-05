@@ -8,11 +8,18 @@ import 'package:daylock/services/local_storage.dart';
 import 'package:daylock/services/notifications/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 class TutorialBridge extends InstagramDetectionBridge {
   TutorialBridge() : super(android: false);
+  int appSettingsOpened = 0;
+  @override
+  Future<void> openAppSettings() async {
+    appSettingsOpened++;
+  }
+
   @override
   Future<void> refresh() async {}
   @override
@@ -26,8 +33,10 @@ InstagramDetectionStatus ready({
   String? restriction,
   String? lock,
   bool enabled = true,
+  bool xiaomi = false,
 }) => InstagramDetectionStatus(
   supported: true,
+  xiaomiDevice: xiaomi,
   enabled: enabled,
   connected: enabled,
   blockingEnabled: true,
@@ -68,16 +77,21 @@ void main() {
   });
 
   testWidgets(
-    'First installation opens tutorial; interrupted progress resumes; existing users are migrated',
+    'Startup forces revised tutorial for fresh and existing users, resumes progress and honors completion',
     (tester) async {
       final storage = LocalStorage();
+      final notifications = NotificationService();
       await tester.pumpWidget(
         MainApp(
           storage: storage,
+          notificationService: notifications,
           onboardingEnabled: true,
           now: () => DateTime(2026, 11, 5),
         ),
       );
+      await tester.pumpAndSettle();
+      expect(find.text('Take Back Control'), findsOneWidget);
+      notifications.onTap?.call(const NotificationTarget('plan'));
       await tester.pumpAndSettle();
       expect(find.text('Take Back Control'), findsOneWidget);
       await tester.tap(find.text('Get Started'));
@@ -97,6 +111,7 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
       await storage.reset();
+      await SharedPreferencesAsync().setInt('daylock.onboarding.v1', 6);
       await storage.save(
         DaylockState(
           todayPlan: DailyPlan(
@@ -118,8 +133,20 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      expect(find.text('Take Back Control'), findsOneWidget);
+      expect(await storage.loadOnboardingStep(), 0);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await storage.saveOnboardingStep(6);
+      await tester.pumpWidget(
+        MainApp(
+          storage: storage,
+          onboardingEnabled: true,
+          now: () => DateTime(2026, 11, 5),
+        ),
+      );
+      await tester.pumpAndSettle();
       expect(find.byType(OnboardingScreen), findsNothing);
-      expect(await storage.loadOnboardingStep(), 6);
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -234,6 +261,61 @@ void main() {
     );
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets(
+    'Xiaomi power guidance requires a durable user confirmation and opens app-specific Settings',
+    (tester) async {
+      final storage = LocalStorage();
+      final bridge = TutorialBridge()..status.value = ready(xiaomi: true);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: OnboardingScreen(
+            bridge: bridge,
+            notifications: NotificationService(),
+            initialStep: 1,
+            saveStep: (_) async {},
+            hasGoal: () => true,
+            createGoal: (_) async => true,
+            enableFreedom: () async {},
+            onExit: () {},
+            savePowerReviewed: storage.saveOnboardingPowerReviewed,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Xiaomi / Poco: keep blocking active'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Continue'))
+            .onPressed,
+        isNull,
+      );
+      await tester.ensureVisible(find.byKey(const ValueKey('setup-app-power')));
+      await tester.tap(find.byKey(const ValueKey('setup-app-power')));
+      await tester.pumpAndSettle();
+      expect(bridge.appSettingsOpened, 1);
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Continue'))
+            .onPressed,
+        isNull,
+      );
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('setup-power-reviewed')),
+      );
+      await tester.tap(find.byKey(const ValueKey('setup-power-reviewed')));
+      await tester.pumpAndSettle();
+      expect(await storage.loadOnboardingPowerReviewed(), isTrue);
+      expect(await LocalStorage().loadOnboardingPowerReviewed(), isTrue);
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Continue'))
+            .onPressed,
+        isNotNull,
+      );
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 
   testWidgets('Permission step waits for actual connection and updates live', (
     tester,

@@ -30,7 +30,13 @@ class MainActivity : FlutterActivity() {
         DetectionRuntime.attach(this)
         methods = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "daylock/instagram_detection").apply {
             setMethodCallHandler { call, result ->
-                if (call.method == "openAccessibilitySettings") {
+                if (call.method == "openAppSettings") {
+                    try {
+                        startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            android.net.Uri.parse("package:$packageName")))
+                        result.success(null)
+                    } catch (_: Exception) { result.error("SETTINGS_UNAVAILABLE", "Open Daylock App info manually.", null) }
+                } else if (call.method == "openAccessibilitySettings") {
                     try {
                         val detail = Intent("android.settings.ACCESSIBILITY_DETAILS_SETTINGS").putExtra(
                             "android.intent.extra.COMPONENT_NAME",

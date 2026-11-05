@@ -13,6 +13,8 @@ class OnboardingScreen extends StatefulWidget {
   final InstagramDetectionBridge bridge;
   final NotificationService notifications;
   final int initialStep;
+  final bool initialPowerReviewed;
+  final Future<void> Function(bool)? savePowerReviewed;
   final Future<void> Function(int) saveStep;
   final Future<bool> Function(BuildContext) createGoal;
   final bool Function() hasGoal;
@@ -28,6 +30,8 @@ class OnboardingScreen extends StatefulWidget {
     required this.enableFreedom,
     required this.onExit,
     this.initialStep = 0,
+    this.initialPowerReviewed = false,
+    this.savePowerReviewed,
   });
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -36,6 +40,7 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen>
     with WidgetsBindingObserver {
   late int _step;
+  late bool _powerReviewed;
   bool _busy = false, _testing = false, _verified = false;
   DateTime? _testStarted;
   String? _testedPackage;
@@ -54,6 +59,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   void initState() {
     super.initState();
     _step = widget.initialStep.clamp(0, 5);
+    _powerReviewed = widget.initialPowerReviewed;
     WidgetsBinding.instance.addObserver(this);
     widget.bridge.status.addListener(_statusChanged);
     widget.notifications.status.addListener(_statusChanged);
@@ -161,10 +167,29 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     return !s.supported || (s.enabled && s.connected && s.error == null);
   }
 
+  bool get _powerReady =>
+      !widget.bridge.status.value.xiaomiDevice || _powerReviewed;
+
+  Future<void> _reviewPower(bool reviewed) async {
+    setState(() => _busy = true);
+    try {
+      await widget.savePowerReviewed?.call(reviewed);
+      if (mounted) setState(() => _powerReviewed = reviewed);
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _message = 'Could not save your confirmation. Please retry.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   bool get _canContinue {
     final s = widget.bridge.status.value;
     return switch (_step) {
-      1 => _permissionReady,
+      1 => _permissionReady && _powerReady,
       2 =>
         !s.supported ||
             (s.selectedPackages.isNotEmpty &&
@@ -175,12 +200,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         !s.supported ||
             (_verified &&
                 _permissionReady &&
+                _powerReady &&
                 s.blockingEnabled &&
                 s.selectedPackages.contains(_testedPackage) &&
                 widget.hasGoal()),
       5 =>
         !s.supported ||
             (_permissionReady &&
+                _powerReady &&
                 s.blockingEnabled &&
                 s.selectedPackages.isNotEmpty &&
                 widget.hasGoal()),
@@ -253,6 +280,41 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         ];
       case 1:
         return [
+          if (s.xiaomiDevice)
+            _card(
+              Icons.battery_saver_outlined,
+              'Xiaomi / Poco: keep blocking active',
+              'HyperOS can pause Daylock in the background even while Accessibility shows enabled. '
+                  'A test inside Daylock may work while opening Instagram from Home does not.\n\n'
+                  'Open this app’s App info → Power (or Battery saver) → No restrictions. '
+                  'Use the settings for this installed Daylock app; Daylock Dev and the Play version have separate settings.\n\n'
+                  'Daylock cannot read Xiaomi’s battery-saver choice. Confirm it yourself below, then test normal app openings too.',
+              action: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  OutlinedButton.icon(
+                    key: const ValueKey('setup-app-power'),
+                    onPressed: widget.bridge.openAppSettings,
+                    icon: const Icon(Icons.open_in_new),
+                    label: const Text('Open Daylock App info'),
+                  ),
+                  CheckboxListTile(
+                    key: const ValueKey('setup-power-reviewed'),
+                    contentPadding: EdgeInsets.zero,
+                    value: _powerReviewed,
+                    onChanged: _busy
+                        ? null
+                        : (value) => _reviewPower(value == true),
+                    title: const Text(
+                      'I selected No restrictions for this Daylock app',
+                    ),
+                    subtitle: const Text(
+                      'Your confirmation; not automatically verified.',
+                    ),
+                  ),
+                ],
+              ),
+            ),
           _card(
             Icons.accessibility_new,
             'Accessibility access',
@@ -427,6 +489,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           if (!_permissionReady)
             const Text(
               'Accessibility is not connected. Go back to permission setup.',
+            ),
+          if (!_powerReady)
+            const Text(
+              'Go back to Set Up App Blocking and confirm the Xiaomi battery setting before finishing setup.',
             ),
           if (s.error != null) Text(s.error!),
           TextButton(

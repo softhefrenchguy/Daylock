@@ -5,11 +5,14 @@ visual fixtures can continue to instantiate `MainApp` directly. Other platforms
 can replay the tutorial in Settings; blocking and installed-app selection are
 explicitly unavailable there.
 
-Progress is stored as `daylock.onboarding.v1` using the existing
+Progress is stored as `daylock.onboarding.v2` using the existing
 `SharedPreferencesAsync` instance in `LocalStorage`. Values 0–5 resume a screen;
 6 means completed. Before the first planner save, new Android installations save
-step 0. Existing planner saves without a progress key migrate to 6, avoiding
-forced onboarding after an update. A partial progress key takes precedence.
+step 0. Existing planner data and the old v1 completion/migration marker no longer
+skip the revised tutorial: every Android installation sees it automatically on
+its first launch of this version. Subsequent launches resume progress until step
+6 has been saved. Completed v2 setup does not repeat. This intentional one-time
+upgrade prompt follows the user's request to show setup automatically.
 Replay resets only this progress key. Leaving setup keeps its last saved step.
 Storage failures show a retry message and never mark completion.
 
@@ -20,6 +23,14 @@ Storage failures show a retry message and never mark completion.
   settings action, with the general Accessibility screen as a fallback.
 - Notifications: reuses the notification service's native permission request,
   status and settings methods. Optional: denial never blocks setup.
+- Xiaomi / Redmi / Poco: the permission step shows a background-blocking card
+  based on Android's manufacturer/brand. It opens App info for the runtime
+  application ID and directs users to Power > No restrictions. A required
+  checkbox records the user's confirmation separately as
+  `daylock.onboarding.v2.power-reviewed`. This is explicitly not automatic
+  verification of the proprietary setting. The confirmation survives interruption
+  and app updates. Other manufacturers do not see this step. No exemption
+  permission is requested and no battery setting is changed automatically.
 - App selection: reuses `RestrictedAppsSection` and native durable selections.
   The tutorial explicitly explains that enabling restrictions also enables
   Freedom Control at the user's saved time.
@@ -56,13 +67,17 @@ permissions, battery exemptions, packages or release-signing changes are added.
 ## Manual device checklist
 
 1. Use a fresh test installation/profile (do not clear an existing user's data).
-   Confirm welcome appears automatically. Existing installations should open
-   Today normally and expose Run Setup Tutorial in Settings.
+   Confirm welcome appears automatically. Existing installations, including ones
+   with an old v1 marker, should also open the revised tutorial once. Confirm
+   all existing plans and selected restricted apps survive.
 2. Get Started, leave midway, close/reopen the app: it resumes the saved step.
    Test system Back, Save & leave, small screens and large accessibility text.
 3. Review the Accessibility disclosure. Cancel should not open settings; Agree
    should. Return with access disabled, enabled but disconnected, then connected.
    Continue should require a real connection. Test notification grant and denial.
+   On Xiaomi / Redmi / Poco, check the No restrictions guidance, app-specific
+   App info shortcut and durable user confirmation. Merely opening App info must
+   not count as confirmation. On Samsung/Pixel, the Xiaomi card must not appear.
 4. Pick two launchable apps. Search by name, inspect icons, leave and restart.
    Choices should persist. Verify app restrictions and Freedom Control are on.
 5. Create a commitment: verify it appears in tomorrow's actual Plan. Replaying

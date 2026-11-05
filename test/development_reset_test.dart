@@ -76,9 +76,17 @@ void main() {
       for (var i = 0; i < 30; i++) {
         await tester.pump(const Duration(milliseconds: 100));
         if (find.text('Go to the gym').evaluate().isNotEmpty ||
+            find.text('Take Back Control').evaluate().isNotEmpty ||
             find.text('0 / 0 complete').evaluate().isNotEmpty) {
           break;
         }
+      }
+      await tester.pumpAndSettle();
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        // Production startup must show revised setup even when plans exist.
+        expect(find.text('Take Back Control'), findsOneWidget);
+        await tester.tap(find.byTooltip('Save & leave'));
+        await tester.pumpAndSettle();
       }
       final saved = (await LocalStorage().load())!;
       expect(await preferences.getString('unrelated.preference'), 'keep');

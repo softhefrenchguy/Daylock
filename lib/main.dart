@@ -127,6 +127,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   int _nativePendingSaves = 0, _nativeSaveRevision = 0;
   bool _nativePersistedReady = false, _nativeSaveFailed = false;
   int _onboardingStep = 0;
+  bool _onboardingPowerReviewed = false;
   bool _tutorialOpen = false;
   bool get _onboardingEnabled => widget.onboardingEnabled;
 
@@ -344,9 +345,11 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       bool showTutorial = false;
       if (_onboardingEnabled) {
         final progress = await _storage.loadOnboardingStep();
-        // Existing installations keep their current workflow on upgrade. A
-        // recorded partial tutorial always resumes, even after a plan was saved.
-        _onboardingStep = progress ?? (saved == null ? 0 : 6);
+        // Run the revised setup once for every Android installation, including
+        // existing users who previously skipped/migrated the old tutorial.
+        // Planner data never counts as evidence that setup was completed.
+        _onboardingStep = progress ?? 0;
+        _onboardingPowerReviewed = await _storage.loadOnboardingPowerReviewed();
         await _storage.saveOnboardingStep(_onboardingStep);
         showTutorial = _onboardingStep < 6;
       }
@@ -487,6 +490,11 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             bridge: _detectionBridge,
             notifications: _notifications,
             initialStep: _onboardingStep,
+            initialPowerReviewed: _onboardingPowerReviewed,
+            savePowerReviewed: (reviewed) async {
+              await _storage.saveOnboardingPowerReviewed(reviewed);
+              _onboardingPowerReviewed = reviewed;
+            },
             saveStep: (step) async {
               await _storage.saveOnboardingStep(step);
               _onboardingStep = step;
@@ -509,6 +517,11 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             onExit: () {
               _navigatorKey.currentState!.pop();
               setState(() => selectedPage = 0);
+              if (_onboardingStep == 6 && _pendingNotificationTap != null) {
+                final target = _pendingNotificationTap!;
+                _pendingNotificationTap = null;
+                _notificationTapped(target);
+              }
             },
           ),
         ),
@@ -590,7 +603,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
   void _notificationTapped(NotificationTarget target) {
     if (!mounted) return;
-    if (_isLoading || _loadFailed) {
+    if (_isLoading ||
+        _loadFailed ||
+        (_onboardingEnabled && _onboardingStep < 6)) {
       _pendingNotificationTap = target;
       return;
     }
