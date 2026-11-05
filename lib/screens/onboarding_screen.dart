@@ -382,6 +382,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             !s.supported
                 ? 'Blocking tests require the Android app.'
                 : 'Open a selected app and look for Daylock’s lock screen. Return here to see the result. '
+                      'Also open it normally from Home after leaving Daylock in the background: this test confirms only one opening. '
                       'This uses your real Freedom conditions and never completes a goal for you.',
             checked: _verified,
             action: !s.supported

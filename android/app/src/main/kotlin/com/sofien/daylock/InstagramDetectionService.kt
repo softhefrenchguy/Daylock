@@ -40,9 +40,16 @@ class InstagramDetectionService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null || event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        InstagramLockLog.event("window_raw", detail = "package=${event.packageName} changes=${event.contentChangeTypes} fullscreen=${event.isFullScreen} ageMs=${SystemClock.uptimeMillis() - event.eventTime}")
         // Pane appearance/disappearance/title changes are not app foreground changes.
         if (event.contentChangeTypes != 0) return
         val packageName = event.packageName?.toString()
+        if (!InstagramBlockingPolicy.isFreshEvent(event.eventTime, SystemClock.uptimeMillis())) {
+            if (DetectionRuntime.isSelected(packageName)) {
+                DetectionRuntime.reportRestriction("skipped_event_delayed")
+            }
+            return
+        }
         // Debug-only event order is essential when an OEM posts an intermediate
         // system window between the selected app event and enforcement.
         InstagramLockLog.event("window_event", detail = "package=$packageName fullScreen=${event.isFullScreen}")

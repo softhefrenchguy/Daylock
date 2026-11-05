@@ -4,6 +4,14 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class InstagramBlockingPolicyTest {
+    @Test fun delayedBackgroundEventsCannotAuthorizeNavigation() {
+        assertTrue(InstagramBlockingPolicy.isFreshEvent(100_000, 100_100))
+        assertTrue(InstagramBlockingPolicy.isFreshEvent(100_000, 105_000))
+        assertFalse(InstagramBlockingPolicy.isFreshEvent(100_000, 105_001))
+        assertFalse(InstagramBlockingPolicy.isFreshEvent(100_000, 142_193))
+        assertFalse(InstagramBlockingPolicy.isFreshEvent(100_000, 99_999))
+        assertFalse(InstagramBlockingPolicy.isFreshEvent(-1, 100_000))
+    }
     private val clock = DetectionClock(1_800_000_000_000L, 100_000L, 7, "2026-10-13", "Asia/Qatar", 10_800_000, 18 * 60)
     private val snapshot = NativeFreedomState(clock.date, true, 18, 0, 3, 2, true, false)
     private fun decide(value: NativeFreedomState? = snapshot, now: DetectionClock = clock,

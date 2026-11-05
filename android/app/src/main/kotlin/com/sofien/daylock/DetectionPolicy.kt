@@ -140,6 +140,12 @@ class InstagramEventGate {
 enum class InstagramRestriction { ALLOW, BLOCK, RECOVER }
 
 object InstagramBlockingPolicy {
+    // AccessibilityEvent.eventTime and uptimeMillis share the uptime clock.
+    // OEM background suspension can deliver an old app opening after the user
+    // has already switched elsewhere. Never navigate on that stale evidence.
+    fun isFreshEvent(eventTimeMs: Long, uptimeMs: Long): Boolean =
+        eventTimeMs >= 0 && uptimeMs >= eventTimeMs && uptimeMs - eventTimeMs <= 5_000L
+
     /**
      * OEMs do not consistently populate AccessibilityRecord.isFullScreen for an
      * app Activity. A selected app's window-state event is still sufficient to

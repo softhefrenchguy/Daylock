@@ -10,6 +10,7 @@ enum DetectionSectionMode { full, restricted, diagnostics }
 
 String _restrictionDiagnostic(String? value) => switch (value) {
   null => 'No restriction attempt yet.',
+  'skipped_event_delayed' => 'Android delivered the app-opening event too late. On Xiaomi / HyperOS, review Daylock’s App info → Power → No restrictions, then test opening a selected app from Home.',
   'test_requested' =>
     'Test requested: waiting for a fresh selected-app detection.',
   'detected_selected_app' =>
