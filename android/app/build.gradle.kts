@@ -54,6 +54,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            // A separate development package can coexist with the Play build.
+            // Native components use context.packageName / ${applicationId}, so
+            // the accessibility service and lock task resolve within this app.
+            applicationIdSuffix = ".debug"
+        }
         release {
             // Never fall back to the debug key for a Play release.
             signingConfig = signingConfigs.findByName("upload")
