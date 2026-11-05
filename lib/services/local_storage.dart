@@ -3,18 +3,29 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/daylock_state.dart';
+import '../models/onboarding_steps.dart';
 
 class LocalStorage {
   static const stateKey = 'daylock.state.v2';
   static const legacyStateKey = 'daylock.state.v1';
   static const beforeStopwatchKey = 'daylock.state.v2.before-stopwatch';
-  static const onboardingKey = 'daylock.onboarding.v2';
+  static const onboardingKey = 'daylock.onboarding.v3';
   static const onboardingPowerKey = 'daylock.onboarding.v2.power-reviewed';
 
-  Future<int?> loadOnboardingStep() => _preferences.getInt(onboardingKey);
-  // Six denotes completed; 0–5 are resumable screens.
-  Future<void> saveOnboardingStep(int step) =>
-      _preferences.setInt(onboardingKey, step.clamp(0, 6));
+  Future<int?> loadOnboardingStep() async {
+    final current = await _preferences.getInt(onboardingKey);
+    if (current != null) return current;
+    final previous = await _preferences.getInt('daylock.onboarding.v2');
+    // Existing setup users start at the new feature tour, not at the obsolete
+    // test/ready/completed step numbers. Their permissions and data are kept.
+    return previous?.clamp(0, OnboardingSteps.overview);
+  }
+
+  // Completion is separate from all resumable screens.
+  Future<void> saveOnboardingStep(int step) => _preferences.setInt(
+    onboardingKey,
+    step.clamp(0, OnboardingSteps.complete),
+  );
   Future<bool> loadOnboardingPowerReviewed() async =>
       await _preferences.getBool(onboardingPowerKey) ?? false;
   Future<void> saveOnboardingPowerReviewed(bool reviewed) =>
@@ -109,5 +120,6 @@ class LocalStorage {
     await _preferences.remove(onboardingKey);
     await _preferences.remove(onboardingPowerKey);
     await _preferences.remove('daylock.onboarding.v1');
+    await _preferences.remove('daylock.onboarding.v2');
   }
 }

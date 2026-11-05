@@ -12,6 +12,7 @@ import 'screens/onboarding_screen.dart';
 import 'screens/commitment_editor.dart';
 
 import 'models/daylock_state.dart';
+import 'models/onboarding_steps.dart';
 import 'models/daily_plan.dart';
 import 'models/plan_history.dart';
 import 'models/event.dart';
@@ -351,7 +352,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         _onboardingStep = progress ?? 0;
         _onboardingPowerReviewed = await _storage.loadOnboardingPowerReviewed();
         await _storage.saveOnboardingStep(_onboardingStep);
-        showTutorial = _onboardingStep < 6;
+        showTutorial = _onboardingStep < OnboardingSteps.complete;
       }
       final previous = saved ?? _snapshot();
       await _stopwatchClock.synchronize();
@@ -490,6 +491,21 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             bridge: _detectionBridge,
             notifications: _notifications,
             initialStep: _onboardingStep,
+            onAreasRequested: _openAreas,
+            onRoutinesRequested: _openRoutines,
+            onCalendarRequested: () => _openCalendar(),
+            onSettingsRequested: _openSettings,
+            onJourneyRequested: () => _navigatorKey.currentState!.push(
+              MaterialPageRoute<void>(
+                builder: (_) => Scaffold(
+                  appBar: AppBar(title: const Text('Explore Journey')),
+                  body: ValueListenableBuilder<int>(
+                    valueListenable: _journeyChanges,
+                    builder: (_, _, _) => _buildJourneyScreen(),
+                  ),
+                ),
+              ),
+            ),
             initialPowerReviewed: _onboardingPowerReviewed,
             savePowerReviewed: (reviewed) async {
               await _storage.saveOnboardingPowerReviewed(reviewed);
@@ -517,7 +533,8 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             onExit: () {
               _navigatorKey.currentState!.pop();
               setState(() => selectedPage = 0);
-              if (_onboardingStep == 6 && _pendingNotificationTap != null) {
+              if (_onboardingStep == OnboardingSteps.complete &&
+                  _pendingNotificationTap != null) {
                 final target = _pendingNotificationTap!;
                 _pendingNotificationTap = null;
                 _notificationTapped(target);
@@ -605,7 +622,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     if (!mounted) return;
     if (_isLoading ||
         _loadFailed ||
-        (_onboardingEnabled && _onboardingStep < 6)) {
+        (_onboardingEnabled && _onboardingStep < OnboardingSteps.complete)) {
       _pendingNotificationTap = target;
       return;
     }
@@ -1164,19 +1181,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           unawaited(_saveState());
         },
       ),
-      JourneyScreen(
-        areas: areas,
-        highlights: highlights,
-        data: _journeyData(),
-        onAreaOpened: _openAreaJourney,
-        onHighlightOpened: _openHighlight,
-        onAddHighlight: () => _editHighlight(),
-        onHighlightEdited: (highlight) => _editHighlight(original: highlight),
-        onPastChapters: _openPastChapters,
-        onManageAreas: _openAreas,
-        onAllHighlights: _openHighlights,
-        onDailyHistory: () => _openCalendar(),
-      ),
+      _buildJourneyScreen(),
     ];
 
     return Scaffold(
@@ -1208,4 +1213,18 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       ),
     );
   }
+
+  Widget _buildJourneyScreen() => JourneyScreen(
+    areas: areas,
+    highlights: highlights,
+    data: _journeyData(),
+    onAreaOpened: _openAreaJourney,
+    onHighlightOpened: _openHighlight,
+    onAddHighlight: () => _editHighlight(),
+    onHighlightEdited: (highlight) => _editHighlight(original: highlight),
+    onPastChapters: _openPastChapters,
+    onManageAreas: _openAreas,
+    onAllHighlights: _openHighlights,
+    onDailyHistory: () => _openCalendar(),
+  );
 }

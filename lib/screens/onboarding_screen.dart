@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../design/journey_surface.dart';
+import '../models/onboarding_steps.dart';
+import '../models/routine.dart';
+import '../models/task.dart';
 import '../services/instagram_detection_bridge.dart';
 import '../services/notifications/notification_service.dart';
 import 'instagram_detection_section.dart';
@@ -20,6 +23,11 @@ class OnboardingScreen extends StatefulWidget {
   final bool Function() hasGoal;
   final Future<void> Function() enableFreedom;
   final VoidCallback onExit;
+  final VoidCallback? onAreasRequested,
+      onRoutinesRequested,
+      onJourneyRequested,
+      onCalendarRequested,
+      onSettingsRequested;
   const OnboardingScreen({
     super.key,
     required this.bridge,
@@ -32,6 +40,11 @@ class OnboardingScreen extends StatefulWidget {
     this.initialStep = 0,
     this.initialPowerReviewed = false,
     this.savePowerReviewed,
+    this.onAreasRequested,
+    this.onRoutinesRequested,
+    this.onJourneyRequested,
+    this.onCalendarRequested,
+    this.onSettingsRequested,
   });
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -47,18 +60,53 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   Timer? _timeout;
   final _scroll = ScrollController();
   String? _message;
+  String _exampleArea = 'Life';
+  Routine _exampleRoutine = _newExampleRoutine();
+  int _exampleDay = 1;
+  String? _routineFeedback;
+  static Routine _newExampleRoutine() => Routine(
+    id: 'tutorial-example',
+    name: 'Workout cycle',
+    steps: [
+      RoutineStep(id: 'a', name: 'Upper body', type: TaskType.goal),
+      RoutineStep(id: 'b', name: 'Lower body', type: TaskType.goal),
+    ],
+  );
+  void _tryRoutine(RoutineAction action) {
+    final step = _exampleRoutine.nextStep.name;
+    setState(() {
+      // Exercise the actual routine model in memory; never save preview data.
+      _exampleRoutine = _exampleRoutine.decide(
+        DateTime(2000, 1, _exampleDay++),
+        action,
+      );
+      _routineFeedback = switch (action) {
+        RoutineAction.accept =>
+          'Accept would add “$step” to tomorrow’s plan and advance the cycle.',
+        RoutineAction.skip =>
+          'Skip advances the cycle without adding a commitment.',
+        RoutineAction.dismiss =>
+          'Dismiss keeps “$step” as the next step for another day.',
+      };
+    });
+  }
+
   static const _titles = [
     'Take Back Control',
     'Set Up App Blocking',
     'Choose Your Distractions',
     'Set Your First Goal',
+    'Your Daily Rhythm',
+    'Give Your Goals a Home',
+    'Build Your Routines',
+    'See Your Journey Grow',
     "You're Almost Ready!",
     "You're All Set!",
   ];
   @override
   void initState() {
     super.initState();
-    _step = widget.initialStep.clamp(0, 5);
+    _step = widget.initialStep.clamp(0, OnboardingSteps.ready);
     _powerReviewed = widget.initialPowerReviewed;
     WidgetsBinding.instance.addObserver(this);
     widget.bridge.status.addListener(_statusChanged);
@@ -117,7 +165,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     try {
       await widget.saveStep(step);
       if (!mounted) return;
-      if (step == 6) {
+      if (step == OnboardingSteps.complete) {
         widget.onExit();
         return;
       }
@@ -196,7 +244,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 s.selectionError == null &&
                 s.error == null),
       3 => widget.hasGoal(),
-      4 =>
+      OnboardingSteps.test =>
         !s.supported ||
             (_verified &&
                 _permissionReady &&
@@ -204,7 +252,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 s.blockingEnabled &&
                 s.selectedPackages.contains(_testedPackage) &&
                 widget.hasGoal()),
-      5 =>
+      OnboardingSteps.ready =>
         !s.supported ||
             (_permissionReady &&
                 _powerReady &&
@@ -436,7 +484,188 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               'Your plan already contains a commitment. You can continue without creating another.',
             ),
         ];
-      case 4:
+      case OnboardingSteps.overview:
+        return [
+          _card(
+            Icons.today_outlined,
+            'Today: keep your word',
+            'See today’s commitments and progress. Start, pause and resume a stopwatch to record your effort. '
+                'Time recorded does not complete a commitment: mark it complete yourself. '
+                'Use the task menu to record an excuse when needed; excused tasks are excluded from Freedom eligibility.',
+          ),
+          _card(
+            Icons.edit_note,
+            'Plan: prepare tomorrow',
+            'Add and edit tomorrow’s commitments, assign an Area, and review routine suggestions. '
+                'Commit the plan when you are ready. Once committed, its commitments are locked against editing. '
+                'They become your Today plan when the date changes.',
+          ),
+          _card(
+            Icons.event_outlined,
+            'Calendar & Daily History',
+            'View dates, scheduled events and saved past days. Events help organise your schedule; '
+                'they are separate from commitments and do not earn Freedom.',
+            action: widget.onCalendarRequested == null
+                ? null
+                : OutlinedButton(
+                    onPressed: widget.onCalendarRequested,
+                    child: const Text('Explore Calendar'),
+                  ),
+          ),
+          _card(
+            Icons.lock_open,
+            'Freedom has three conditions',
+            'Complete all eligible commitments, reach your chosen Freedom Time, and commit tomorrow’s plan. '
+                'Empty or all-excused days do not earn Freedom. '
+                'Freedom Control and the app-restrictions switch must both be on for selected apps to be restricted.',
+          ),
+        ];
+      case OnboardingSteps.areas:
+        return [
+          const Text(
+            'Areas connect your commitments and progress to what matters: Life, study, fitness, work, or anything you choose.',
+          ),
+          const SizedBox(height: 16),
+          _card(
+            Icons.category_outlined,
+            'Try an Area · example only',
+            'Tap an Area below to see how a commitment gets a home. This preview does not create or change your data.',
+            action: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final area in ['Life', 'Study', 'Gym'])
+                      ChoiceChip(
+                        label: Text(area),
+                        selected: _exampleArea == area,
+                        onSelected: (_) => setState(() => _exampleArea = area),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Read ten pages → $_exampleArea',
+                  key: const ValueKey('tutorial-area-preview'),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+          ),
+          _card(
+            Icons.palette_outlined,
+            'Make each Area yours',
+            'Create Areas with a name, icon and colour. Choose an Area when adding a commitment. '
+                'Life is the default when no other Area is selected. '
+                'Archive an Area when that chapter is over; its history stays available in Past Chapters.',
+            action: widget.onAreasRequested == null
+                ? null
+                : FilledButton(
+                    onPressed: widget.onAreasRequested,
+                    child: const Text('Open Areas'),
+                  ),
+          ),
+        ];
+      case OnboardingSteps.routines:
+        return [
+          _card(
+            Icons.repeat_rounded,
+            'A cycle you can keep returning to',
+            'Create a routine with ordered steps, such as Upper body → Lower body. '
+                'Plan offers one suggestion per routine for each planning date. '
+                'Accept adds that step as a real commitment; Skip advances without adding it; Dismiss saves that step for another day.',
+          ),
+          _card(
+            Icons.touch_app_outlined,
+            'Try the cycle · example only',
+            'Each tap previews a decision on another planning day. Nothing is added to your real plan.',
+            action: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Next suggestion: ${_exampleRoutine.nextStep.name}',
+                  key: const ValueKey('tutorial-routine-preview'),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final action in RoutineAction.values)
+                      OutlinedButton(
+                        key: ValueKey('tutorial-routine-${action.name}'),
+                        onPressed: () => _tryRoutine(action),
+                        child: Text(switch (action) {
+                          RoutineAction.accept => 'Try Accept',
+                          RoutineAction.skip => 'Try Skip',
+                          RoutineAction.dismiss => 'Try Dismiss',
+                        }),
+                      ),
+                  ],
+                ),
+                if (_routineFeedback != null) ...[
+                  const SizedBox(height: 12),
+                  Semantics(liveRegion: true, child: Text(_routineFeedback!)),
+                ],
+              ],
+            ),
+          ),
+          const Text(
+            'Routine suggestions still need your review in an editable Plan. They never complete a commitment automatically.',
+          ),
+          if (widget.onRoutinesRequested != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: FilledButton(
+                onPressed: widget.onRoutinesRequested,
+                child: const Text('Open Routines'),
+              ),
+            ),
+        ];
+      case OnboardingSteps.journey:
+        return [
+          _card(
+            Icons.auto_stories_outlined,
+            'Progress in the areas that matter',
+            'Journey brings together completed commitments, recorded time and saved Highlights. '
+                'Open an Area to explore its progress and activity over time.',
+          ),
+          _card(
+            Icons.auto_awesome_outlined,
+            'Highlights: keep the moments',
+            'Save a milestone with a title, date, note and illustration. Link it to an Area if you want. '
+                'Highlights celebrate your own moments; they do not complete tasks or unlock apps.',
+          ),
+          _card(
+            Icons.history,
+            'Daily History & Past Chapters',
+            'Daily History opens your calendar and saved past days. Past Chapters keeps archived Areas within reach. '
+                'Archiving an Area does not erase the progress you made.',
+          ),
+          if (widget.onJourneyRequested != null)
+            FilledButton(
+              onPressed: widget.onJourneyRequested,
+              child: const Text('Explore Journey'),
+            ),
+          const SizedBox(height: 16),
+          _card(
+            Icons.settings_outlined,
+            'Set it up your way',
+            'Settings contains your Freedom Time, local notification reminders, restricted apps and permission diagnostics. '
+                'Appearance lets you choose light, dark or system mode and a colour palette. '
+                'You can replay this tutorial there any time.',
+            action: widget.onSettingsRequested == null
+                ? null
+                : OutlinedButton(
+                    onPressed: widget.onSettingsRequested,
+                    child: const Text('Explore Settings'),
+                  ),
+          ),
+        ];
+      case OnboardingSteps.test:
         return [
           _card(
             Icons.verified_outlined,
@@ -547,11 +776,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'SETUP · ${_step + 1} OF 6',
+                        'SETUP · ${_step + 1} OF ${OnboardingSteps.complete}',
                         style: Theme.of(context).textTheme.labelLarge,
                       ),
                       const SizedBox(height: 12),
-                      LinearProgressIndicator(value: (_step + 1) / 6),
+                      LinearProgressIndicator(
+                        value: (_step + 1) / OnboardingSteps.complete,
+                      ),
                       const SizedBox(height: 20),
                     ],
                   ),
@@ -599,8 +830,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         padding: const EdgeInsets.all(14),
                         child: Text(switch (_step) {
                           0 => 'Get Started',
-                          4 => 'Finish Setup',
-                          5 => 'Go to Daylock',
+                          OnboardingSteps.test => 'Finish Setup',
+                          OnboardingSteps.ready => 'Go to Daylock',
                           _ => 'Continue',
                         }),
                       ),

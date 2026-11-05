@@ -2,7 +2,11 @@ import 'package:daylock/main.dart';
 import 'package:daylock/models/daily_plan.dart';
 import 'package:daylock/models/daylock_state.dart';
 import 'package:daylock/models/task.dart';
+import 'package:daylock/models/onboarding_steps.dart';
 import 'package:daylock/screens/onboarding_screen.dart';
+import 'package:daylock/screens/areas_screen.dart';
+import 'package:daylock/screens/routines_screen.dart';
+import 'package:daylock/screens/journey_screen.dart';
 import 'package:daylock/services/instagram_detection_bridge.dart';
 import 'package:daylock/services/local_storage.dart';
 import 'package:daylock/services/notifications/notification_service.dart';
@@ -71,9 +75,24 @@ void main() {
     );
     await storage.saveOnboardingStep(3);
     expect(await LocalStorage().loadOnboardingStep(), 3);
-    await storage.saveOnboardingStep(6);
-    expect(await LocalStorage().loadOnboardingStep(), 6);
+    await storage.saveOnboardingStep(OnboardingSteps.complete);
+    expect(await LocalStorage().loadOnboardingStep(), OnboardingSteps.complete);
     expect((await storage.load())!.todayPlan.tasks.single.name, 'Keep this');
+  });
+
+  test('Old setup progress starts the added feature tour and preserves Xiaomi confirmation', () async {
+    final preferences = SharedPreferencesAsync();
+    final storage = LocalStorage();
+    for (final oldStep in [4, 5, 6]) {
+      await preferences.setInt('daylock.onboarding.v2', oldStep);
+      expect(await storage.loadOnboardingStep(), OnboardingSteps.overview);
+    }
+    await preferences.setInt('daylock.onboarding.v2', 2);
+    expect(await storage.loadOnboardingStep(), 2);
+    await storage.saveOnboardingPowerReviewed(true);
+    await storage.saveOnboardingStep(OnboardingSteps.complete);
+    expect(await LocalStorage().loadOnboardingStep(), OnboardingSteps.complete);
+    expect(await LocalStorage().loadOnboardingPowerReviewed(), isTrue);
   });
 
   testWidgets(
@@ -137,7 +156,7 @@ void main() {
       expect(await storage.loadOnboardingStep(), 0);
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
-      await storage.saveOnboardingStep(6);
+      await storage.saveOnboardingStep(OnboardingSteps.complete);
       await tester.pumpWidget(
         MainApp(
           storage: storage,
@@ -174,6 +193,123 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+  }
+
+  testWidgets(
+    'Feature tour previews Areas and routine decisions, opens real screens, and preserves data',
+    (tester) async {
+      final storage = LocalStorage();
+      final date = DateTime(2026, 11, 5);
+      await storage.save(
+        DaylockState(
+          todayPlan: DailyPlan(
+            date: date,
+            tasks: [Task(name: 'Keep today')],
+            isCommitted: true,
+          ),
+          tomorrowPlan: DailyPlan(
+            date: date.add(const Duration(days: 1)),
+            tasks: [Task(name: 'Keep tomorrow')],
+          ),
+        ),
+      );
+      final original = (await storage.load())!.toJson();
+      await storage.saveOnboardingStep(OnboardingSteps.overview);
+      await tester.pumpWidget(
+        MainApp(storage: storage, now: () => date, onboardingEnabled: true),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Your Daily Rhythm'), findsOneWidget);
+      expect(find.text('Today: keep your word'), findsOneWidget);
+      expect(find.text('Calendar & Daily History'), findsOneWidget);
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      expect(find.text('Give Your Goals a Home'), findsOneWidget);
+      await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Study'));
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Study'));
+      await tester.pumpAndSettle();
+      expect(find.text('Read ten pages → Study'), findsOneWidget);
+      await tester.ensureVisible(find.text('Open Areas'));
+      await tester.tap(find.text('Open Areas'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AreasScreen), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(find.text('Give Your Goals a Home'), findsOneWidget);
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      expect(find.text('Build Your Routines'), findsOneWidget);
+      Future<void> decision(String label) async {
+        await tester.ensureVisible(find.text(label));
+        await tester.tap(find.text(label));
+        await tester.pumpAndSettle();
+      }
+
+      await decision('Try Skip');
+      expect(find.text('Next suggestion: Lower body'), findsOneWidget);
+      await decision('Try Dismiss');
+      expect(find.text('Next suggestion: Lower body'), findsOneWidget);
+      await decision('Try Accept');
+      expect(find.text('Next suggestion: Upper body'), findsOneWidget);
+      await decision('Open Routines');
+      expect(find.byType(RoutinesScreen), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      expect(find.text('See Your Journey Grow'), findsOneWidget);
+      expect(find.text('Highlights: keep the moments'), findsOneWidget);
+      expect(find.text('Daily History & Past Chapters'), findsOneWidget);
+      await decision('Explore Journey');
+      expect(find.byType(JourneyScreen), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(find.text('See Your Journey Grow'), findsOneWidget);
+      expect((await tester.runAsync(() => storage.load()))!.toJson(), original);
+      expect(await storage.loadOnboardingStep(), OnboardingSteps.journey);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  for (final step in [
+    OnboardingSteps.overview,
+    OnboardingSteps.areas,
+    OnboardingSteps.routines,
+    OnboardingSteps.journey,
+  ]) {
+    testWidgets(
+      'Feature step $step supports 320px with large accessibility text',
+      (tester) async {
+        tester.view.physicalSize = const Size(320, 720);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final bridge = TutorialBridge();
+        await tester.pumpWidget(
+          MaterialApp(
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: const TextScaler.linear(2)),
+              child: child!,
+            ),
+            home: OnboardingScreen(
+              bridge: bridge,
+              notifications: NotificationService(),
+              initialStep: step,
+              saveStep: (_) async {},
+              createGoal: (_) async => true,
+              hasGoal: () => true,
+              enableFreedom: () async {},
+              onExit: () {},
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Continue').hitTestable(), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
   }
 
   testWidgets(
@@ -354,7 +490,7 @@ void main() {
           lock: 'shown',
         );
       final saved = <int>[];
-      await mount(tester, bridge, 4, saved);
+      await mount(tester, bridge, OnboardingSteps.test, saved);
       expect(
         tester
             .widget<FilledButton>(
@@ -387,11 +523,11 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Finish Setup'));
       await tester.pumpAndSettle();
-      expect(saved, [5]);
+      expect(saved, [OnboardingSteps.ready]);
       expect(find.text("You're All Set!"), findsOneWidget);
       await tester.tap(find.text('Go to Daylock'));
       await tester.pumpAndSettle();
-      expect(saved, [5, 6]);
+      expect(saved, [OnboardingSteps.ready, OnboardingSteps.complete]);
       await tester.pumpWidget(const SizedBox());
     },
   );

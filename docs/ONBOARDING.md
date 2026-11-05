@@ -1,20 +1,33 @@
 # First-launch setup
 
-The Android `main()` entry point enables six setup screens. Planner embeds and
+The Android `main()` entry point enables ten setup screens. Planner embeds and
 visual fixtures can continue to instantiate `MainApp` directly. Other platforms
 can replay the tutorial in Settings; blocking and installed-app selection are
 explicitly unavailable there.
 
-Progress is stored as `daylock.onboarding.v2` using the existing
-`SharedPreferencesAsync` instance in `LocalStorage`. Values 0–5 resume a screen;
-6 means completed. Before the first planner save, new Android installations save
+Progress is stored as `daylock.onboarding.v3` using the existing
+`SharedPreferencesAsync` instance in `LocalStorage`. Values 0–9 resume a screen;
+10 means completed. Before the first planner save, new Android installations save
 step 0. Existing planner data and the old v1 completion/migration marker no longer
 skip the revised tutorial: every Android installation sees it automatically on
 its first launch of this version. Subsequent launches resume progress until step
-6 has been saved. Completed v2 setup does not repeat. This intentional one-time
+10 has been saved. Completed v3 setup does not repeat. This intentional one-time
 upgrade prompt follows the user's request to show setup automatically.
 Replay resets only this progress key. Leaving setup keeps its last saved step.
 Storage failures show a retry message and never mark completion.
+
+The sequence is Welcome, Permissions, Restricted apps, First commitment,
+Today & Plan, Areas, Routines, Journey, Blocking test, and Ready. The four new
+walkthrough pages also introduce stopwatches, task outcomes/excuses, Freedom
+conditions, scheduled events, Calendar/Daily History, Highlights, Past Chapters,
+notification preferences and appearance settings.
+
+Existing v2 progress before the feature tour retains its step. Old test, ready
+and completed markers move to the start of the new tour (step 4), so those users
+see the added features automatically without redoing permission setup. The
+existing Xiaomi power-review confirmation is preserved. `OnboardingSteps`
+defines the shared step numbers; old completion marker 6 is never interpreted as
+completion of the expanded walkthrough.
 
 ## Existing integrations
 
@@ -38,6 +51,12 @@ Storage failures show a retry message and never mark completion.
   existing planner save path. Today's committed plan stays locked. The callback
   rechecks plan identity and commitment after the editor returns. Existing goals
   satisfy this step without inserting duplicates.
+- Features: Area chips and an interactive routine cycle are clearly marked as
+  examples. Routine decisions use the actual `Routine.decide` model in memory;
+  neither preview writes to planner data. Optional buttons open the existing
+  Areas, Routines, Calendar, Settings and shared Journey screen. Back returns to
+  the same tutorial step. Actions users deliberately take in those real screens
+  use their existing validation and persistence paths.
 - Test: a user tap requests `testRestrictedApp` on the existing channel. Native
   code validates the selected installed app, enabled/bound service, and existing
   Freedom BLOCK decision, clears historical presentation evidence, and opens the
@@ -83,6 +102,11 @@ permissions, battery exemptions, packages or release-signing changes are added.
 5. Create a commitment: verify it appears in tomorrow's actual Plan. Replaying
    must not duplicate it. A committed tomorrow plan must reject another insert
    and retain its existing commitments.
+   Continue through Today & Plan, Areas, Routines and Journey. Try the Area chips
+   and Accept/Skip/Dismiss examples. Confirm examples do not insert anything into
+   real plans. Open the real feature pages and return with Back; tutorial progress
+   should remain unchanged. Check Calendar and Appearance/notification settings
+   links as well.
 6. With Freedom not earned, test the selected app. Check the real branded lock
    screen, return to the tutorial, and confirm verification. Try a failed launch
    or disconnected service: Finish Setup must remain disabled; retry should work.
