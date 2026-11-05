@@ -43,6 +43,9 @@ class InstagramDetectionService : AccessibilityService() {
         // Pane appearance/disappearance/title changes are not app foreground changes.
         if (event.contentChangeTypes != 0) return
         val packageName = event.packageName?.toString()
+        // Debug-only event order is essential when an OEM posts an intermediate
+        // system window between the selected app event and enforcement.
+        InstagramLockLog.event("window_event", detail = "package=$packageName fullScreen=${event.isFullScreen}")
         // Keep the raw platform value for deciding when a *different* Activity
         // has definitely replaced a pending selected app. It is deliberately
         // not required for recognizing the selected app itself; HyperOS can
@@ -87,7 +90,7 @@ class InstagramDetectionService : AccessibilityService() {
         if (foreground.targetPackage != target) gate.reset()
         foreground.observe(target)
         DetectionRuntime.foregroundRestrictedPackage = target
-        if (target == null || !DetectionRuntime.blockingEnabled || !DetectionRuntime.isEnabled()) return
+        if (!DetectionRuntime.blockingEnabled || !DetectionRuntime.isEnabled()) return
         // Never access event.text, event.source, rootInActiveWindow or window contents.
         if (gate.accept(target, AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED, SystemClock.elapsedRealtime(), DetectionRuntime.selection.packages.keys)) {
             InstagramLockLog.event("restricted_app_foreground", detail = "session=${foreground.token()}")
