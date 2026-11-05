@@ -8,6 +8,12 @@ class LocalStorage {
   static const stateKey = 'daylock.state.v2';
   static const legacyStateKey = 'daylock.state.v1';
   static const beforeStopwatchKey = 'daylock.state.v2.before-stopwatch';
+  static const onboardingKey = 'daylock.onboarding.v1';
+
+  Future<int?> loadOnboardingStep() => _preferences.getInt(onboardingKey);
+  // Six denotes completed; 0–5 are resumable screens.
+  Future<void> saveOnboardingStep(int step) =>
+      _preferences.setInt(onboardingKey, step.clamp(0, 6));
 
   final SharedPreferencesAsync _preferences;
   final DateTime Function() _now;
@@ -95,5 +101,6 @@ class LocalStorage {
     await _preferences.remove(legacyStateKey);
     await _preferences.remove(beforeStopwatchKey);
     await _preferences.remove(stateKey);
+    await _preferences.remove(onboardingKey);
   }
 }

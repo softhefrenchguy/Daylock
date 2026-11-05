@@ -32,17 +32,34 @@ class MainActivity : FlutterActivity() {
             setMethodCallHandler { call, result ->
                 if (call.method == "openAccessibilitySettings") {
                     try {
-                        startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                        val detail = Intent("android.settings.ACCESSIBILITY_DETAILS_SETTINGS").putExtra(
+                            "android.intent.extra.COMPONENT_NAME",
+                            android.content.ComponentName(this@MainActivity, InstagramDetectionService::class.java).flattenToString())
+                        try { startActivity(detail) }
+                        catch (_: Exception) { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
                         result.success(null)
                     } catch (_: Exception) { result.error("SETTINGS_UNAVAILABLE", "Open Android Accessibility Settings manually.", null) }
-                } else if (call.method in listOf("getStatus", "publishSnapshot", "invalidateSnapshot", "setBlockingEnabled", "publishAppearance", "getInstalledApps", "setRestrictedApp")) {
+                } else if (call.method in listOf("getStatus", "publishSnapshot", "invalidateSnapshot", "setBlockingEnabled", "publishAppearance", "getInstalledApps", "setRestrictedApp", "testRestrictedApp")) {
                     if (call.method in listOf("publishSnapshot", "invalidateSnapshot", "setBlockingEnabled", "setRestrictedApp")) {
                         DetectionRuntime.stateRevision.incrementAndGet()
                     }
                     DetectionRuntime.worker.execute {
                         try {
                             var apps: List<Map<String, Any?>>? = null
+                            var testIntent: Intent? = null
                             when (call.method) {
+                                "testRestrictedApp" -> {
+                                    val target = (call.arguments as Map<*, *>)["packageName"] as String
+                                    check(DetectionRuntime.isEnabled() && DetectionRuntime.connected &&
+                                        DetectionRuntime.canRestrict(target) &&
+                                        InstagramBlockingPolicy.decide(DetectionRuntime.blockingEnabled, true,
+                                            DetectionRuntime.store.eligibility()) == InstagramRestriction.BLOCK)
+                                    testIntent = checkNotNull(packageManager.getLaunchIntentForPackage(target))
+                                    // Clear historical evidence before a fresh real app-opening test.
+                                    DetectionRuntime.store.reportRestriction("test_requested")
+                                    DetectionRuntime.store.reportLockLaunch("not_attempted")
+                                    DetectionRuntime.store.reportHomeAction("not_attempted")
+                                }
                                 "getInstalledApps" -> apps = DetectionRuntime.refreshApps().map { DetectionRuntime.catalog.row(it) }
                                 "getStatus" -> runCatching { DetectionRuntime.refreshApps() }
                                 "setRestrictedApp" -> {
@@ -55,7 +72,14 @@ class MainActivity : FlutterActivity() {
                                 "publishAppearance" -> check(DetectionRuntime.store.publishAppearance(call.arguments as Map<*, *>))
                             }
                             val status = DetectionRuntime.status()
-                            main.post { result.success(if (apps == null) status else mapOf("status" to status, "apps" to apps)) }
+                            main.post {
+                                try {
+                                    result.success(if (apps == null) status else mapOf("status" to status, "apps" to apps))
+                                    testIntent?.let { startActivity(it) }
+                                } catch (_: Exception) {
+                                    DetectionRuntime.reportRestriction("lock_launch_failed")
+                                }
+                            }
                             DetectionRuntime.emit()
                         } catch (it: Exception) {
                             if (call.method in listOf("publishSnapshot", "invalidateSnapshot") && it !is NativeRevisionConflict) DetectionRuntime.store.invalidate("save_failed")

@@ -10,6 +10,8 @@ enum DetectionSectionMode { full, restricted, diagnostics }
 
 String _restrictionDiagnostic(String? value) => switch (value) {
   null => 'No restriction attempt yet.',
+  'test_requested' =>
+    'Test requested: waiting for a fresh selected-app detection.',
   'detected_selected_app' =>
     'Selected app detected. Checking Freedom and restriction eligibility.',
   'eligibility_notEarned' => 'Eligibility evaluated: Freedom is not earned.',
@@ -86,7 +88,10 @@ class InstagramDetectionSection extends StatelessWidget {
     this.mode = DetectionSectionMode.full,
   });
 
-  Future<void> _explainAndOpen(BuildContext context) async {
+  static Future<void> explainAndOpen(
+    BuildContext context,
+    InstagramDetectionBridge bridge,
+  ) async {
     final agree = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -413,7 +418,7 @@ class InstagramDetectionSection extends StatelessWidget {
                     OutlinedButton(
                       key: const ValueKey('open-accessibility-settings'),
                       onPressed: status.supported
-                          ? () => _explainAndOpen(context)
+                          ? () => explainAndOpen(context, bridge)
                           : null,
                       child: const Text('Open Accessibility Settings'),
                     ),

@@ -8,6 +8,8 @@ import 'design/daylock_widgets.dart';
 import 'design/appearance_preferences.dart';
 import 'services/appearance_storage.dart';
 import 'screens/settings_screen.dart';
+import 'screens/onboarding_screen.dart';
+import 'screens/commitment_editor.dart';
 
 import 'models/daylock_state.dart';
 import 'models/daily_plan.dart';
@@ -50,7 +52,12 @@ Future<void> main() async {
     await SecureCalendarCredentialStore().clearDaylockCredentials();
     await LocalStorage().reset();
   }
-  runApp(const MainApp());
+  runApp(
+    MainApp(
+      onboardingEnabled:
+          !kIsWeb && defaultTargetPlatform == TargetPlatform.android,
+    ),
+  );
 }
 
 class MainApp extends StatefulWidget {
@@ -61,6 +68,9 @@ class MainApp extends StatefulWidget {
   final InstagramDetectionBridge? detectionBridge;
   final NotificationService? notificationService;
   final StopwatchClock? stopwatchClock;
+  // The Android entry point enables first-run setup. Embedders and visual
+  // fixtures can open the planner directly without starting device setup.
+  final bool onboardingEnabled;
 
   const MainApp({
     super.key,
@@ -71,6 +81,7 @@ class MainApp extends StatefulWidget {
     this.detectionBridge,
     this.notificationService,
     this.stopwatchClock,
+    this.onboardingEnabled = false,
   });
 
   @override
@@ -115,6 +126,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   late final InstagramDetectionBridge _detectionBridge;
   int _nativePendingSaves = 0, _nativeSaveRevision = 0;
   bool _nativePersistedReady = false, _nativeSaveFailed = false;
+  int _onboardingStep = 0;
+  bool _tutorialOpen = false;
+  bool get _onboardingEnabled => widget.onboardingEnabled;
 
   @override
   void initState() {
@@ -327,6 +341,15 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     try {
       await _appearanceReady;
       final saved = await _storage.load();
+      bool showTutorial = false;
+      if (_onboardingEnabled) {
+        final progress = await _storage.loadOnboardingStep();
+        // Existing installations keep their current workflow on upgrade. A
+        // recorded partial tutorial always resumes, even after a plan was saved.
+        _onboardingStep = progress ?? (saved == null ? 0 : 6);
+        await _storage.saveOnboardingStep(_onboardingStep);
+        showTutorial = _onboardingStep < 6;
+      }
       final previous = saved ?? _snapshot();
       await _stopwatchClock.synchronize();
       final recovered = _stopwatches.reconcile(previous, recovering: true);
@@ -359,6 +382,11 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       // Also catch a date change while the initial read/write was pending.
       _refreshClock();
       _publishNotifications();
+      if (showTutorial) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _openTutorial();
+        });
+      }
       if (_pendingNotificationTap != null) {
         final target = _pendingNotificationTap!;
         _pendingNotificationTap = null;
@@ -436,11 +464,103 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             notificationService: _notifications,
             notificationPreferences: notificationPreferences,
             onNotificationsChanged: _changeNotifications,
+            onSetupRequested: () => _openTutorial(restart: true),
           ),
         ),
       ),
     ),
   );
+
+  Future<void> _openTutorial({bool restart = false}) async {
+    if (_tutorialOpen || _isLoading || _loadFailed) return;
+    _tutorialOpen = true;
+    try {
+      if (restart) {
+        await _storage.saveOnboardingStep(0);
+        _onboardingStep = 0;
+      }
+      if (!mounted) return;
+      await _navigatorKey.currentState!.push(
+        MaterialPageRoute<void>(
+          settings: const RouteSettings(name: '/setup'),
+          builder: (context) => OnboardingScreen(
+            bridge: _detectionBridge,
+            notifications: _notifications,
+            initialStep: _onboardingStep,
+            saveStep: (step) async {
+              await _storage.saveOnboardingStep(step);
+              _onboardingStep = step;
+            },
+            hasGoal: () =>
+                !_nativeSaveFailed &&
+                (todayPlan.tasks.isNotEmpty || tomorrowPlan.tasks.isNotEmpty),
+            createGoal: _createOnboardingGoal,
+            enableFreedom: () async {
+              setState(
+                () => freedomSettings = freedomSettings.copyWith(enabled: true),
+              );
+              _planningChanges.value++;
+              await _saveState();
+              if (_nativeSaveFailed) {
+                throw StateError('Freedom settings could not be saved');
+              }
+              await _detectionBridge.refresh();
+            },
+            onExit: () {
+              _navigatorKey.currentState!.pop();
+              setState(() => selectedPage = 0);
+            },
+          ),
+        ),
+      );
+    } catch (_) {
+      _messengerKey.currentState?.showSnackBar(
+        const SnackBar(
+          content: Text('Could not save setup. Please retry from Settings.'),
+        ),
+      );
+    } finally {
+      _tutorialOpen = false;
+    }
+  }
+
+  Future<bool> _createOnboardingGoal(BuildContext context) async {
+    _refreshClock();
+    final plan = tomorrowPlan;
+    if (plan.isCommitted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Tomorrow’s plan is already committed. Existing commitments are kept. Add another after the next day starts.',
+          ),
+        ),
+      );
+      return false;
+    }
+    final task = await showModalBottomSheet<Task>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => CommitmentEditor(
+        areas: areas,
+        heading: 'Your first commitment · tomorrow',
+        canCreate: () => identical(plan, tomorrowPlan) && !plan.isCommitted,
+      ),
+    );
+    if (!mounted || task == null) return false;
+    _refreshClock();
+    if (!identical(plan, tomorrowPlan) ||
+        plan.isCommitted ||
+        plan.tasks.any((existing) => existing.id == task.id)) {
+      return false;
+    }
+    setState(() {
+      task.areaId = areas.forNewCommitment(task.areaId).id;
+      plan.tasks.add(task);
+    });
+    await _saveState();
+    return !_nativeSaveFailed;
+  }
 
   void _changeFreedomSettings(FreedomSettings settings) {
     settings.toJson();

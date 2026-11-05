@@ -31,6 +31,7 @@ class SettingsScreen extends StatefulWidget {
   final NotificationPreferences notificationPreferences;
   final ValueChanged<NotificationPreferences>? onNotificationsChanged;
   final NotificationService? notificationService;
+  final VoidCallback? onSetupRequested;
   const SettingsScreen({
     super.key,
     this.readFreedom,
@@ -46,6 +47,7 @@ class SettingsScreen extends StatefulWidget {
     this.notificationPreferences = const NotificationPreferences(),
     this.onNotificationsChanged,
     this.notificationService,
+    this.onSetupRequested,
   });
 
   @override
@@ -324,6 +326,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           subtitle: item.$4,
           onTap: () => _open(item.$1),
         ),
+      SettingsNavigationCard(
+        id: 'settings-setup',
+        icon: Icons.explore_outlined,
+        title: 'Run Setup Tutorial',
+        subtitle: 'Permissions, distractions and your first commitment',
+        onTap: widget.onSetupRequested,
+      ),
     ],
   );
 }

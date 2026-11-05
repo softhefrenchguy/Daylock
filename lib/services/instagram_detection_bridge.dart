@@ -222,6 +222,8 @@ class InstagramDetectionBridge {
   }
 
   Future<void> refresh() => _call('getStatus');
+  Future<void> testRestrictedApp(String packageName) =>
+      _call('testRestrictedApp', {'packageName': packageName});
   Future<void> setRestrictedApp(String packageName, bool selected) => _call(
     'setRestrictedApp',
     {'packageName': packageName, 'selected': selected},

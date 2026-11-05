@@ -81,7 +81,7 @@ void main() {
         var freedom = const FreedomSettings();
         var appearance = const AppearancePreferences();
         var prefs = const NotificationPreferences();
-        var routinesOpened = 0, areasOpened = 0;
+        var routinesOpened = 0, areasOpened = 0, setupOpened = 0;
         await tester.pumpWidget(
           StatefulBuilder(
             builder: (context, update) => MaterialApp(
@@ -98,6 +98,7 @@ void main() {
                 onFreedomChanged: (v) => update(() => freedom = v),
                 onAreasRequested: () => areasOpened++,
                 onRoutinesRequested: () => routinesOpened++,
+                onSetupRequested: () => setupOpened++,
                 routineCount: 3,
                 areaCount: 4,
                 detectionBridge: bridge,
@@ -109,7 +110,7 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        expect(find.byType(SettingsNavigationCard), findsNWidgets(5));
+        expect(find.byType(SettingsNavigationCard), findsNWidgets(6));
         if (scale == 1) {
           expect(
             tester
@@ -175,7 +176,9 @@ void main() {
         await tap(tester, 'settings-about');
         expect(find.text('Keep your word.'), findsOneWidget);
         await back(tester);
-        expect(find.byType(SettingsNavigationCard), findsNWidgets(5));
+        expect(find.byType(SettingsNavigationCard), findsNWidgets(6));
+        await tap(tester, 'settings-setup');
+        expect(setupOpened, 1);
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());
         await bridge.close();
