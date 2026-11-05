@@ -13,7 +13,7 @@ class StopwatchClock {
   final MethodChannel channel;
   final Stopwatch _ticks = Stopwatch()..start();
   final String _process =
-      'process-${Random.secure().nextInt(1 << 32)}-${DateTime.now().microsecondsSinceEpoch}';
+      'process-${Random.secure().nextInt(0x7fffffff)}-${DateTime.now().microsecondsSinceEpoch}';
   StopwatchStamp? _base;
   bool _processOnly = false;
   int _sampleTick = 0;
