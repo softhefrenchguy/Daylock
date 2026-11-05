@@ -4,6 +4,15 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class InstagramLockFlowTest {
+    @Test fun pendingPresentationKeepsOnlyItsTargetDuringDaylockTransition() {
+        val flow = InstagramLockFlow()
+        flow.begin(1, 1000, "com.instagram.android")
+        assertTrue(flow.isPresenting("com.instagram.android"))
+        assertFalse(flow.isPresenting("com.other.app"))
+        flow.settle(1)
+        assertFalse(flow.isPresenting("com.instagram.android"))
+    }
+
     @Test fun launchRequestIsNotEvidenceOfAVisibleActivity() {
         val flow = InstagramLockFlow()
         assertTrue(flow.begin(1, 1000))

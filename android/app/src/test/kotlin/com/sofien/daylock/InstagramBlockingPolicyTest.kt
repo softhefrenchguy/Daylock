@@ -72,10 +72,12 @@ class InstagramBlockingPolicyTest {
         assertNull(DetectionPolicy.evaluate(snapshot.copy(runningFocus = true,
             focusCompletesAtMs = clock.wallMs + 500), clock).nextChangeInMs)
     }
-    @Test fun fullWindowRequiredAndPaneEventsAreNotForegroundChanges() {
+    @Test fun selectedWindowAllowsOemNonFullscreenButPaneEventsAreNotForegroundChanges() {
         assertTrue(InstagramBlockingPolicy.isForegroundWindow(true, 0))
-        assertFalse(InstagramBlockingPolicy.isForegroundWindow(false, 0))
+        assertTrue(InstagramBlockingPolicy.isForegroundWindow(false, 0))
         for (pane in listOf(8, 16, 32)) assertFalse(InstagramBlockingPolicy.isForegroundWindow(true, pane))
+        assertTrue(InstagramBlockingPolicy.isDefiniteOtherForegroundWindow(true, 0))
+        assertFalse(InstagramBlockingPolicy.isDefiniteOtherForegroundWindow(false, 0))
     }
     @Test fun repeatedTargetEventsDoNotCreateNewForegroundSessions() {
         val scope = InstagramForegroundGuard()

@@ -32,6 +32,8 @@ class InstagramLockFlow {
         return true
     }
     fun matchesTarget(id: Long, packageName: String?) = isCurrent(id) && packageName != null && packageName == targetPackage
+    /** Keep the selected target through Daylock's own Activity transition only. */
+    fun isPresenting(packageName: String?) = pending && packageName != null && packageName == targetPackage
     fun mayPresent(id: Long, packageName: String?, foregroundPackage: String?) =
         matchesTarget(id, packageName) && packageName == foregroundPackage
     fun isCurrent(id: Long) = id != 0L && attempt == id

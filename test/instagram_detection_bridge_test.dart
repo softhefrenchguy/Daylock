@@ -46,6 +46,9 @@ Map<String, Object?> statusMap({
   bool connected = true,
   String freedom = 'earned',
   int? latest,
+  String? lastRestriction,
+  String? lastHomeAction,
+  String? lastLockLaunch,
 }) => {
   'supported': true,
   'enabled': enabled,
@@ -62,6 +65,9 @@ Map<String, Object?> statusMap({
           'freedomState': 'earned',
           'freedomReason': 'conditions_satisfied',
         },
+  'lastRestriction': lastRestriction,
+  'lastHomeAction': lastHomeAction,
+  'lastLockLaunch': lastLockLaunch,
 };
 
 void main() {
@@ -149,10 +155,7 @@ void main() {
       minimumFocusMinutes: 20,
     )..startFocus(date);
     expect(input(tasks: [focus]).values['runningFocus'], isFalse);
-    expect(
-      input(tasks: [focus]).values['focusCompletesAtMs'],
-      isNull,
-    );
+    expect(input(tasks: [focus]).values['focusCompletesAtMs'], isNull);
     focus.changeOutcome(
       TaskOutcome.excused,
       now: date.add(const Duration(minutes: 2)),
@@ -254,6 +257,25 @@ void main() {
       service.status.value.freedomAtDetection,
       'earned',
     ); // Historical, not current.
+    await service.close();
+  });
+  test('Native enforcement diagnostics preserve restriction, Home, and lock results', () async {
+    final service = bridge();
+    await service.start();
+    await messenger.handlePlatformMessage(
+      events.name,
+      const StandardMethodCodec().encodeSuccessEnvelope(
+        statusMap(
+          lastRestriction: 'lock_launch_unconfirmed',
+          lastHomeAction: 'accepted',
+          lastLockLaunch: 'unconfirmed',
+        ),
+      ),
+      (_) {},
+    );
+    expect(service.status.value.lastRestriction, 'lock_launch_unconfirmed');
+    expect(service.status.value.lastHomeAction, 'accepted');
+    expect(service.status.value.lastLockLaunch, 'unconfirmed');
     await service.close();
   });
   test(

@@ -44,6 +44,14 @@ class DetectionStore(private val context: Context) {
         preferences.edit().putString("lastRestriction", value).commit()
     }.getOrDefault(false)
     fun lastRestriction(): String? = preferences.getString("lastRestriction", null)
+    fun reportHomeAction(value: String): Boolean = runCatching {
+        preferences.edit().putString("lastHomeAction", value).commit()
+    }.getOrDefault(false)
+    fun lastHomeAction(): String? = preferences.getString("lastHomeAction", null)
+    fun reportLockLaunch(value: String): Boolean = runCatching {
+        preferences.edit().putString("lastLockLaunch", value).commit()
+    }.getOrDefault(false)
+    fun lastLockLaunch(): String? = preferences.getString("lastLockLaunch", null)
     fun publishAppearance(value: Map<*, *>): Boolean = runCatching {
         val mode = value["mode"] as String
         require(mode in listOf("dark", "light", "system"))

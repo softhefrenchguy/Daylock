@@ -202,6 +202,14 @@ object DetectionRuntime {
     fun reportRestriction(value: String) {
         worker.execute { store.reportRestriction(value); emit() }
     }
+    /** Call only from the serial worker when a state transition must be ordered with eligibility. */
+    fun reportRestrictionOnWorker(value: String) { store.reportRestriction(value) }
+    fun reportHomeAction(value: String) {
+        worker.execute { store.reportHomeAction(value); emit() }
+    }
+    fun reportLockLaunch(value: String) {
+        worker.execute { store.reportLockLaunch(value); emit() }
+    }
 
     fun lockResumed(attempt: Long) {
         if (!lockFlow.isCurrent(attempt)) return
@@ -237,6 +245,7 @@ object DetectionRuntime {
         worker.execute {
             runCatching { InstagramLockFeedback.cancel(context) }
             store.reportRestriction(if (recovery) "recovery_shown" else "lock_shown")
+            store.reportLockLaunch("shown")
             emit()
         }
     }
@@ -265,7 +274,8 @@ object DetectionRuntime {
             "selectedPackages" to selection.packages.keys.toList(), "selectionRevision" to selection.revision,
             "selectionError" to selectionError, "removedAppCount" to selection.removedCount,
             "revision" to store.revision(), "detectionSaveFailed" to detectionSaveFailed, "blockingEnabled" to blockingEnabled,
-            "lastRestriction" to store.lastRestriction(), "blockingSaveFailed" to blockingSaveFailed)
+            "lastRestriction" to store.lastRestriction(), "lastHomeAction" to store.lastHomeAction(),
+            "lastLockLaunch" to store.lastLockLaunch(), "blockingSaveFailed" to blockingSaveFailed)
     }
 
     fun emit() {

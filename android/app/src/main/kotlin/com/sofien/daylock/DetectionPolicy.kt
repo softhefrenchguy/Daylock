@@ -119,7 +119,18 @@ class InstagramEventGate {
 enum class InstagramRestriction { ALLOW, BLOCK, RECOVER }
 
 object InstagramBlockingPolicy {
-    fun isForegroundWindow(fullScreen: Boolean, contentChanges: Int): Boolean = fullScreen && contentChanges == 0
+    /**
+     * OEMs do not consistently populate AccessibilityRecord.isFullScreen for an
+     * app Activity. A selected app's window-state event is still sufficient to
+     * evaluate the user-selected restriction, provided it is not a pane/content
+     * transition. This never reads window content.
+     */
+    fun isForegroundWindow(@Suppress("UNUSED_PARAMETER") fullScreen: Boolean, contentChanges: Int): Boolean =
+        contentChanges == 0
+
+    /** A non-selected full-screen Activity is a reliable switch away from a pending target. */
+    fun isDefiniteOtherForegroundWindow(fullScreen: Boolean, contentChanges: Int): Boolean =
+        fullScreen && contentChanges == 0
     fun decide(blockingEnabled: Boolean, permissionEnabled: Boolean, freedom: NativeFreedomResult): InstagramRestriction = when {
         !blockingEnabled || !permissionEnabled -> InstagramRestriction.ALLOW
         freedom.state == "disabled" || freedom.state == "earned" -> InstagramRestriction.ALLOW
@@ -141,7 +152,8 @@ class InstagramRecoveryGate {
     }
 }
 
-// No app names/history retained. A pending navigation is cancelled on any other window.
+// No app names/history retained. A pending navigation is cancelled on a definite
+// replacement Activity; transient OEM/system windows must not cancel it.
 class InstagramForegroundGuard {
     @Volatile var targetPackage: String? = null
         private set

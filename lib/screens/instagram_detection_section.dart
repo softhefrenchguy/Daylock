@@ -8,6 +8,75 @@ import 'restricted_apps_section.dart';
 
 enum DetectionSectionMode { full, restricted, diagnostics }
 
+String _restrictionDiagnostic(String? value) => switch (value) {
+  null => 'No restriction attempt yet.',
+  'detected_selected_app' =>
+    'Selected app detected. Checking Freedom and restriction eligibility.',
+  'eligibility_notEarned' => 'Eligibility evaluated: Freedom is not earned.',
+  'eligibility_earned' =>
+    'Eligibility evaluated: Freedom is earned; the app is allowed.',
+  'eligibility_disabled' =>
+    'Eligibility evaluated: Freedom Control is off; the app is allowed.',
+  'eligibility_unknown' =>
+    'Eligibility could not be confirmed; blocking is paused safely.',
+  'restriction_triggered' =>
+    'Restriction triggered: starting the Daylock lock flow.',
+  'restriction_recovery' =>
+    'Restriction needs Daylock to refresh Freedom state.',
+  'recovery_shown' => 'Last attempt: recovery screen shown. Open Daylock to refresh plans or disable blocking.',
+  'lock_shown' => 'Last restriction attempt: Daylock lock screen shown.',
+  'state_unknown' =>
+    'Last attempt: selected apps allowed while Freedom state was unavailable.',
+  'lock_launch_requested' =>
+    'Last attempt: lock screen requested; display not yet confirmed.',
+  'lock_fallback_posted' => 'Last attempt: lock screen not confirmed; app restriction notification posted. Android controls its delivery.',
+  'lock_fallback_unavailable' => 'Last attempt: lock screen not confirmed. Allow notifications and the App restriction notices channel in Android settings for fallback notices.',
+  'home_only' => 'Last attempt: Home requested; lock screen was not confirmed.',
+  'lock_launch_failed' || 'lock_launch_unconfirmed' => 'Last attempt: lock screen was not confirmed. Android may restrict background launches.',
+  'home_failed' => 'Last attempt: Android rejected Home navigation. Restriction could not be applied.',
+  'skipped_foreground_changed_before_eligibility' ||
+  'skipped_foreground_changed_before_navigation' =>
+    'Restriction skipped: the foreground app changed before enforcement.',
+  'skipped_accessibility_disabled' =>
+    'Restriction skipped: Accessibility is no longer enabled.',
+  'skipped_selection_unavailable' =>
+    'Restriction skipped: the selected app could not be verified.',
+  'skipped_device_not_interactive' =>
+    'Restriction skipped: the device was locked or not interactive.',
+  'skipped_service_inactive' =>
+    'Restriction skipped: the Accessibility service was no longer active.',
+  'skipped_lock_already_visible' =>
+    'Restriction skipped: a Daylock lock screen was already visible.',
+  'retrying_state_changed' =>
+    'Freedom state changed during enforcement; checking it once more.',
+  'skipped_state_changed' =>
+    'Restriction skipped: Freedom state changed while opening the app.',
+  'skipped_freedom_earned' => 'Restriction skipped: Freedom is earned.',
+  'skipped_freedom_disabled' => 'Restriction skipped: Freedom Control is off.',
+  'skipped_launch_throttled' =>
+    'Restriction skipped: a lock-screen attempt is already in progress.',
+  _ => 'Last restriction state could not be verified.',
+};
+
+String _homeDiagnostic(String? value) => switch (value) {
+  'attempted' => 'Home action: requested.',
+  'accepted' => 'Home action: Android accepted the request.',
+  'rejected' => 'Home action: Android rejected the request.',
+  _ => '',
+};
+
+String _lockDiagnostic(String? value) => switch (value) {
+  'attempted' => 'Lock screen: launch requested.',
+  'requested_unconfirmed' =>
+    'Lock screen: request returned; visibility is not confirmed yet.',
+  'shown' => 'Lock screen: visible and confirmed.',
+  'failed_exception' =>
+    'Lock screen: Android rejected or failed the launch request.',
+  'unconfirmed' =>
+    'Lock screen: not confirmed; a fallback notification may be used.',
+  _ => '',
+};
+
 class InstagramDetectionSection extends StatelessWidget {
   final InstagramDetectionBridge bridge;
   final DetectionSectionMode mode;
@@ -132,19 +201,7 @@ class InstagramDetectionSection extends StatelessWidget {
                   key: const ValueKey('instagram-blocking-status'),
                 ),
                 if (status.lastRestriction != null)
-                  Text(switch (status.lastRestriction) {
-                    'recovery_shown' => 'Last attempt: recovery screen shown. Open Daylock to refresh plans or disable blocking.',
-                    'lock_shown' =>
-                      'Last restriction attempt: Daylock lock screen shown.',
-                    'state_unknown' => 'Last attempt: Selected apps allowed while Freedom state was unavailable.',
-                    'lock_launch_requested' => 'Last attempt: lock screen requested; display not yet confirmed.',
-                    'lock_fallback_posted' => 'Last attempt: lock screen not confirmed; app restriction notification posted. Android controls its delivery.',
-                    'lock_fallback_unavailable' => 'Last attempt: lock screen not confirmed. Allow notifications and the App restriction notices channel in Android settings for fallback notices.',
-                    'home_only' => 'Last attempt: Home requested; lock screen was not confirmed.',
-                    'lock_launch_failed' || 'lock_launch_unconfirmed' => 'Last attempt: lock screen was not confirmed. Android may restrict background launches.',
-                    'home_failed' => 'Last attempt: Android rejected Home navigation. Restriction could not be applied.',
-                    _ => 'Last restriction attempt could not be verified.',
-                  }),
+                  Text(_restrictionDiagnostic(status.lastRestriction)),
                 const SizedBox(height: DaylockSpace.md),
                 Text(
                   status.error != null
@@ -259,22 +316,13 @@ class InstagramDetectionSection extends StatelessWidget {
                     title: const Text('Technical details & setup'),
                     childrenPadding: const EdgeInsets.all(16),
                     children: [
-                      if (status.lastRestriction == null)
-                        const Text('No restriction attempt yet.')
-                      else
-                        Text(switch (status.lastRestriction) {
-                          'recovery_shown' => 'Last attempt: recovery screen shown. Open Daylock to refresh plans or disable blocking.',
-                          'lock_shown' => 'Last restriction attempt: Daylock lock screen shown.',
-                          'state_unknown' => 'Last attempt: Selected apps allowed while Freedom state was unavailable.',
-                          'lock_launch_requested' => 'Last attempt: lock screen requested; display not yet confirmed.',
-                          'lock_fallback_posted' => 'Last attempt: lock screen not confirmed; app restriction notification posted. Android controls its delivery.',
-                          'lock_fallback_unavailable' => 'Last attempt: lock screen not confirmed. Allow notifications and the App restriction notices channel in Android settings for fallback notices.',
-                          'home_only' => 'Last attempt: Home requested; lock screen was not confirmed.',
-                          'lock_launch_failed' || 'lock_launch_unconfirmed' => 'Last attempt: lock screen was not confirmed. Android may restrict background launches.',
-                          'home_failed' => 'Last attempt: Android rejected Home navigation. Restriction could not be applied.',
-                          _ =>
-                            'Last restriction attempt could not be verified.',
-                        }),
+                      Text(_restrictionDiagnostic(status.lastRestriction)),
+                      if (status.lastHomeAction != null &&
+                          _homeDiagnostic(status.lastHomeAction).isNotEmpty)
+                        Text(_homeDiagnostic(status.lastHomeAction)),
+                      if (status.lastLockLaunch != null &&
+                          _lockDiagnostic(status.lastLockLaunch).isNotEmpty)
+                        Text(_lockDiagnostic(status.lastLockLaunch)),
                       const SizedBox(height: DaylockSpace.md),
                       Text(
                         status.error != null

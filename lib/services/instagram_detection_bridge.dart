@@ -55,7 +55,7 @@ class InstagramDetectionStatus {
   final String freedomState, freedomReason;
   final String? error;
   final bool blockingEnabled;
-  final String? lastRestriction;
+  final String? lastRestriction, lastHomeAction, lastLockLaunch;
   final bool blockingSaveFailed;
   final int revision;
   const InstagramDetectionStatus({
@@ -75,6 +75,8 @@ class InstagramDetectionStatus {
     this.error,
     this.blockingEnabled = false,
     this.lastRestriction,
+    this.lastHomeAction,
+    this.lastLockLaunch,
     this.blockingSaveFailed = false,
     this.revision = 0,
   });
@@ -102,6 +104,8 @@ class InstagramDetectionStatus {
       freedomReason: freedom['reason'] as String,
       blockingEnabled: map['blockingEnabled'] == true,
       lastRestriction: map['lastRestriction'] as String?,
+      lastHomeAction: map['lastHomeAction'] as String?,
+      lastLockLaunch: map['lastLockLaunch'] as String?,
       blockingSaveFailed: map['blockingSaveFailed'] == true,
       revision: map['revision'] as int? ?? 0,
     );
@@ -194,6 +198,8 @@ class InstagramDetectionBridge {
       freedomReason: 'native_unavailable',
       blockingEnabled: old.blockingEnabled,
       lastRestriction: old.lastRestriction,
+      lastHomeAction: old.lastHomeAction,
+      lastLockLaunch: old.lastLockLaunch,
       revision: _nativeRevision,
     );
   }
