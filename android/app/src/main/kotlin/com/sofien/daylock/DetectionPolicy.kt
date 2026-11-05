@@ -5,6 +5,27 @@ import java.util.GregorianCalendar
 import java.util.Locale
 import java.util.TimeZone
 
+/**
+ * Matches Android's flattened AccessibilityService component identifiers without
+ * assuming that the application ID and Kotlin package are the same. This is
+ * important for the debug applicationIdSuffix variant.
+ */
+object AccessibilityServiceComponentPolicy {
+    fun matches(applicationId: String, serviceClassName: String, enabledComponent: String?): Boolean {
+        val value = enabledComponent?.trim().orEmpty()
+        val separator = value.indexOf('/')
+        if (separator <= 0 || separator == value.lastIndex) return false
+        val packageName = value.substring(0, separator)
+        val declaredClass = value.substring(separator + 1)
+        val className = when {
+            declaredClass.startsWith('.') -> "$packageName$declaredClass"
+            '.' !in declaredClass -> "$packageName.$declaredClass"
+            else -> declaredClass
+        }
+        return packageName == applicationId && className == serviceClassName
+    }
+}
+
 // No Android/UI dependencies: the background decision and event gate are unit-testable.
 data class DetectionClock(
     val wallMs: Long,

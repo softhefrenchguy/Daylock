@@ -152,11 +152,26 @@ object DetectionRuntime {
 
     fun isEnabled(): Boolean = runCatching {
         val target = ComponentName(context, InstagramDetectionService::class.java)
+        val applicationId = context.packageName
+        val serviceClassName = target.className
         val manager = context.getSystemService(AccessibilityManager::class.java)
-        manager.isEnabled && manager.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK).any {
+        // HyperOS can temporarily return a stale/empty manager list immediately
+        // after an enabled service is switched to a variant with a new package.
+        // Read the same OS-owned canonical component list as a fallback. Both
+        // paths require the runtime application's package ID and service class.
+        val managerMatch = manager.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK).any {
+            AccessibilityServiceComponentPolicy.matches(applicationId, serviceClassName, it.id) || runCatching {
             val info = it.resolveInfo.serviceInfo
-            ComponentName(info.packageName, info.name) == target
+                ComponentName(info.packageName, info.name) == target
+            }.getOrDefault(false)
         }
+        val settingsMatch = android.provider.Settings.Secure.getString(
+            context.contentResolver,
+            android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+        )?.split(':')?.any {
+            AccessibilityServiceComponentPolicy.matches(applicationId, serviceClassName, it)
+        } == true
+        managerMatch || settingsMatch
     }.getOrDefault(false)
 
     private fun notifyPermissionChange() {

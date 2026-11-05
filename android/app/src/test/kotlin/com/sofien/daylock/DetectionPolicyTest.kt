@@ -4,6 +4,18 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class DetectionPolicyTest {
+    @Test fun accessibilityComponentMatchesReleaseAndDebugApplicationIds() {
+        val service = "com.sofien.daylock.InstagramDetectionService"
+        assertTrue(AccessibilityServiceComponentPolicy.matches(
+            "com.sofien.daylock", service, "com.sofien.daylock/$service"))
+        assertTrue(AccessibilityServiceComponentPolicy.matches(
+            "com.sofien.daylock.debug", service, "com.sofien.daylock.debug/$service"))
+        assertFalse(AccessibilityServiceComponentPolicy.matches(
+            "com.sofien.daylock.debug", service, "com.sofien.daylock/$service"))
+        assertFalse(AccessibilityServiceComponentPolicy.matches(
+            "com.sofien.daylock", service, "com.sofien.daylock.debug/$service"))
+    }
+
     private val clock = DetectionClock(1_800_000_000_000L, 100_000L, 7, "2026-10-13", "Asia/Qatar", 10_800_000, 18 * 60)
     private val state = NativeFreedomState(clock.date, true, 18, 0, 3, 3, true, false)
     private fun evaluate(value: NativeFreedomState? = state, now: DetectionClock = clock) = DetectionPolicy.evaluate(value, now)
