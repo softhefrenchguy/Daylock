@@ -41,6 +41,7 @@ import 'design/daylock_journey.dart';
 import 'services/freedom_service.dart';
 import 'services/routine_service.dart';
 import 'screens/routines_screen.dart';
+import 'screens/blocking_health_notice.dart';
 import 'services/instagram_detection_bridge.dart';
 import 'models/notification_preferences.dart';
 import 'services/notifications/notification_service.dart';
@@ -1098,6 +1099,12 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     final pages = [
       TodayScreen(
         key: _todayScreenKey,
+        notice: BlockingHealthNotice(
+          status: _detectionBridge.status,
+          onOpenAccessibility: () =>
+              unawaited(_detectionBridge.openAccessibilitySettings()),
+          onOpenAppInfo: () => unawaited(_detectionBridge.openAppSettings()),
+        ),
         plan: planForToday,
         tomorrowPlan: planForTomorrow,
         onFreedomRequested: () => _openSettings(SettingsDestination.freedom),

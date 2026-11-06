@@ -358,9 +358,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               'Xiaomi / Poco: keep blocking active',
               'HyperOS can pause Daylock in the background even while Accessibility shows enabled. '
                   'A test inside Daylock may work while opening Instagram from Home does not.\n\n'
-                  'Open this app’s App info → Power (or Battery saver) → No restrictions. '
-                  'Use the settings for this installed Daylock app; Daylock Dev and the Play version have separate settings.\n\n'
-                  'Daylock cannot read Xiaomi’s battery-saver choice. Confirm it yourself below, then test normal app openings too.',
+                  'In this app’s App info:\n'
+                  '• Autostart: on\n'
+                  '• Battery saver (or Power): No restrictions\n'
+                  '• Other permissions → Display pop-up windows while running in the background: allow\n\n'
+                  'Swiping Daylock away in Recents or using “Clean” can still stop blocking. '
+                  'If that happens, Today shows a warning: turn Daylock off and on in Accessibility.\n\n'
+                  'Use the settings for this installed Daylock app; Daylock Dev and the Play version have separate settings. '
+                  'Daylock cannot read these Xiaomi choices. Confirm them yourself below, then test normal app openings too.',
               action: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -378,7 +383,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         ? null
                         : (value) => _reviewPower(value == true),
                     title: const Text(
-                      'I selected No restrictions for this Daylock app',
+                      'I changed these settings for this Daylock app',
                     ),
                     subtitle: const Text(
                       'Your confirmation; not automatically verified.',

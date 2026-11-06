@@ -61,8 +61,12 @@ class TodayScreen extends StatefulWidget {
   final void Function(Task task, TaskOutcome outcome, String? reason)?
   onOutcomeChanged;
 
+  /// Shown under the header, e.g. a warning that app blocking has stopped.
+  final Widget? notice;
+
   const TodayScreen({
     super.key,
+    this.notice,
     required this.plan,
     this.tomorrowPlan,
     this.areas,
@@ -329,6 +333,7 @@ class TodayScreenState extends State<TodayScreen> {
                         recordedMilliseconds: recorded,
                       ),
               ),
+              if (widget.notice != null) section(widget.notice!),
               if (earned)
                 section(
                   Padding(
