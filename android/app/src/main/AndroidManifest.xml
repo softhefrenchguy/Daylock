@@ -5,7 +5,7 @@
     <application
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:label="Daylock"
+        android:label="${appLabel}"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -40,7 +40,7 @@
             android:theme="@style/DaylockLockTheme" />
         <service
             android:name=".InstagramDetectionService"
-            android:label="@string/instagram_detection_service_label"
+            android:label="${restrictionsLabel}"
             android:exported="true"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>

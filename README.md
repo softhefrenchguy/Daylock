@@ -6,6 +6,12 @@ stay on your device.
 
 ## Download for Android
 
+**Phone-test builds** install as a separate app, *Daylock Preview*
+(`com.sofien.daylock.preview`), so they sit next to the Play Store version instead
+of conflicting with its signature. Build one with
+`flutter build apk --release -P daylock.preview=true`. A preview keeps its own
+local data and its own Accessibility entry (*Daylock Preview app restrictions*).
+
 Download **Daylock-0.1.0.apk** from the [latest GitHub release](https://github.com/softhefrenchguy/Daylock/releases/latest).
 The APK supports Android 7.0 and newer. Open it on your phone and follow Android's
 installation prompts. Android may ask you to allow installs from your browser or

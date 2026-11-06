@@ -26,6 +26,8 @@ android {
         applicationId = "com.sofien.daylock"
         // AppAuth browser callback; public routing metadata, not an OAuth secret.
         manifestPlaceholders["appAuthRedirectScheme"] = "com.example.daylock.microsoft"
+        manifestPlaceholders["appLabel"] = "Daylock"
+        manifestPlaceholders["restrictionsLabel"] = "@string/instagram_detection_service_label"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -63,6 +65,15 @@ android {
         release {
             // Never fall back to the debug key for a Play release.
             signingConfig = signingConfigs.findByName("upload")
+            // Sideloaded phone tests: `flutter build apk --release -P daylock.preview=true`.
+            // A separate app ID installs next to the Play Store app instead of
+            // conflicting with its Google-managed signature.
+            if (project.findProperty("daylock.preview")?.toString() == "true") {
+                applicationIdSuffix = ".preview"
+                versionNameSuffix = "-preview"
+                manifestPlaceholders["appLabel"] = "Daylock Preview"
+                manifestPlaceholders["restrictionsLabel"] = "Daylock Preview app restrictions"
+            }
         }
     }
 
