@@ -12,6 +12,9 @@ import 'package:daylock/services/instagram_detection_bridge.dart';
 import 'package:daylock/services/local_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'navigation_helpers.dart';
+
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
@@ -98,7 +101,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(bridge.latest, isNotNull);
       storage.waiting = Completer<void>();
-      await tap(tester, find.text('Walk'));
+      await tap(tester, keepBox('Walk'));
       expect(bridge.latest, isNull);
       await tester.pump(const Duration(seconds: 2));
       expect(bridge.latest, isNull);
@@ -118,7 +121,7 @@ void main() {
         MainApp(storage: storage, now: () => date, detectionBridge: bridge),
       );
       await tester.pumpAndSettle();
-      await tap(tester, find.text('Walk'));
+      await tap(tester, keepBox('Walk'));
       expect(find.text('Could not save your changes.'), findsOneWidget);
       expect(bridge.latest, isNull);
       await tester.pump(const Duration(seconds: 2));

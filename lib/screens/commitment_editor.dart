@@ -63,25 +63,12 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
     Navigator.of(context).pop(task);
   }
 
-  InputDecoration _field(String label, {String? error}) {
-    final colors = Theme.of(context).colorScheme;
-    final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: colors.outline),
-    );
-    return InputDecoration(
-      labelText: label,
-      errorText: error,
-      filled: true,
-      fillColor: colors.surfaceContainerLow,
-      border: border,
-      enabledBorder: border,
-      focusedBorder: border.copyWith(
-        borderSide: BorderSide(color: colors.primary, width: 2),
-      ),
-      contentPadding: const EdgeInsets.all(DaylockSpace.md),
-    );
-  }
+  InputDecoration _field(String label, {String? error}) => InputDecoration(
+    labelText: label,
+    hintText: 'One small, specific step',
+    errorText: error,
+    contentPadding: const EdgeInsets.all(18),
+  );
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -92,7 +79,7 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.fromLTRB(
           DaylockSpace.lg,
-          DaylockSpace.md,
+          0,
           DaylockSpace.lg,
           DaylockSpace.lg,
         ),
@@ -105,7 +92,7 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
                 Expanded(
                   child: Text(
                     widget.heading,
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                 ),
                 IconButton(
@@ -121,18 +108,20 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
               controller: _name,
               enabled: true,
               decoration: _field('Commitment name'),
+              style: Theme.of(context).textTheme.bodyLarge!
+                  .copyWith(fontSize: 17),
               textCapitalization: TextCapitalization.sentences,
               textInputAction: TextInputAction.done,
               onChanged: (_) => setState(() {}),
               onSubmitted: (_) => _submit(),
             ),
-            const SizedBox(height: DaylockSpace.md),
+            const SizedBox(height: 18),
             AreaSelector(
               book: _areas,
               selectedId: _areaId,
               onChanged: (id) => setState(() => _areaId = id),
             ),
-            const SizedBox(height: DaylockSpace.sm),
+            const SizedBox(height: DaylockSpace.lg),
             FilledButton.icon(
               key: const ValueKey('save-commitment'),
               onPressed: _valid ? _submit : null,

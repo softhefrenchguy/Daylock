@@ -94,7 +94,12 @@ class _HighlightEditorState extends State<HighlightEditor> {
     child: SafeArea(
       top: false,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(DaylockSpace.lg),
+        padding: const EdgeInsets.fromLTRB(
+          DaylockSpace.lg,
+          0,
+          DaylockSpace.lg,
+          DaylockSpace.lg,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -103,9 +108,9 @@ class _HighlightEditorState extends State<HighlightEditor> {
                 Expanded(
                   child: Text(
                     widget.highlight == null
-                        ? 'Add Highlight'
-                        : 'Edit Highlight',
-                    style: Theme.of(context).textTheme.titleLarge,
+                        ? 'New achievement'
+                        : 'Edit achievement',
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                 ),
                 IconButton(
@@ -122,8 +127,8 @@ class _HighlightEditorState extends State<HighlightEditor> {
               maxLength: Highlight.maxTitleLength,
               textCapitalization: TextCapitalization.sentences,
               decoration: const InputDecoration(
-                labelText: 'Title',
-                hintText: 'Something worth remembering',
+                labelText: 'What are you proud of?',
+                hintText: 'Passed my driving test',
               ),
               onChanged: (_) => setState(() {}),
             ),
@@ -175,7 +180,7 @@ class _HighlightEditorState extends State<HighlightEditor> {
             FilledButton(
               key: const ValueKey('save-highlight'),
               onPressed: _valid ? _save : null,
-              child: const Text('Save Highlight'),
+              child: const Text('Save achievement'),
             ),
           ],
         ),

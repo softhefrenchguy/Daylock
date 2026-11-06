@@ -173,7 +173,7 @@ void main() {
       expect(find.textContaining('Microsoft Work/School'), findsOneWidget);
       expect(find.textContaining('Microsoft Personal'), findsOneWidget);
       await _page(tester, 'Today');
-      expect(find.text('0 / 1 complete'), findsOneWidget);
+      expect(find.text('0 of 1 kept'), findsOneWidget);
       expect(find.text('Teams lesson'), findsNothing);
 
       // Reopen offline without OAuth adapters: all three accounts' cache survives.

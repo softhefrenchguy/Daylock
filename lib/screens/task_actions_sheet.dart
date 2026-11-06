@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 
+import '../design/area_tones.dart';
+import '../design/daylock_scene.dart';
+import '../design/daylock_surfaces.dart';
 import '../design/daylock_theme.dart';
 import '../design/daylock_widgets.dart';
+import '../models/area.dart';
 import '../models/task.dart';
 
 class TaskActionsSheet extends StatelessWidget {
   final Task task;
+  final Area? area;
   final DateTime currentTime;
   final bool Function() canChange;
   const TaskActionsSheet({
     super.key,
     required this.task,
+    this.area,
     required this.currentTime,
     required this.canChange,
   });
@@ -26,49 +32,97 @@ class TaskActionsSheet extends StatelessWidget {
       }
     }
 
+    final scheme = theme.colorScheme;
+    final tones = AreaTones.forContext(
+      context,
+      area == null ? scheme.primary : Color(area!.colour),
+    );
+    final elapsed = task.focusMillisecondsAt(currentTime);
+    final status = switch (task.outcome) {
+      TaskOutcome.completed => 'Kept',
+      TaskOutcome.excused => 'Excused',
+      TaskOutcome.incomplete => 'Not kept yet',
+    };
+    Widget action({
+      required Key key,
+      required IconData icon,
+      required Color color,
+      required String label,
+      required TaskOutcome outcome,
+    }) => ListTile(
+      key: key,
+      minTileHeight: 60,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      leading: DaylockIconTile(icon: icon, color: color),
+      title: Text(label, style: theme.textTheme.bodyLarge),
+      onTap: () => choose(outcome),
+    );
+
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(DaylockSpace.lg),
+        padding: const EdgeInsets.fromLTRB(
+          DaylockSpace.lg,
+          0,
+          DaylockSpace.lg,
+          DaylockSpace.lg,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(task.name, style: theme.textTheme.titleLarge),
-            const SizedBox(height: 8),
-            DaylockLabel(task.outcome.name.toUpperCase()),
-            if (task.focusMillisecondsAt(currentTime) > 0) ...[
-              const SizedBox(height: 8),
-              Text(
-                '${recordedFocusLabel(task.focusMillisecondsAt(currentTime))} recorded',
+            Text(task.name, style: theme.textTheme.headlineMedium),
+            const SizedBox(height: 6),
+            Text(
+              [
+                if (area != null) area!.name,
+                status,
+                if (elapsed > 0) '${recordedFocusLabel(elapsed)} recorded',
+              ].join(' · '),
+              style: theme.textTheme.bodyMedium!.copyWith(
+                color: area == null ? scheme.onSurfaceVariant : tones.ink,
+                fontWeight: FontWeight.w500,
               ),
-            ],
+            ),
             if (task.excuseReason != null) ...[
-              const SizedBox(height: 16),
-              const DaylockLabel('EXCUSE REASON'),
+              const SizedBox(height: 14),
+              Text(
+                'Excuse reason',
+                style: theme.textTheme.labelLarge!.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(task.excuseReason!),
+              Text(task.excuseReason!, style: theme.textTheme.bodyLarge),
             ],
-            const SizedBox(height: 16),
-            ListTile(
-              key: const ValueKey('task-mark-completed'),
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.check_circle_outline),
-              title: const Text('Mark completed'),
-              onTap: () => choose(TaskOutcome.completed),
-            ),
-            ListTile(
-              key: const ValueKey('task-excuse'),
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.shield_outlined),
-              title: const Text('Excuse task'),
-              onTap: () => choose(TaskOutcome.excused),
-            ),
-            ListTile(
-              key: const ValueKey('task-reset'),
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.restart_alt_rounded),
-              title: const Text('Reset to incomplete'),
-              onTap: () => choose(TaskOutcome.incomplete),
+            const SizedBox(height: 18),
+            DaylockGroup(
+              color: Color.alphaBlend(
+                scheme.onSurface.withValues(alpha: .04),
+                scheme.surfaceContainerLow,
+              ),
+              children: [
+                action(
+                  key: const ValueKey('task-mark-completed'),
+                  icon: Icons.check_rounded,
+                  color: daylockGold(theme.brightness),
+                  label: 'Mark completed',
+                  outcome: TaskOutcome.completed,
+                ),
+                action(
+                  key: const ValueKey('task-excuse'),
+                  icon: Icons.shield_outlined,
+                  color: DaylockHues.blue,
+                  label: 'Excuse task',
+                  outcome: TaskOutcome.excused,
+                ),
+                action(
+                  key: const ValueKey('task-reset'),
+                  icon: Icons.restart_alt_rounded,
+                  color: DaylockHues.grey,
+                  label: 'Reset to incomplete',
+                  outcome: TaskOutcome.incomplete,
+                ),
+              ],
             ),
           ],
         ),

@@ -104,7 +104,7 @@ void main() {
         MainApp(now: () => _now, calendarService: service),
       );
       await tester.pumpAndSettle();
-      expect(find.text('0 / 1 complete'), findsOneWidget);
+      expect(find.text('0 of 1 kept'), findsOneWidget);
       await _navigate(tester, 'Calendar');
       await _tomorrow(tester);
       expect(find.text('Local lesson'), findsOneWidget);
@@ -149,8 +149,8 @@ void main() {
       expect(find.text("Tomorrow's plan is committed."), findsOneWidget);
       expect(find.byKey(const ValueKey('commitment-name')), findsNothing);
       await _navigate(tester, 'Today');
-      await _tap(tester, find.text('Gym'));
-      expect(find.text('1 / 1 complete'), findsOneWidget);
+      await _tap(tester, keepBox('Gym'));
+      expect(find.text('1 of 1 kept'), findsOneWidget);
       expect(find.text('Day complete'), findsOneWidget);
       expect((await _saved(tester)).calendarCache.events, hasLength(3));
 

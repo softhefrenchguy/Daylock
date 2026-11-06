@@ -115,7 +115,7 @@ void main() {
       expect((await _saved(tester)).todayPlan.tasks, isEmpty);
       expect((await _saved(tester)).tomorrowPlan.tasks, isEmpty);
       await _page(tester, 'Today');
-      expect(find.text('0 / 0 complete'), findsOneWidget);
+      expect(find.text('A clear day.'), findsOneWidget);
       // Reopening with no connected network/provider still displays the cache.
       await tester.pumpWidget(const SizedBox());
       await tester.pumpWidget(

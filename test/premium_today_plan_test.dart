@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:daylock/design/daylock_illustrations.dart';
-
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -102,12 +100,12 @@ void main() {
       );
       await tester.pumpWidget(screen(plan, eligibility(plan)));
       await tester.pumpAndSettle();
-      expect(find.text('1m 50s recorded today'), findsOneWidget);
-      expect(find.text('1 / 3 complete'), findsOneWidget);
+      expect(find.textContaining('1m 50s timed'), findsOneWidget);
+      expect(find.text('1 of 3 kept'), findsOneWidget);
       expect(plan.tasks.first.accumulatedFocusMilliseconds, 20000);
       expect(find.byKey(const ValueKey('freedom-status')), findsOneWidget);
-      expect(find.text('Pause stopwatch'), findsOneWidget);
-      expect(find.text('Resume stopwatch'), findsOneWidget);
+      expect(find.byTooltip('Pause stopwatch'), findsOneWidget);
+      expect(find.byTooltip('Resume stopwatch'), findsOneWidget);
     },
   );
   for (final mode in ['disabled', 'locked', 'waiting', 'earned']) {
@@ -128,26 +126,35 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('freedom-status')), findsOneWidget);
+      expect(find.byKey(const ValueKey('freedom-indicator')), findsOneWidget);
       final title = switch (mode) {
         'disabled' => 'Freedom Control is off',
-        'locked' => 'Freedom not yet earned',
+        'locked' => 'Apps unlock at 18:00',
         'waiting' => 'Waiting for Freedom Time',
-        _ => 'Freedom earned',
+        _ => 'Freedom earned.',
       };
       expect(find.text(title), findsOneWidget);
-      expect(find.textContaining('Freedom Time'), findsWidgets);
-      expect(
-        find.textContaining('eligible commitments complete'),
-        findsOneWidget,
-      );
-      expect(find.textContaining('plan committed'), findsOneWidget);
+      if (mode == 'disabled') {
+        expect(find.text('Turn on'), findsOneWidget);
+      } else {
+        // The conditions are one tap away on the strip or the earned headline.
+        await tester.tap(find.byKey(const ValueKey('freedom-indicator')));
+        await tester.pumpAndSettle();
+        expect(find.textContaining('Freedom Time'), findsWidgets);
+        expect(
+          find.textContaining('eligible commitments complete'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('plan committed'), findsOneWidget);
+      }
       if (mode == 'waiting') {
-        expect(find.text('Available at 18:00'), findsOneWidget);
+        expect(find.textContaining('Apps unlock at 18:00'), findsOneWidget);
       }
       if (mode == 'earned') {
-        expect(find.text('100%'), findsOneWidget);
-        expect(find.text('Day complete'), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('freedom-earned-headline')),
+          findsOneWidget,
+        );
       }
     });
   }
@@ -163,13 +170,13 @@ void main() {
       );
       await tester.pumpWidget(screen(plan, eligibility(plan)));
       await tester.pumpAndSettle();
-      expect(find.text('Start stopwatch'), findsOneWidget);
-      expect(find.text('Resume stopwatch'), findsOneWidget);
+      expect(find.byTooltip('Start stopwatch'), findsOneWidget);
+      expect(find.byTooltip('Resume stopwatch'), findsOneWidget);
       await tester.tap(
         find.byKey(ValueKey('stopwatch-toggle-${plan.tasks[1].id}')),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Pause stopwatch'), findsOneWidget);
+      expect(find.byTooltip('Pause stopwatch'), findsOneWidget);
       expect(plan.tasks[1].isFocusRunning, isTrue);
     },
   );
@@ -237,14 +244,14 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('No commitments planned yet.'), findsOneWidget);
-      expect(find.byType(DaylockIllustration), findsOneWidget);
+
       expect(
         find.byKey(const ValueKey('open-commitment-editor')),
         findsOneWidget,
       );
       expect(
         tester
-            .widget<FilledButton>(
+            .widget<TextButton>(
               find.byKey(const ValueKey('open-commitment-editor')),
             )
             .onPressed,

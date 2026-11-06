@@ -126,21 +126,20 @@ void main() {
         '  Buyer did not arrive.  ',
       );
       await _tap(tester, find.byKey(const ValueKey('confirm-excuse')));
-      expect(find.text('3 / 3 complete'), findsOneWidget);
-      expect(find.text('100%'), findsOneWidget);
+      expect(find.text('3 of 3 kept'), findsOneWidget);
       expect(find.text('1 excused'), findsOneWidget);
-      expect(find.byType(CheckboxListTile), findsNWidgets(3));
+      expect(find.byType(Checkbox), findsNWidgets(3));
       final excused = (await _saved(tester)).todayPlan.tasks.last;
       expect(excused.outcome, TaskOutcome.excused);
       expect(excused.excuseReason, 'Buyer did not arrive.');
       await _tap(tester, find.text('Sell car'));
-      expect(find.text('EXCUSE REASON'), findsOneWidget);
+      expect(find.text('Excuse reason'), findsOneWidget);
       expect(find.text('Buyer did not arrive.'), findsOneWidget);
       await _tap(tester, find.byKey(const ValueKey('task-reset')));
-      expect(find.text('3 / 4 complete'), findsOneWidget);
+      expect(find.text('3 of 4 kept'), findsOneWidget);
       expect((await _saved(tester)).todayPlan.tasks.last.excuseReason, isNull);
-      await _tap(tester, find.text('Sell car'));
-      expect(find.text('4 / 4 complete'), findsOneWidget);
+      await _tap(tester, keepBox('Sell car'));
+      expect(find.text('4 of 4 kept'), findsOneWidget);
       await _actions(tester, 'Sell car');
       await _tap(tester, find.byKey(const ValueKey('task-reset')));
       await _actions(tester, 'Sell car');
@@ -167,7 +166,7 @@ void main() {
     );
     await _tap(tester, find.text('Cancel'));
     expect((await _saved(tester)).toJson(), before);
-    expect(find.text('0 / 1 complete'), findsOneWidget);
+    expect(find.text('0 of 1 kept'), findsOneWidget);
   });
 
   testWidgets(
@@ -203,8 +202,7 @@ void main() {
       ]);
       await tester.pumpWidget(MainApp(now: () => _date));
       await tester.pumpAndSettle();
-      expect(find.text('2 / 3 complete'), findsOneWidget);
-      expect(find.text('67%'), findsOneWidget);
+      expect(find.text('2 of 3 kept'), findsOneWidget);
       expect(find.text('1 excused'), findsOneWidget);
       expect(find.text('Day complete'), findsNothing);
       await _tap(tester, find.byKey(const ValueKey('freedom-indicator')));
@@ -228,17 +226,19 @@ void main() {
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
       expect(find.text('No eligible commitments'), findsOneWidget);
+      // Freedom is off, so the strip opens Freedom Control with the details.
       await _tap(tester, find.byKey(const ValueKey('freedom-indicator')));
       expect(
         find.textContaining('completion is required to earn Freedom'),
         findsOneWidget,
       );
+      await navigateApp(tester, 'Today');
       expect(find.text('Day complete'), findsNothing);
       expect(find.text('100%'), findsNothing);
       expect(find.text('0%'), findsNothing);
       expect(find.text('2 excused'), findsOneWidget);
-      expect(find.byType(CheckboxListTile), findsNothing);
-      expect(find.text('Start stopwatch'), findsNothing);
+      expect(find.byType(Checkbox), findsNothing);
+      expect(find.byTooltip('Start stopwatch'), findsNothing);
       now = DateTime(2026, 10, 14, 8);
       _resume(tester);
       await tester.pumpAndSettle();
@@ -268,7 +268,7 @@ void main() {
       );
       expect(
         fill.color,
-        DaylockHeatmapPalette(DaylockTheme.dark.colorScheme)
+        DaylockHeatmapPalette(DaylockTheme.light.colorScheme)
             .background(HeatmapIntensity.neutral),
       );
       expect((await _saved(tester)).history.toJson(), saved.history.toJson());
@@ -289,7 +289,7 @@ void main() {
       ]);
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      await _tap(tester, find.text('Resume stopwatch'));
+      await _tap(tester, find.byTooltip('Resume stopwatch'));
       now = now.add(const Duration(milliseconds: 23500));
       await tester.pump(const Duration(seconds: 1));
       await _actions(tester, 'Study');
@@ -320,9 +320,9 @@ void main() {
       expect(task.outcome, TaskOutcome.excused);
       await _tap(tester, find.text('Study'));
       await _tap(tester, find.byKey(const ValueKey('task-reset')));
-      await _tap(tester, find.text('Resume stopwatch'));
+      await _tap(tester, find.byTooltip('Resume stopwatch'));
       now = now.add(const Duration(milliseconds: 499));
-      await _tap(tester, find.text('Pause stopwatch'));
+      await _tap(tester, find.byTooltip('Pause stopwatch'));
       expect(
         (await _saved(tester))
             .todayPlan
@@ -348,7 +348,7 @@ void main() {
         of: find.byWidgetPredicate(
           (widget) => widget is DaylockTaskRow && widget.task.name == 'Study',
         ),
-        matching: find.text('Start stopwatch'),
+        matching: find.byTooltip('Start stopwatch'),
       );
       await _tap(tester, first);
       now = now.add(const Duration(minutes: 5));
@@ -505,7 +505,7 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
-          expect(find.byType(CheckboxListTile), findsNothing);
+          expect(find.byType(Checkbox), findsNothing);
           expect(find.byIcon(Icons.shield_outlined), findsOneWidget);
           await _actions(tester, plan.tasks.single.name);
           expect(find.text('Buyer did not arrive.'), findsOneWidget);

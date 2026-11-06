@@ -17,6 +17,9 @@ import 'package:daylock/services/local_storage.dart';
 import 'package:daylock/services/routine_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'navigation_helpers.dart';
+
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
@@ -65,16 +68,18 @@ DaylockState _state({
 Future<void> _tap(WidgetTester tester, Finder finder) async {
   await tester.pumpAndSettle();
   if (finder.evaluate().isEmpty) {
+    final vertical = find.byWidgetPredicate(
+      (widget) =>
+          widget is Scrollable && widget.axisDirection == AxisDirection.down,
+    );
+    final plan = find.descendant(
+      of: find.byKey(const ValueKey('plan-content')),
+      matching: vertical,
+    );
     await tester.scrollUntilVisible(
       finder,
       180,
-      scrollable: find
-          .byWidgetPredicate(
-            (widget) =>
-                widget is Scrollable &&
-                widget.axisDirection == AxisDirection.down,
-          )
-          .last,
+      scrollable: plan.evaluate().isNotEmpty ? plan.first : vertical.last,
       maxScrolls: 40,
     );
   }
@@ -220,14 +225,14 @@ void main() {
       );
       await tester.pumpWidget(MainApp(now: () => _date));
       await tester.pumpAndSettle();
-      await _tap(tester, find.text('Today goal'));
+      await _tap(tester, keepBox('Today goal'));
       expect(find.byTooltip('Freedom not yet earned'), findsOneWidget);
       await _page(tester, 'Plan');
       await _tap(tester, _key('commit-tomorrow'));
       await confirmPlanCommit(tester);
       await _page(tester, 'Today');
       expect(find.byTooltip('Freedom earned'), findsOneWidget);
-      await _tap(tester, find.text('Today goal'));
+      await _tap(tester, keepBox('Today goal'));
       expect(find.byTooltip('Freedom not yet earned'), findsOneWidget);
     },
   );
@@ -280,13 +285,13 @@ void main() {
       );
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      await _tap(tester, find.text('Start stopwatch'));
+      await _tap(tester, find.byTooltip('Start stopwatch'));
       expect(find.byTooltip('Freedom not yet earned'), findsOneWidget);
       now = now.add(const Duration(minutes: 2));
       _resume(tester);
       await tester.pumpAndSettle();
       expect(find.byTooltip('Freedom not yet earned'), findsOneWidget);
-      await _tap(tester, find.text('Read'));
+      await _tap(tester, keepBox('Read'));
       expect(find.byTooltip('Freedom earned'), findsOneWidget);
       final task = (await _saved(tester)).todayPlan.tasks.single;
       expect(task.isCompleted, isTrue);
@@ -304,7 +309,7 @@ void main() {
       await tester.pumpAndSettle();
       await _page(tester, 'Plan');
       expect(find.text('Push'), findsNothing);
-      await _tap(tester, find.text('ROUTINE SUGGESTIONS'));
+      await _tap(tester, find.text('Routine suggestions'));
       expect(find.text('Push'), findsOneWidget);
       final oldScreen = tester.widget<PlanScreen>(find.byType(PlanScreen));
       final suggestion = oldScreen.routineSuggestions.single;
@@ -328,7 +333,7 @@ void main() {
       now = DateTime(2026, 10, 14, 18);
       _resume(tester);
       await tester.pumpAndSettle();
-      await _tap(tester, find.text('ROUTINE SUGGESTIONS'));
+      await _tap(tester, find.text('Routine suggestions'));
       expect(find.text('Pull'), findsOneWidget);
       expect(find.textContaining('35 min'), findsNothing);
       expect(find.text('Technique practice'), findsOneWidget);
@@ -350,7 +355,7 @@ void main() {
         await tester.pumpWidget(MainApp(now: () => now));
         await tester.pumpAndSettle();
         await _page(tester, 'Plan');
-        await _tap(tester, find.text('ROUTINE SUGGESTIONS'));
+        await _tap(tester, find.text('Routine suggestions'));
         await _tap(tester, _key('routine-${action.name}-training'));
         final saved = await _saved(tester);
         expect(saved.tomorrowPlan.tasks.map((task) => task.name), [
@@ -360,7 +365,7 @@ void main() {
         now = DateTime(2026, 10, 14, 18);
         _resume(tester);
         await tester.pumpAndSettle();
-        await _tap(tester, find.text('ROUTINE SUGGESTIONS'));
+        await _tap(tester, find.text('Routine suggestions'));
         expect(
           find.text(action == RoutineAction.skip ? 'Pull' : 'Push'),
           findsOneWidget,
@@ -477,7 +482,7 @@ void main() {
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
       await _page(tester, 'Plan');
-      await _tap(tester, find.text('ROUTINE SUGGESTIONS'));
+      await _tap(tester, find.text('Routine suggestions'));
       await _tap(tester, _key('routine-accept-training'));
       await _page(tester, 'Today');
       await _tap(tester, find.byTooltip('Settings'));
@@ -522,7 +527,7 @@ void main() {
       await tester.pumpWidget(MainApp(storage: storage, now: () => _date));
       await tester.pumpAndSettle();
       await _page(tester, 'Plan');
-      await _tap(tester, find.text('ROUTINE SUGGESTIONS'));
+      await _tap(tester, find.text('Routine suggestions'));
       await _tap(tester, _key('routine-accept-training'));
       expect(find.text('Could not save your changes.'), findsOneWidget);
       expect((await _saved(tester)).toJson(), initial.toJson());
@@ -632,7 +637,7 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
-          await _tap(tester, find.text('ROUTINE SUGGESTIONS'));
+          await _tap(tester, find.text('Routine suggestions'));
           await _tap(tester, _key('routine-accept-training'));
           expect(tester.takeException(), isNull);
         },

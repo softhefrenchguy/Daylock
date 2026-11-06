@@ -14,16 +14,36 @@ Duration daylockMotion(BuildContext context) =>
     ? Duration.zero
     : const Duration(milliseconds: 220);
 
+/// A small section heading. Labels are written in capitals at call sites; they
+/// render in sentence case so headings never shout ("COLOUR THEME" reads as
+/// "Colour theme").
 class DaylockLabel extends StatelessWidget {
   final String text;
   final Color? color;
   const DaylockLabel(this.text, {super.key, this.color});
 
+  static String sentenceCase(String value) {
+    if (value.isEmpty || value != value.toUpperCase()) return value;
+    final lower = value.toLowerCase();
+    return lower[0].toUpperCase() + lower.substring(1);
+  }
+
   @override
-  Widget build(BuildContext context) => Text(
-    text,
-    style: Theme.of(context).textTheme.labelSmall!.copyWith(color: color),
-  );
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Semantics(
+      header: true,
+      child: Text(
+        sentenceCase(text),
+        style: theme.textTheme.titleMedium!.copyWith(
+          fontFamily: DaylockSpace.displayFont,
+          fontWeight: FontWeight.w800,
+          fontSize: 17,
+          color: color ?? theme.colorScheme.onSurface,
+        ),
+      ),
+    );
+  }
 }
 
 class DaylockProgress extends StatelessWidget {

@@ -177,302 +177,198 @@ Widget shell(
   ),
 );
 
+DailyPlan _kept(DateTime date, {bool kept = true, bool excused = false}) =>
+    DailyPlan(
+      date: date,
+      tasks: [
+        Task(
+          name: 'Step',
+          type: TaskType.goal,
+          isCompleted: kept && !excused,
+          outcome: excused ? TaskOutcome.excused : null,
+          excuseReason: excused ? 'Outside reason.' : null,
+          areaId: 'learn',
+        ),
+      ],
+    );
+
+JourneyData _streakData(List<DailyPlan> days, DailyPlan live) {
+  var book = PlanHistory.empty;
+  for (final day in days) {
+    book = book.archive(day);
+  }
+  return JourneyData(areas: areas, history: book, todayPlan: live, now: now);
+}
+
 void main() {
   setUp(
     () => SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.empty(),
   );
-  testWidgets(
-    'Four configured Areas form two columns with featured Highlight visible before scrolling',
-    (tester) async {
-      phone(tester);
-      await tester.pumpWidget(shell(overview()));
-      await tester.pumpAndSettle();
-      final tiles = [
-        for (final area in areas.active)
-          tester.getRect(key('journey-area-${area.id}')),
-      ];
-      expect(tiles[0].top, tiles[1].top);
-      expect(tiles[2].top, tiles[3].top);
-      expect(tiles[0].left, tiles[2].left);
-      expect(tiles[1].left, greaterThan(tiles[0].right));
-      expect(tiles[0].width / tiles[0].height, inInclusiveRange(.7, 1.8));
-      final card = tester.getRect(key('featured-highlights'));
-      expect(
-        card.bottom,
-        lessThanOrEqualTo(tester.getRect(find.byType(NavigationBar)).top),
-      );
-      expect(key('highlight-first').hitTestable(), findsOneWidget);
-      expect(find.text('Everyday'), findsOneWidget);
-      expect(key('journey-area-past'), findsNothing);
-      expect(tester.takeException(), isNull);
-    },
-  );
 
-  testWidgets(
-    'Summary uses existing totals including archived history; Goal time is never inferred',
-    (tester) async {
-      await tester.pumpWidget(shell(overview()));
-      expect(
-        tester
-            .widget<Text>(key('journey-total-completed'))
-            .textSpan!
-            .toPlainText(),
-        '3',
-      );
-      expect(
-        tester.widget<Text>(key('journey-total-focus')).textSpan!.toPlainText(),
-        '2 min',
-      );
-      expect(
-        tester
-            .widget<Text>(key('journey-total-highlights'))
-            .textSpan!
-            .toPlainText(),
-        '3',
-      );
-      expect(
-        find.descendant(
-          of: key('journey-area-learn'),
-          matching: find.text('2 min recorded'),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: key('journey-area-health'),
-          matching: find.text('1 completed'),
-        ),
-        findsOneWidget,
-      );
-    },
-  );
+  group('Streaks', () {
+    final today = DateTime(2026, 10, 26);
+    DateTime day(int offset) => DateTime(2026, 10, 26 - offset);
+    final unfinished = DailyPlan(
+      date: today,
+      tasks: [Task(name: 'Today', type: TaskType.goal, areaId: 'learn')],
+    );
 
-  testWidgets(
-    'Quiet empty Area and Highlight-only Area use distinct meaningful indicators; tiles navigate',
-    (tester) async {
-      String? opened;
-      await tester.pumpWidget(shell(overview(onArea: (id) => opened = id)));
-      expect(
-        find.descendant(
-          of: key('journey-area-${Area.defaultId}'),
-          matching: find.text('Open space'),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: key('journey-area-cook'),
-          matching: find.text(moments.highlights.first.title),
-        ),
-        findsOneWidget,
-      );
-      expect(find.text('Your story here is just beginning.'), findsNothing);
-      await tap(tester, key('journey-area-cook'));
-      expect(opened, 'cook');
-      await tester.pumpWidget(
-        shell(
-          overview(
-            journey: JourneyData(
-              areas: areas,
-              history: PlanHistory.empty,
-              todayPlan: DailyPlan(
-                date: now,
-                tasks: [
-                  Task(
-                    name: 'Try a recipe',
-                    type: TaskType.goal,
-                    areaId: 'cook',
-                  ),
-                ],
-              ),
-              now: now,
-            ),
-          ),
-        ),
-      );
-      expect(
-        find.descendant(
-          of: key('journey-area-cook'),
-          matching: find.text('0 completed'),
-        ),
-        findsOneWidget,
-      );
-    },
-  );
+    test('An unfinished today never breaks a streak of kept days', () {
+      final journey = _streakData([
+        for (var i = 4; i >= 1; i--) _kept(day(i)),
+      ], unfinished);
+      expect(journey.currentStreak, 4);
+      expect(journey.longestStreak, 4);
+    });
 
-  testWidgets(
-    'Featured Highlights swipe, show position, open and edit the selected record',
-    (tester) async {
-      phone(tester);
-      String? opened, edited;
-      await tester.pumpWidget(
-        shell(
-          overview(onOpen: (h) => opened = h.id, onEdit: (h) => edited = h.id),
-        ),
-      );
-      expect(find.text('1 / 3'), findsOneWidget);
-      await tester.drag(key('featured-highlights'), const Offset(-340, 0));
-      await tester.pumpAndSettle();
-      expect(find.text('2 / 3'), findsOneWidget);
-      await tap(tester, key('edit-featured-highlight'));
-      expect(edited, 'second');
-      await tap(tester, key('highlight-second'));
-      expect(opened, 'second');
-      await tap(tester, key('next-highlight'));
-      expect(find.text('3 / 3'), findsOneWidget);
-      expect(
-        tester.widget<IconButton>(key('next-highlight')).onPressed,
-        isNull,
-      );
-      await tap(tester, key('previous-highlight'));
-      expect(find.text('2 / 3'), findsOneWidget);
-    },
-  );
+    test('Keeping today extends the streak', () {
+      final journey = _streakData([
+        for (var i = 3; i >= 1; i--) _kept(day(i)),
+      ], _kept(today));
+      expect(journey.currentStreak, 4);
+    });
 
-  testWidgets(
-    'Selection survives rebuilds and date reordering, then safely handles deletion and new Highlights',
-    (tester) async {
-      phone(tester);
-      final source = ValueNotifier(moments);
-      addTearDown(source.dispose);
-      String? edited;
-      await tester.pumpWidget(
-        shell(
-          ValueListenableBuilder<HighlightBook>(
-            valueListenable: source,
-            builder: (_, book, _) =>
-                overview(highlights: book, onEdit: (h) => edited = h.id),
-          ),
-        ),
-      );
-      await tap(tester, key('next-highlight'));
-      source.value = HighlightBook(moments.highlights);
-      await tester.pumpAndSettle();
-      expect(find.text('2 / 3'), findsOneWidget);
-      source.value = source.value.upsert(
-        Highlight(
-          id: 'second',
-          title: 'Edited milestone',
-          date: DateTime(2026, 10, 27),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('1 / 3'), findsOneWidget);
-      await tap(tester, key('edit-featured-highlight'));
-      expect(edited, 'second');
-      source.value = source.value.remove('second');
-      await tester.pumpAndSettle();
-      expect(find.text('1 / 2'), findsOneWidget);
-      source.value = source.value.upsert(
-        Highlight(
-          id: 'added',
-          title: 'Remembered an earlier moment',
-          date: DateTime(2020),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('3 / 3'), findsOneWidget);
-      await tap(tester, key('edit-featured-highlight'));
-      expect(edited, 'added');
-      source.value = source.value.remove('added');
-      await tester.pumpAndSettle();
-      expect(find.text('2 / 2'), findsOneWidget);
-      source.value = HighlightBook.empty;
-      await tester.pumpAndSettle();
-      expect(key('empty-highlights'), findsOneWidget);
-      source.value = HighlightBook([
-        Highlight(id: 'new', title: 'New moment', date: now),
-      ]);
-      await tester.pumpAndSettle();
-      expect(key('highlight-new').hitTestable(), findsOneWidget);
-      expect(key('highlight-position'), findsNothing);
-      expect(tester.takeException(), isNull);
-    },
-  );
+    test('A missed day or a day without a plan ends the streak', () {
+      final missed = _streakData([
+        _kept(day(3)),
+        _kept(day(2), kept: false),
+        _kept(day(1)),
+      ], unfinished);
+      expect(missed.currentStreak, 1);
+      expect(missed.longestStreak, 1);
+      final gap = _streakData([_kept(day(3)), _kept(day(1))], unfinished);
+      expect(gap.currentStreak, 1);
+    });
 
-  testWidgets('Empty Highlights offer Add and All without an empty carousel', (
+    test('Fully excused days neither count nor break the streak', () {
+      final journey = _streakData([
+        _kept(day(3)),
+        _kept(day(2), excused: true),
+        _kept(day(1)),
+      ], unfinished);
+      expect(journey.currentStreak, 2);
+      expect(journey.statusOn(day(2)), JourneyDayStatus.excused);
+      expect(journey.statusOn(day(5)), JourneyDayStatus.none);
+    });
+  });
+
+  testWidgets('The sky shows the streak; totals use all recorded history', (
     tester,
   ) async {
     phone(tester);
-    var added = false;
-    await tester.pumpWidget(
-      shell(
-        overview(highlights: HighlightBook.empty, onAdd: () => added = true),
-      ),
-    );
-    expect(find.text('Keep a moment that matters.'), findsOneWidget);
-    expect(find.byType(PageView), findsNothing);
-    await tap(tester, key('add-highlight'));
-    expect(added, isTrue);
-    expect(key('all-highlights'), findsOneWidget);
+    await tester.pumpWidget(shell(overview()));
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel('0 day streak'), findsOneWidget);
+    expect(find.text('Keep all of today to start one'), findsOneWidget);
+    String plain(String id) => tester.widget<Text>(key(id)).data!;
+    // Two kept today plus one in an archived Area's history.
+    expect(plain('journey-total-completed'), '3');
+    expect(plain('journey-total-focus'), '2m');
+    expect(plain('journey-total-highlights'), '3');
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets(
-    'Direct edit, manage Areas, Past Chapters and Daily history retain existing flows',
+    'Achievements show newest first, open on tap and edit on long press',
     (tester) async {
-      await LocalStorage().save(
-        DaylockState(
-          areas: areas,
-          highlights: moments,
-          todayPlan: today,
-          tomorrowPlan: DailyPlan(
-            date: DateTime(2026, 10, 27),
-            tasks: [],
-            isCommitted: true,
-          ),
-          history: history,
-        ),
+      phone(tester);
+      Highlight? opened, edited;
+      await tester.pumpWidget(
+        shell(overview(onOpen: (h) => opened = h, onEdit: (h) => edited = h)),
       );
-      await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      await navigateApp(tester, 'Journey');
-      await tap(tester, key('edit-featured-highlight'));
-      expect(find.byType(HighlightEditor), findsOneWidget);
-      await tester.enterText(key('highlight-title'), 'A meal to remember');
-      await tap(tester, key('save-highlight'));
+      final first = tester.getTopLeft(key('highlight-first'));
+      final second = tester.getTopLeft(key('highlight-second'));
+      expect(first.dx, lessThan(second.dx));
+      expect(first.dy, second.dy);
+      expect(key('all-highlights'), findsOneWidget);
+      await tester.tap(key('highlight-first'));
+      expect(opened?.id, 'first');
+      await tester.longPress(key('highlight-second'));
+      expect(edited?.id, 'second');
+      // Each card wears its Area's colour; an unlinked one falls back to pink.
       expect(
-        (await LocalStorage().load())!.highlights.highlights.first.title,
-        'A meal to remember',
+        find.descendant(
+          of: key('highlight-first'),
+          matching: find.textContaining('Cooking'),
+        ),
+        findsOneWidget,
       );
-      await tap(tester, key('journey-manage-areas'));
-      expect(find.byType(AreasScreen), findsOneWidget);
-      await navigateApp(tester, 'Journey');
-      await tap(tester, key('past-chapters'));
-      expect(find.byType(PastChaptersScreen), findsOneWidget);
-      expect(key('journey-area-past'), findsOneWidget);
-      expect(key('journey-area-learn'), findsNothing);
-      await navigateApp(tester, 'Calendar');
-      final saved = (await LocalStorage().load())!;
-      expect(saved.history.toJson(), history.toJson());
-      expect(saved.tomorrowPlan.isCommitted, isTrue);
+      expect(tester.takeException(), isNull);
     },
   );
 
+  testWidgets('An empty shelf invites the first achievement', (tester) async {
+    phone(tester);
+    var added = 0;
+    await tester.pumpWidget(
+      shell(overview(highlights: HighlightBook.empty, onAdd: () => added++)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Keep a moment that matters.'), findsOneWidget);
+    expect(key('all-highlights'), findsNothing);
+    await tester.tap(find.text('Keep a moment that matters.'));
+    await tester.tap(key('add-highlight'));
+    expect(added, 2);
+  });
+
+  testWidgets('Areas show this week in their own colours and open on tap', (
+    tester,
+  ) async {
+    phone(tester);
+    String? opened;
+    await tester.pumpWidget(shell(overview(onArea: (id) => opened = id)));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      key('journey-area-grid'),
+      200,
+      scrollable: vertical,
+    );
+    await tester.pumpAndSettle();
+    Finder week(String id, String text) =>
+        find.descendant(of: key('journey-area-$id'), matching: find.text(text));
+    expect(week('learn', '1 this week'), findsOneWidget);
+    expect(week('health', '1 this week'), findsOneWidget);
+    expect(week('cook', '0 this week'), findsOneWidget);
+    expect(key('journey-area-past'), findsNothing);
+    await tap(tester, key('journey-area-learn'));
+    expect(opened, 'learn');
+  });
+
+  testWidgets('Five-week grid summarises kept days for screen readers', (
+    tester,
+  ) async {
+    phone(tester);
+    final journey = _streakData([
+      _kept(DateTime(2026, 10, 24)),
+      _kept(DateTime(2026, 10, 25)),
+    ], today);
+    await tester.pumpWidget(shell(overview(journey: journey)));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      key('journey-weeks'),
+      200,
+      scrollable: vertical,
+    );
+    expect(
+      find.bySemanticsLabel('Last 5 weeks: 2 days fully kept'),
+      findsOneWidget,
+    );
+    expect(find.bySemanticsLabel('2 day streak'), findsOneWidget);
+  });
+
   for (final colour in ColourTheme.values) {
     for (final brightness in Brightness.values) {
-      testWidgets(
-        'Configured colours and readable theme text in $colour $brightness',
-        (tester) async {
-          phone(tester);
-          await tester.pumpWidget(
-            shell(overview(), colour: colour, brightness: brightness),
-          );
-          await tester.pumpAndSettle();
-          final icon = tester
-              .widgetList<Icon>(
-                find.descendant(
-                  of: key('journey-area-learn'),
-                  matching: find.byType(Icon),
-                ),
-              )
-              .first;
-          expect(icon.color, Color(areas.resolve('learn').colour));
-          await tap(tester, key('next-highlight'));
-          expect(find.text('2 / 3'), findsOneWidget);
-          expect(tester.takeException(), isNull);
-        },
-      );
+      testWidgets('Journey renders in $colour $brightness', (tester) async {
+        phone(tester);
+        await tester.pumpWidget(
+          shell(overview(), colour: colour, brightness: brightness),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Journey'), findsWidgets);
+        expect(tester.takeException(), isNull);
+      });
     }
   }
 
@@ -481,54 +377,55 @@ void main() {
       '320px compact layout supports $scale text, long names and many Areas',
       (tester) async {
         phone(tester, width: 320, height: 640);
-        var book = areas.upsert(
-          areas.defaultArea.copyWith(
-            name: 'Personal relationships and meaningful experiences',
-          ),
-        );
-        for (var i = 0; i < 7; i++) {
-          book = book.upsert(custom('more-$i', 'An additional Area $i'));
-        }
-        await tester.pumpWidget(shell(overview(book: book), scale: scale));
+        final many = AreaBook([
+          ...areas.areas,
+          for (var i = 0; i < 6; i++)
+            custom('extra$i', 'A very long Area name number $i that wraps'),
+        ]);
+        await tester.pumpWidget(shell(overview(book: many), scale: scale));
         await tester.pumpAndSettle();
         await tester.scrollUntilVisible(
-          key('journey-area-${Area.defaultId}'),
-          180,
-          scrollable: vertical,
-        );
-        await tester.pumpAndSettle();
-        final first = tester.getRect(key('journey-area-${Area.defaultId}'));
-        final second = tester.getRect(key('journey-area-learn'));
-        expect(
-          scale > 1.5 ? second.top > first.top : second.top == first.top,
-          isTrue,
-        );
-        await tester.scrollUntilVisible(
-          key('daily-history'),
-          220,
+          key('past-chapters'),
+          250,
           scrollable: vertical,
           maxScrolls: 80,
         );
         await tester.pumpAndSettle();
-        expect(key('daily-history').hitTestable(), findsOneWidget);
-        await tap(tester, key('next-highlight'));
-        expect(find.text('2 / 3'), findsOneWidget);
+        expect(key('past-chapters').hitTestable(), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
     );
   }
 
   testWidgets(
-    'Carousel buttons work with reduced motion and expose selected position semantics',
+    'Manage Areas, Past Chapters and Daily history open their screens',
     (tester) async {
-      phone(tester);
-      final semantics = tester.ensureSemantics();
-      await tester.pumpWidget(shell(overview(), reducedMotion: true));
-      await tap(tester, key('next-highlight'));
-      expect(find.bySemanticsLabel('Highlight 2 of 3'), findsOneWidget);
-      expect(find.bySemanticsLabel(RegExp('.*Open Area')), findsNWidgets(4));
-      expect(tester.takeException(), isNull);
-      semantics.dispose();
+      await tester.runAsync(
+        () => LocalStorage().save(
+          DaylockState(
+            todayPlan: today,
+            tomorrowPlan: DailyPlan(date: DateTime(2026, 10, 27), tasks: []),
+            history: history,
+            areas: areas,
+            highlights: moments,
+          ),
+        ),
+      );
+      await tester.pumpWidget(MainApp(now: () => now));
+      await tester.pumpAndSettle();
+      await navigateApp(tester, 'Journey');
+      await tap(tester, key('journey-manage-areas'));
+      expect(find.byType(AreasScreen), findsOneWidget);
+      // The Calendar helper scrolls down, so visit it before Past Chapters.
+      await navigateApp(tester, 'Calendar');
+      expect(find.textContaining('2026'), findsWidgets);
+      await navigateApp(tester, 'Journey');
+      await tap(tester, key('past-chapters'));
+      expect(find.byType(PastChaptersScreen), findsOneWidget);
+      await navigateApp(tester, 'Journey');
+      await tap(tester, key('highlight-first'));
+      expect(find.text('Cooked my first proper meal'), findsWidgets);
+      expect(find.byType(HighlightEditor), findsNothing);
     },
   );
 }

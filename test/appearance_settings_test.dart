@@ -16,6 +16,9 @@ import 'package:daylock/services/calendar_service.dart';
 import 'package:daylock/services/local_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'navigation_helpers.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
@@ -55,7 +58,7 @@ void main() {
   );
 
   testWidgets(
-    'Fresh app defaults Dark/Violet even when the device is Light; Settings keeps the three tabs',
+    'Fresh app defaults to System/Violet and follows a Light device; Settings keeps the three tabs',
     (tester) async {
       tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
@@ -63,7 +66,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         Theme.of(tester.element(find.byType(TodayScreen))).brightness,
-        Brightness.dark,
+        Brightness.light,
       );
       expect(
         tester.widget<NavigationBar>(find.byType(NavigationBar)).destinations,
@@ -280,7 +283,7 @@ void main() {
       await tester.pumpAndSettle();
       await _tap(
         tester,
-        find.widgetWithText(TextButton, 'Start stopwatch').first,
+        find.byTooltip('Start stopwatch').first,
         running: true,
       );
       final startedAt = (await _saved(tester))
@@ -301,13 +304,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 350));
       await tester.pumpAndSettle();
       expect(find.text('23:00'), findsOneWidget);
-      expect(find.text('Pause stopwatch'), findsOneWidget);
+      expect(find.byTooltip('Pause stopwatch'), findsOneWidget);
       expect(
         (await _saved(tester)).todayPlan.tasks.first.focusStartedAt,
         startedAt,
       );
-      await _tap(tester, find.widgetWithText(TextButton, 'Pause stopwatch'));
-      await _tap(tester, find.text('Walk'));
+      await _tap(tester, find.byTooltip('Pause stopwatch'));
+      await _tap(tester, keepBox('Walk'));
       final saved = await _saved(tester);
       expect(
         saved.todayPlan.tasks.first.accumulatedFocusMilliseconds,
@@ -315,7 +318,7 @@ void main() {
       );
       expect(saved.todayPlan.tasks.last.isCompleted, isTrue);
       expect(saved.tomorrowPlan.isCommitted, isTrue);
-      expect(find.text('1 / 2 complete'), findsOneWidget);
+      expect(find.text('1 of 2 kept'), findsOneWidget);
     },
   );
 
@@ -335,7 +338,7 @@ void main() {
         _theme(tester).colorScheme.primary,
         DaylockTheme.forPalette(
           ColourTheme.rose,
-          Brightness.dark,
+          Brightness.light,
         ).colorScheme.primary,
       );
       expect(find.text('Could not save appearance settings.'), findsOneWidget);
@@ -432,7 +435,7 @@ void main() {
         _theme(tester).colorScheme.primary,
         DaylockTheme.forPalette(
           ColourTheme.ember,
-          Brightness.dark,
+          Brightness.light,
         ).colorScheme.primary,
       );
     },

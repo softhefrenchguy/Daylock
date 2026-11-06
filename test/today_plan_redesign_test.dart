@@ -107,7 +107,7 @@ void main() {
       await tap(tester, find.byKey(ValueKey('complete-${tasks[4].id}')));
       expect(tasks[4].isCompleted, isTrue);
       expect(tasks[4].accumulatedFocusMilliseconds, 120000);
-      expect(find.text('1 / 5 complete'), findsOneWidget);
+      expect(find.text('1 of 5 kept'), findsOneWidget);
       expect(find.text('Task 2'), findsOneWidget);
       expect(find.text('Task 4'), findsNothing);
     },
@@ -122,17 +122,21 @@ void main() {
         );
         await tester.pumpWidget(today(plan, enabled: enabled));
         await tester.pumpAndSettle();
-        expect(find.byKey(const ValueKey('freedom-status')), findsOneWidget);
-        expect(
-          find.text(enabled ? 'Freedom earned' : 'Freedom Control is off'),
-          findsOneWidget,
-        );
-        expect(find.textContaining('Freedom Time'), findsOneWidget);
-        expect(
-          find.text('1 / 1 eligible commitments complete'),
-          findsOneWidget,
-        );
-        expect(find.textContaining('plan committed'), findsOneWidget);
+        if (!enabled) {
+          expect(find.byKey(const ValueKey('freedom-status')), findsOneWidget);
+          expect(find.text('Freedom Control is off'), findsOneWidget);
+          expect(find.text('Turn on'), findsOneWidget);
+        } else {
+          expect(find.text('Freedom earned.'), findsOneWidget);
+          await tester.tap(find.byKey(const ValueKey('freedom-indicator')));
+          await tester.pumpAndSettle();
+          expect(find.textContaining('Freedom Time'), findsOneWidget);
+          expect(
+            find.text('1 / 1 eligible commitments complete'),
+            findsOneWidget,
+          );
+          expect(find.textContaining('plan committed'), findsOneWidget);
+        }
         expect(find.byKey(const ValueKey('freedom-dialog')), findsNothing);
       },
     );
@@ -178,7 +182,7 @@ void main() {
       refresh(() => now = DateTime(2026, 10, 27, 18));
       await tester.pump();
       await tester.pumpAndSettle();
-      expect(find.text('Freedom earned'), findsOneWidget);
+      expect(find.text('Freedom earned.'), findsOneWidget);
     },
   );
 

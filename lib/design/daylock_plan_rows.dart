@@ -11,11 +11,13 @@ class DaylockPlanTaskRow extends StatelessWidget {
   final Task task;
   final Area? area;
   final Widget? areaAction;
+  final bool showIcon;
   const DaylockPlanTaskRow({
     super.key,
     required this.task,
     this.area,
     this.areaAction,
+    this.showIcon = true,
   });
 
   @override
@@ -28,21 +30,23 @@ class DaylockPlanTaskRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ExcludeSemantics(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Icon(
-                  area == null
-                      ? Icons.task_alt_rounded
-                      : (areaIcons[area!.icon] ?? Icons.task_alt_rounded),
-                  color: area == null
-                      ? theme.colorScheme.primary
-                      : Color(area!.colour),
-                  size: DaylockSpace.icon,
+            if (showIcon) ...[
+              ExcludeSemantics(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Icon(
+                    area == null
+                        ? Icons.task_alt_rounded
+                        : (areaIcons[area!.icon] ?? Icons.task_alt_rounded),
+                    color: area == null
+                        ? theme.colorScheme.primary
+                        : Color(area!.colour),
+                    size: DaylockSpace.icon,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
+            ],
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,8 +58,8 @@ class DaylockPlanTaskRow extends StatelessWidget {
                         child: Text(
                           task.name,
                           style: theme.textTheme.bodyLarge!.copyWith(
-                            fontWeight: FontWeight.w600,
-                            height: 1.35,
+                            fontSize: 17,
+                            height: 1.3,
                           ),
                         ),
                       ),

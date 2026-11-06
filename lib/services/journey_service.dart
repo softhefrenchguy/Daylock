@@ -21,6 +21,8 @@ class JourneyRecord {
   });
 }
 
+enum JourneyDayStatus { none, excused, missed, some, kept }
+
 class JourneySummary {
   final List<JourneyRecord> records;
   JourneySummary(Iterable<JourneyRecord> records)
@@ -84,6 +86,92 @@ class JourneyData {
         );
       }
     }
+  }
+
+  late final Map<DateTime, JourneyDayStatus> _days = _dayStatuses();
+
+  Map<DateTime, JourneyDayStatus> _dayStatuses() {
+    final eligible = <DateTime, int>{};
+    final kept = <DateTime, int>{};
+    final total = <DateTime, int>{};
+    for (final record in records) {
+      final day = journeyDay(record.date);
+      total[day] = (total[day] ?? 0) + 1;
+      if (record.task.outcome != TaskOutcome.excused) {
+        eligible[day] = (eligible[day] ?? 0) + 1;
+      }
+      if (record.task.outcome == TaskOutcome.completed) {
+        kept[day] = (kept[day] ?? 0) + 1;
+      }
+    }
+    return {
+      for (final day in total.keys)
+        day: (eligible[day] ?? 0) == 0
+            ? JourneyDayStatus.excused
+            : (kept[day] ?? 0) == eligible[day]
+            ? JourneyDayStatus.kept
+            : (kept[day] ?? 0) > 0
+            ? JourneyDayStatus.some
+            : JourneyDayStatus.missed,
+    };
+  }
+
+  /// How a calendar day went. Days without commitments are [JourneyDayStatus.none].
+  JourneyDayStatus statusOn(DateTime date) =>
+      _days[journeyDay(date)] ?? JourneyDayStatus.none;
+
+  /// Consecutive fully kept days up to today. Today only counts once it is
+  /// kept, so an unfinished today never breaks the streak. Fully excused days
+  /// are neutral: they neither count nor break it.
+  int get currentStreak {
+    var streak = 0;
+    var day = today;
+    if (statusOn(day) != JourneyDayStatus.kept) {
+      day = DateTime(day.year, day.month, day.day - 1);
+    }
+    for (var guard = 0; guard < 4000; guard++) {
+      final status = statusOn(day);
+      if (status == JourneyDayStatus.kept) {
+        streak++;
+      } else if (status != JourneyDayStatus.excused) {
+        break;
+      }
+      day = DateTime(day.year, day.month, day.day - 1);
+    }
+    return streak;
+  }
+
+  int get longestStreak {
+    final days = _days.keys.toList()..sort();
+    var best = 0, run = 0;
+    DateTime? previous;
+    for (final day in days) {
+      final status = _days[day]!;
+      final contiguous =
+          previous != null && _dayNumber(day) - _dayNumber(previous) == 1;
+      if (!contiguous) run = 0;
+      if (status == JourneyDayStatus.kept) {
+        run++;
+        if (run > best) best = run;
+      } else if (status != JourneyDayStatus.excused) {
+        run = 0;
+      }
+      previous = day;
+    }
+    return best;
+  }
+
+  /// Commitments kept in [areaId] during the last seven days, today included.
+  int keptThisWeek(String areaId) {
+    final start = DateTime(today.year, today.month, today.day - 6);
+    return records
+        .where(
+          (r) =>
+              r.areaId == areaId &&
+              r.task.outcome == TaskOutcome.completed &&
+              !r.date.isBefore(start),
+        )
+        .length;
   }
 
   DateTime get last30Start => DateTime(today.year, today.month, today.day - 29);

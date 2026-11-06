@@ -242,20 +242,22 @@ void main() {
       );
       await tester.pumpWidget(MainApp(now: () => _today));
       await tester.pumpAndSettle();
-      expect(find.text('0 / 1 complete'), findsOneWidget);
-      expect(find.byType(CheckboxListTile), findsOneWidget);
+      expect(find.text('0 of 1 kept'), findsOneWidget);
+      expect(find.byType(Checkbox), findsOneWidget);
       expect(find.text('Today event'), findsNothing);
-      await tester.tap(find.text('Gym'));
+      await tester.tap(keepBox('Gym'));
       await tester.pumpAndSettle();
-      expect(find.text('1 / 1 complete'), findsOneWidget);
+      expect(find.text('1 of 1 kept'), findsOneWidget);
       expect(find.text('Day complete'), findsOneWidget);
       await _navigate(tester, 'Plan');
       expect(find.text('Driving lesson'), findsOneWidget);
       expect(find.text('Today event'), findsNothing);
       expect(find.text('Later event'), findsNothing);
       expect(
-        tester.getTopLeft(find.text('SCHEDULE')).dy,
-        lessThan(tester.getTopLeft(find.text('Commitments')).dy),
+        tester.getTopLeft(find.textContaining('scheduled event')).dy,
+        lessThan(
+          tester.getTopLeft(find.textContaining(RegExp(r'^Commitments'))).dy,
+        ),
       );
       expect(
         tester
@@ -267,7 +269,7 @@ void main() {
         'Read',
       );
       expect(find.byType(CheckboxListTile), findsNothing);
-      final commit = find.widgetWithText(FilledButton, 'COMMIT FRIDAY');
+      final commit = find.widgetWithText(FilledButton, 'Lock in Friday');
       await _tap(tester, commit);
       await confirmPlanCommit(tester);
       expect(find.text("Tomorrow's plan is committed."), findsOneWidget);
@@ -287,7 +289,7 @@ void main() {
         hasLength(1),
       );
       await _navigate(tester, 'Today');
-      expect(find.text('1 / 1 complete'), findsOneWidget);
+      expect(find.text('1 of 1 kept'), findsOneWidget);
       final saved = (await tester.runAsync<DaylockState?>(
         () => LocalStorage().load(),
       ))!;
@@ -314,14 +316,14 @@ void main() {
     );
     await tester.pumpWidget(MainApp(now: () => _today));
     await tester.pumpAndSettle();
-    expect(find.text('0 / 0 complete'), findsOneWidget);
+    expect(find.text('A clear day.'), findsOneWidget);
     await _navigate(tester, 'Plan');
     expect(find.text('Lesson'), findsOneWidget);
     expect(find.text('No commitments planned yet.'), findsOneWidget);
     expect(
       tester
           .widget<FilledButton>(
-            find.widgetWithText(FilledButton, 'COMMIT FRIDAY'),
+            find.widgetWithText(FilledButton, 'Lock in Friday'),
           )
           .onPressed,
       isNull,
@@ -376,8 +378,8 @@ void main() {
       expect(find.text('No commitments planned yet.'), findsOneWidget);
       await _navigate(tester, 'Today');
       expect(find.text('Read'), findsOneWidget);
-      expect(find.text('0 / 1 complete'), findsOneWidget);
-      expect(find.byType(CheckboxListTile), findsOneWidget);
+      expect(find.text('0 of 1 kept'), findsOneWidget);
+      expect(find.byType(Checkbox), findsOneWidget);
       final saved = (await tester.runAsync<DaylockState?>(
         () => LocalStorage().load(),
       ))!;

@@ -110,18 +110,19 @@ class InstagramLockActivity : Activity() {
     }
 
     private fun render(blocked: Boolean, freedom: NativeFreedomResult, appearance: JSONObject?, appName: String) {
-        val useDark = when (appearance?.optString("mode", "dark")) {
+        val useDark = when (appearance?.optString("mode", "system")) {
             "light" -> false
-            "system" -> resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
-            else -> true
+            "dark" -> true
+            else -> resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
         }
         val palette = appearance?.optJSONObject(if (useDark) "dark" else "light")
         fun color(key: String, fallback: String) = palette?.optLong(key)?.takeIf { it != 0L }?.toInt() ?: Color.parseColor(fallback)
-        val screenBackground = color("background", if (useDark) "#100D1D" else "#F8F6FC")
-        val ink = color("foreground", if (useDark) "#F8F6FC" else "#211A2E")
-        val muted = color("muted", if (useDark) "#BEB5CF" else "#62586F")
-        val accent = color("accent", if (useDark) "#B988F0" else "#7054A4")
-        val onAccent = color("onAccent", if (useDark) "#171321" else "#FFFFFF")
+        val screenBackground = color("background", if (useDark) "#120E26" else "#F8F4FD")
+        val ink = color("foreground", if (useDark) "#F5F1FF" else "#1B1330")
+        val muted = color("muted", if (useDark) "#C4BBE0" else "#5E5478")
+        val accent = color("accent", if (useDark) "#C08BFF" else "#6A3FC0")
+        val onAccent = color("onAccent", if (useDark) "#1D1036" else "#FFFFFF")
+        val gold = Color.parseColor(if (useDark) "#FFC27A" else "#E38A2B")
         window.decorView.setBackgroundColor(screenBackground)
         @Suppress("DEPRECATION")
         if (Build.VERSION.SDK_INT >= 30) {
@@ -133,85 +134,128 @@ class InstagramLockActivity : Activity() {
             window.navigationBarColor = screenBackground
             window.decorView.systemUiVisibility = if (useDark) 0 else View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
         }
-        val scroll = ScrollView(this).apply { setBackgroundColor(screenBackground); isFillViewport = true }
-        val body = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(24), dp(24), dp(24), dp(24))
-        }
-        scroll.addView(body)
-        scroll.setOnApplyWindowInsetsListener { view, insets ->
-            if (Build.VERSION.SDK_INT >= 30) {
-                val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
-                view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
-            } else {
-                @Suppress("DEPRECATION")
-                view.setPadding(insets.systemWindowInsetLeft, insets.systemWindowInsetTop, insets.systemWindowInsetRight, insets.systemWindowInsetBottom)
-            }
-            insets
-        }
         fun tint(base: Int, overlay: Int, amount: Float): Int = Color.rgb(
             (Color.red(base) * (1 - amount) + Color.red(overlay) * amount).toInt(),
             (Color.green(base) * (1 - amount) + Color.green(overlay) * amount).toInt(),
             (Color.blue(base) * (1 - amount) + Color.blue(overlay) * amount).toInt())
-        fun text(value: String, size: Float, color: Int = ink, bold: Boolean = false,
-                 spacing: Int = 12, parent: LinearLayout = body, centered: Boolean = false) {
+        val cardColor = if (useDark) tint(screenBackground, accent, .12f) else Color.WHITE
+        // The rounded display face bundled for Flutter, reused here without an engine.
+        val display = runCatching { Typeface.createFromAsset(assets, "flutter_assets/assets/fonts/Nunito-900.ttf") }
+            .getOrElse { Typeface.create("sans-serif-black", Typeface.NORMAL) }
+        val displayBold = runCatching { Typeface.createFromAsset(assets, "flutter_assets/assets/fonts/Nunito-800.ttf") }
+            .getOrElse { Typeface.create("sans-serif", Typeface.BOLD) }
+
+        val scroll = ScrollView(this).apply { setBackgroundColor(screenBackground); isFillViewport = true }
+        val page = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        scroll.addView(page)
+
+        val conditions = freedom.conditions
+        val progress = when {
+            conditions == null || conditions.eligibleCount == 0 -> 0f
+            else -> conditions.completedCount.toFloat() / conditions.eligibleCount
+        }
+        val earned = freedom.state == "earned"
+        val header = android.widget.FrameLayout(this)
+        header.addView(DaylockSkyView(this, accent, screenBackground, useDark, progress, earned),
+            android.widget.FrameLayout.LayoutParams(-1, -1))
+        val headerText = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(24), dp(20), dp(24), 0)
+        }
+        header.addView(headerText, android.widget.FrameLayout.LayoutParams(-1, -2))
+        page.addView(header, LinearLayout.LayoutParams(-1, dp(if (earned) 300 else 250)))
+
+        val body = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(24), dp(4), dp(24), dp(24))
+        }
+        page.addView(body, LinearLayout.LayoutParams(-1, -2))
+
+        scroll.setOnApplyWindowInsetsListener { _, insets ->
+            val top: Int; val left: Int; val right: Int; val bottom: Int
+            if (Build.VERSION.SDK_INT >= 30) {
+                val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+                top = bars.top; left = bars.left; right = bars.right; bottom = bars.bottom
+            } else {
+                @Suppress("DEPRECATION")
+                run { top = insets.systemWindowInsetTop; left = insets.systemWindowInsetLeft; right = insets.systemWindowInsetRight; bottom = insets.systemWindowInsetBottom }
+            }
+            // The sky runs under the status bar; text and buttons stay clear of it.
+            headerText.setPadding(dp(24) + left, dp(20) + top, dp(24) + right, 0)
+            header.layoutParams = header.layoutParams.apply { height = dp(if (earned) 300 else 250) + top }
+            body.setPadding(dp(24) + left, dp(4), dp(24) + right, dp(24) + bottom)
+            insets
+        }
+
+        fun text(value: String, size: Float, color: Int = ink, face: Typeface? = null,
+                 spacing: Int = 12, parent: LinearLayout = body) {
             parent.addView(TextView(this).apply {
                 this.text = value; textSize = size; setTextColor(color)
-                typeface = Typeface.create("sans-serif", if (bold) Typeface.BOLD else Typeface.NORMAL)
-                if (centered) gravity = Gravity.CENTER
+                typeface = face ?: Typeface.create("sans-serif", Typeface.NORMAL)
+                setLineSpacing(0f, 1.15f)
                 setPadding(0, 0, 0, dp(spacing))
             }, LinearLayout.LayoutParams(-1, -2))
         }
-        fun surface() = GradientDrawable(GradientDrawable.Orientation.TL_BR,
-            intArrayOf(tint(screenBackground, accent, .22f), tint(screenBackground, accent, .05f))).apply {
-            cornerRadius = dp(20).toFloat(); setStroke(dp(1), tint(screenBackground, accent, .6f))
-        }
-        text("DAYLOCK", 13f, accent, true, 8, centered = true)
-        body.addView(DaylockLockArtwork(this, accent), LinearLayout.LayoutParams(dp(144), dp(144)).apply { gravity = Gravity.CENTER_HORIZONTAL })
-        text(if (blocked) "Not yet." else if (freedom.state == "earned") "Freedom earned." else if (freedom.state == "unknown") "Refresh Freedom status." else "Restriction paused.", 36f, ink, true, 8, centered = true)
+        val skyInk = if (useDark) Color.parseColor("#F7F3FF") else ink
+        val skyMuted = if (useDark) Color.parseColor("#DCD3F2") else muted
+        text("DAYLOCK", 13f, skyMuted, displayBold, 2, headerText)
+        text("$appName is locked", 15f, skyInk, null, 0, headerText)
+
+        text(if (blocked) "Not yet." else if (earned) "Freedom earned." else if (freedom.state == "unknown") "Refresh Freedom status." else "Restriction paused.",
+            44f, ink, display, 4)
         text(when {
-            blocked -> "You've made a commitment."
-            freedom.state == "earned" -> "Your Freedom conditions are satisfied."
+            blocked -> "Keep your word first."
+            earned -> "Your Freedom conditions are satisfied."
             freedom.state == "disabled" -> "Freedom Control is off."
             freedom.state == "unknown" -> "Open Daylock to reconcile your plans."
             else -> "App restrictions are paused or this app is no longer selected."
-        }, 17f, muted, spacing = 12, centered = true)
-        text(if (blocked) "$appName is restricted until Freedom is earned."
+        }, 18f, muted, spacing = 6)
+        text(if (blocked) "$appName opens again once Freedom is earned."
             else if (freedom.state == "unknown") "$appName is available while recovery is needed."
-            else "$appName is available.", 14f, muted, spacing = 24, centered = true)
+            else "$appName is available.", 15f, muted, spacing = 22)
+
         val card = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(16), dp(16), dp(8)); background = surface()
+            orientation = LinearLayout.VERTICAL; setPadding(dp(18), dp(18), dp(18), dp(8))
+            background = GradientDrawable().apply { cornerRadius = dp(22).toFloat(); setColor(cardColor) }
+            if (!useDark) elevation = dp(2).toFloat()
         }
         body.addView(card, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(20) })
-        text("FREEDOM", 12f, accent, true, 14, parent = card)
-        val conditions = freedom.conditions
+        text("Freedom", 20f, ink, displayBold, 12, card)
         fun condition(value: String, ready: Boolean?) {
-            val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.TOP }
+            val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
             row.addView(TextView(this).apply {
-                this.text = when (ready) { true -> "\u2713"; false -> "\u25cb"; null -> "\u2014" }
-                textSize = 20f; setTextColor(if (ready == true) accent else muted)
-                contentDescription = when(ready) { true -> "Satisfied"; false -> "Remaining"; null -> "Unknown" }
-            }, LinearLayout.LayoutParams(dp(28), -2))
-            row.addView(TextView(this).apply { this.text = value; textSize = 15f; setTextColor(ink); setPadding(0, dp(2), 0, dp(14)) }, LinearLayout.LayoutParams(0, -2, 1f))
-            card.addView(row)
+                this.text = when (ready) { true -> "✓"; false -> ""; null -> "—" }
+                textSize = 13f; gravity = Gravity.CENTER
+                typeface = Typeface.create("sans-serif", Typeface.BOLD)
+                setTextColor(if (ready == true) Color.parseColor("#3A1D05") else muted)
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    if (ready == true) setColor(gold) else { setColor(Color.TRANSPARENT); setStroke(dp(2), tint(muted, cardColor, .3f)) }
+                }
+                contentDescription = when (ready) { true -> "Satisfied"; false -> "Remaining"; null -> "Unknown" }
+            }, LinearLayout.LayoutParams(dp(22), dp(22)).apply { rightMargin = dp(12) })
+            row.addView(TextView(this).apply { this.text = value; textSize = 15f; setTextColor(ink) }, LinearLayout.LayoutParams(0, -2, 1f))
+            card.addView(row, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
         }
         val timeLabel = conditions?.let { String.format(java.util.Locale.ROOT, "%02d:%02d", it.hour, it.minute) }
-        condition("Freedom Time reached${timeLabel?.let { " \u00b7 $it" } ?: " \u00b7 refresh needed"}", conditions?.timeReached)
-        condition(if (conditions == null) "Eligible commitments completed \u00b7 refresh needed"
+        condition("Freedom Time reached${timeLabel?.let { " · $it" } ?: " · refresh needed"}", conditions?.timeReached)
+        condition(if (conditions == null) "Eligible commitments completed · refresh needed"
             else if (conditions.eligibleCount == 0) "No eligible commitments"
-            else "Eligible commitments completed \u00b7 ${conditions.completedCount} / ${conditions.eligibleCount}", conditions?.commitmentsCompleted)
-        condition("Tomorrow\u2019s plan committed", conditions?.tomorrowCommitted)
+            else "Eligible commitments completed · ${conditions.completedCount} / ${conditions.eligibleCount}", conditions?.commitmentsCompleted)
+        condition("Tomorrow’s plan committed", conditions?.tomorrowCommitted)
         if (conditions?.eligibleCount == 0) text("Empty or all-excused days do not automatically earn Freedom.", 13f, muted, parent = card)
         if (freedom.reason == "rollover_reconciled") text("A new local day has started. Open Daylock to archive history and prepare the following day.", 13f, muted)
         fun button(label: String, primary: Boolean, parent: LinearLayout = body, action: () -> Unit): Button {
             val view = Button(this).apply {
-                this.text = label; textSize = 15f; isAllCaps = false
-                typeface = Typeface.create("sans-serif", Typeface.BOLD)
-                setTextColor(if (primary) onAccent else accent)
-                minimumHeight = dp(52); setPadding(dp(16), dp(12), dp(16), dp(12))
-                background = if (primary) GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                    intArrayOf(tint(accent, Color.WHITE, .22f), accent)).apply { cornerRadius = dp(16).toFloat() }
-                    else surface()
+                this.text = label; textSize = 16f; isAllCaps = false
+                typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+                setTextColor(if (primary) onAccent else ink)
+                minimumHeight = dp(54); stateListAnimator = null
+                setPadding(dp(16), dp(12), dp(16), dp(12))
+                background = GradientDrawable().apply {
+                    cornerRadius = dp(28).toFloat()
+                    setColor(if (primary) accent else cardColor)
+                }
                 gravity = Gravity.CENTER; setOnClickListener { action() }
             }
             parent.addView(view, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(10) })
@@ -229,7 +273,7 @@ class InstagramLockActivity : Activity() {
             expand.text = if (actionsExpanded) "Other actions \u2303" else "Other actions \u2304"
         }
         body.addView(secondary)
-        text("Return Home, disable blocking or change Accessibility access.", 13f, muted)
+        text("Return Home, disable blocking or change Accessibility access.", 13f, muted, spacing = 10)
         button("Return to Home", false, secondary) { goHome() }
         if (DetectionRuntime.blockingEnabled) button("Disable app restrictions", false, secondary) {
             DetectionRuntime.stateRevision.incrementAndGet()

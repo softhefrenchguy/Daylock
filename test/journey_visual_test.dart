@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:daylock/design/highlight_illustration.dart';
-import 'package:daylock/design/journey_activity_strip.dart';
 import 'package:daylock/main.dart';
 import 'package:daylock/models/area.dart';
 import 'package:daylock/models/daily_plan.dart';
@@ -13,6 +11,7 @@ import 'package:daylock/models/task.dart';
 import 'package:daylock/services/journey_service.dart';
 import 'package:daylock/services/local_storage.dart';
 import 'package:daylock/screens/highlight_editor.dart';
+import 'package:daylock/screens/journey_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -47,7 +46,7 @@ void main() {
           fixture.shell(fixture.overview(highlights: highlights), scale: scale),
         );
         await tester.scrollUntilVisible(
-          fixture.key('featured-highlights'),
+          fixture.key('journey-achievements'),
           200,
           scrollable: fixture.vertical,
         );
@@ -231,30 +230,28 @@ void main() {
   );
 
   testWidgets(
-    'Area charts show exact real 30-day buckets; empty and Highlight-only Areas have no bars',
+    'Area bars show this week from real records; quiet Areas stay empty',
     (tester) async {
       fixture.phone(tester);
       await tester.pumpWidget(fixture.shell(fixture.overview()));
       await tester.pumpAndSettle();
-      final focus = tester.widget<JourneyActivityStrip>(
-        fixture.key('area-activity-learn'),
+      await tester.scrollUntilVisible(
+        fixture.key('journey-area-grid'),
+        200,
+        scrollable: fixture.vertical,
       );
-      final goals = tester.widget<JourneyActivityStrip>(
-        fixture.key('area-activity-health'),
-      );
-      expect(focus.usesFocus, isTrue);
-      expect(focus.values.fold<int>(0, (sum, n) => sum + n), 120000);
-      expect(goals.usesFocus, isFalse);
-      expect(goals.values.fold<int>(0, (sum, n) => sum + n), 1);
-      expect(fixture.key('area-activity-cook'), findsNothing);
-      expect(fixture.key('area-activity-${Area.defaultId}'), findsNothing);
-      for (var i = 0; i < focus.values.length; i++) {
-        final bar = find.descendant(
-          of: fixture.key('area-activity-learn'),
-          matching: fixture.key('activity-bar-$i'),
-        );
-        expect(tester.getSize(bar).height, focus.values[i] == 0 ? 0 : 28);
-      }
+      double bar(String id) => tester
+          .widget<LinearProgressIndicator>(
+            find.descendant(
+              of: fixture.key('journey-area-$id'),
+              matching: find.byType(LinearProgressIndicator),
+            ),
+          )
+          .value!;
+      expect(bar('learn'), 1);
+      expect(bar('health'), 1);
+      expect(bar('cook'), 0);
+      expect(bar(Area.defaultId), 0);
       expect(tester.takeException(), isNull);
     },
   );
@@ -280,21 +277,31 @@ void main() {
         todayPlan: DailyPlan(date: fixture.now, tasks: []),
         now: fixture.now,
       );
+      fixture.phone(tester);
       await tester.pumpWidget(fixture.shell(fixture.overview(journey: data)));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<Text>(fixture.key('journey-total-focus')).data,
+        '1m',
+      );
+      await tester.scrollUntilVisible(
+        fixture.key('journey-area-grid'),
+        200,
+        scrollable: fixture.vertical,
+      );
       expect(
         find.descendant(
           of: fixture.key('journey-area-learn'),
-          matching: find.text('1 min recorded'),
+          matching: find.text('0 this week'),
         ),
         findsOneWidget,
       );
-      expect(find.byType(JourneyActivityStrip), findsNothing);
     },
   );
   testWidgets(
     'Decorative artwork handles unassigned, unknown and Area-linked Highlights',
     (tester) async {
-      fixture.phone(tester);
+      fixture.phone(tester, width: 720);
       final highlights = HighlightBook([
         Highlight(id: 'a', title: 'An ordinary delight', date: fixture.now),
         Highlight(
@@ -315,14 +322,10 @@ void main() {
       );
       await tester.pumpAndSettle();
       String artwork(String id) => tester
-          .widget<HighlightIllustration>(
-            fixture.key('highlight-illustration-$id'),
-          )
+          .widget<AchievementBadge>(fixture.key('highlight-illustration-$id'))
           .iconId;
       expect(artwork('a'), 'celebration');
-      await fixture.tap(tester, fixture.key('next-highlight'));
       expect(artwork('b'), 'learning');
-      await fixture.tap(tester, fixture.key('next-highlight'));
       expect(artwork('c'), 'celebration');
       expect(find.textContaining('Area unavailable'), findsOneWidget);
     },
@@ -350,13 +353,15 @@ void main() {
       var saved = (await LocalStorage().load())!;
       expect(saved.highlights.highlights.single.illustrationIcon, 'award');
       final id = saved.highlights.highlights.single.id;
-      await fixture.tap(tester, fixture.key('edit-featured-highlight'));
+      await tester.longPress(fixture.key('highlight-$id'));
+      await tester.pumpAndSettle();
       await tester.enterText(fixture.key('highlight-title'), 'Cooked a meal');
       await fixture.tap(tester, fixture.key('save-highlight'));
       saved = (await LocalStorage().load())!;
       expect(saved.highlights.highlights.single.id, id);
       expect(saved.highlights.highlights.single.illustrationIcon, 'award');
-      await fixture.tap(tester, fixture.key('edit-featured-highlight'));
+      await tester.longPress(fixture.key('highlight-$id'));
+      await tester.pumpAndSettle();
       await fixture.tap(tester, fixture.key('select-highlight-illustration'));
       await fixture.tap(tester, fixture.key('highlight-icon-automatic'));
       await fixture.tap(tester, fixture.key('save-highlight'));
@@ -364,9 +369,7 @@ void main() {
       expect(saved.highlights.highlights.single.illustrationIcon, isNull);
       expect(
         tester
-            .widget<HighlightIllustration>(
-              fixture.key('highlight-illustration-$id'),
-            )
+            .widget<AchievementBadge>(fixture.key('highlight-illustration-$id'))
             .iconId,
         'cooking',
       );

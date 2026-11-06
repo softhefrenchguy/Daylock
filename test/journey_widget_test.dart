@@ -121,9 +121,23 @@ void main() {
         find.byKey(const ValueKey('journey-effort-summary')),
         findsOneWidget,
       );
-      expect(find.text('Life'), findsOneWidget);
-      expect(find.text('Open space'), findsOneWidget);
       expect(find.text('Keep a moment that matters.'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('journey-area-grid')),
+        300,
+        scrollable: find
+            .descendant(
+              of: find.byKey(const ValueKey('journey-content')),
+              matching: find.byWidgetPredicate(
+                (widget) =>
+                    widget is Scrollable &&
+                    widget.axisDirection == AxisDirection.down,
+              ),
+            )
+            .first,
+      );
+      expect(find.text('Life'), findsOneWidget);
+      expect(find.text('0 this week'), findsOneWidget);
       await navigateApp(tester, 'Calendar');
       expect(find.byType(CalendarScreen), findsOneWidget);
       expect(find.byTooltip('Calendar accounts'), findsOneWidget);
@@ -205,7 +219,7 @@ void main() {
       await tap(tester, find.byKey(ValueKey('highlight-$id')));
       expect(find.text('Cooked a proper meal'), findsOneWidget);
       await tap(tester, find.byKey(const ValueKey('delete-highlight')));
-      await tap(tester, find.text('Keep Highlight'));
+      await tap(tester, find.text('Keep achievement'));
       expect(
         (await LocalStorage().load())!.highlights.highlights,
         hasLength(1),

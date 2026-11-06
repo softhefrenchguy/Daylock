@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../models/task.dart';
 import '../models/area.dart';
-import 'daylock_areas.dart';
-import 'journey_surface.dart';
+import '../models/task.dart';
+import 'area_tones.dart';
 
 String stopwatchLabel(int milliseconds) {
   final seconds = milliseconds ~/ 1000;
@@ -15,6 +14,8 @@ String stopwatchLabel(int milliseconds) {
       : '$minutes:$remainder';
 }
 
+/// One commitment on Today. Only the round checkbox keeps it; tapping the row
+/// opens its actions, so a stray tap can never complete a commitment.
 class DaylockTaskRow extends StatelessWidget {
   final Task task;
   final Area? area;
@@ -34,160 +35,174 @@ class DaylockTaskRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    final scheme = theme.colorScheme;
     final elapsed = task.focusMillisecondsAt(currentTime);
     final timerAction = task.isFocusRunning
         ? 'Pause stopwatch'
         : elapsed > 0
         ? 'Resume stopwatch'
         : 'Start stopwatch';
-    final accent = area == null ? colors.primary : Color(area!.colour);
+    final tones = AreaTones.forContext(
+      context,
+      area == null ? scheme.primary : Color(area!.colour),
+    );
     final areaLabel = area == null
         ? null
         : '${area!.name}${area!.isArchived ? ' (archived)' : ''}';
-    return JourneySurface(
-      accent: accent,
-      emphasized: true,
-      radius: 16,
+    final kept = task.isCompleted;
+    final excused = task.isExcused;
+    final muted = kept || excused;
+
+    final details = <String>[
+      ?areaLabel,
+      if (kept) 'kept',
+      if (excused) 'Excused',
+    ];
+
+    return InkWell(
+      onTap: onDetailsRequested,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(4, 2, 4, 2),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        padding: const EdgeInsets.fromLTRB(4, 4, 2, 4),
+        child: Row(
           children: [
-            if (task.isExcused)
-              ListTile(
-                dense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                onTap: onDetailsRequested,
-                leading: const Icon(Icons.shield_outlined),
-                title: Text(task.name),
-                subtitle: Text(
-                  'Excused${areaLabel == null ? '' : ' \u00b7 $areaLabel'}',
+            if (excused)
+              SizedBox(
+                width: 48,
+                height: 48,
+                child: Icon(
+                  Icons.shield_outlined,
+                  color: scheme.onSurfaceVariant,
+                  semanticLabel: 'Excused',
                 ),
-                trailing: const Icon(Icons.more_horiz_rounded),
               )
             else
-              CheckboxListTile(
-                key: ValueKey('complete-${task.id}'),
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.leading,
-                value: task.isCompleted,
-                activeColor: Color.lerp(accent, Colors.white, .3),
-                checkColor: colors.surface,
-                onChanged: (_) => onGoalChanged(),
-                title: Row(
-                  children: [
-                    if (area != null) ...[
-                      Icon(
-                        areaIcons[area!.icon] ?? Icons.wb_sunny_outlined,
-                        size: 28,
-                        color: accent,
-                      ),
-                      const SizedBox(width: 12),
-                    ],
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            task.name,
-                            style: theme.textTheme.titleMedium!.copyWith(
-                              fontWeight: FontWeight.w700,
-                              height: 1.25,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          if (task.isCompleted && elapsed > 0)
-                            Wrap(
-                              spacing: 8,
-                              children: [
-                                Text(
-                                  stopwatchLabel(elapsed),
-                                  key: ValueKey('stopwatch-time-${task.id}'),
-                                  style: theme.textTheme.bodySmall,
-                                ),
-                                Text(
-                                  'Recorded time',
-                                  style: theme.textTheme.bodySmall!.copyWith(
-                                    color: colors.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            )
-                          else if (areaLabel != null)
-                            Text(
-                              areaLabel,
-                              style: theme.textTheme.bodySmall!.copyWith(
-                                color: colors.onSurfaceVariant,
-                              ),
-                            ),
-                          if (task.focusTarget != null && !task.isCompleted)
-                            Text(
-                              task.focusTarget!,
-                              style: theme.textTheme.bodySmall,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
+              SizedBox(
+                width: 48,
+                height: 48,
+                child: Transform.scale(
+                  scale: 1.15,
+                  child: Checkbox(
+                    key: ValueKey('complete-${task.id}'),
+                    value: kept,
+                    onChanged: (_) => onGoalChanged(),
+                    activeColor: tones.ink,
+                    checkColor: tones.onInk,
+                    side: BorderSide(color: tones.ink, width: 2),
+                    semanticLabel: kept
+                        ? 'Kept: ${task.name}'
+                        : 'Keep ${task.name}',
+                  ),
                 ),
-                secondary: onDetailsRequested == null
-                    ? null
-                    : IconButton(
-                        tooltip: 'Actions for ${task.name}',
-                        onPressed: onDetailsRequested,
-                        icon: const Icon(Icons.more_horiz_rounded),
-                      ),
               ),
-            if (task.outcome == TaskOutcome.incomplete ||
-                (task.isExcused && elapsed > 0))
-              Padding(
-                padding: const EdgeInsets.only(left: 14, right: 8),
-                child: Wrap(
-                  spacing: 12,
-                  crossAxisAlignment: WrapCrossAlignment.center,
+            const SizedBox(width: 4),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      stopwatchLabel(elapsed),
-                      key: ValueKey('stopwatch-time-${task.id}'),
-                      style:
-                          (task.isFocusRunning
-                                  ? theme.textTheme.headlineSmall
-                                  : theme.textTheme.titleMedium)!
-                              .copyWith(
-                                color: task.isFocusRunning
-                                    ? colors.onSurface
-                                    : colors.onSurfaceVariant,
-                                fontWeight: task.isFocusRunning
-                                    ? FontWeight.bold
-                                    : null,
-                                fontFeatures: const [
-                                  FontFeature.tabularFigures(),
-                                ],
-                              ),
+                      task.name,
+                      style: theme.textTheme.bodyLarge!.copyWith(
+                        fontSize: 17,
+                        height: 1.3,
+                        color: muted
+                            ? scheme.onSurfaceVariant
+                            : scheme.onSurface,
+                        decoration: kept ? TextDecoration.lineThrough : null,
+                        decorationColor: scheme.outline,
+                      ),
                     ),
-                    if (task.outcome == TaskOutcome.incomplete)
-                      TextButton.icon(
-                        key: ValueKey('stopwatch-toggle-${task.id}'),
-                        onPressed: onFocusToggled,
-                        icon: Icon(
-                          task.isFocusRunning
-                              ? Icons.pause_rounded
-                              : Icons.play_arrow_rounded,
-                        ),
-                        label: Text(timerAction),
-                        style: TextButton.styleFrom(
-                          backgroundColor: accent.withValues(
-                            alpha: task.isFocusRunning ? .25 : .09,
+                    if (details.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          details.join(' · '),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall!.copyWith(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: excused
+                                ? scheme.onSurfaceVariant
+                                : tones.ink,
                           ),
-                          foregroundColor: colors.onSurface,
                         ),
-                      )
-                    else
-                      Text('Recorded time', style: theme.textTheme.bodySmall),
+                      ),
+                    if (task.focusTarget != null && !kept && !excused)
+                      Text(
+                        task.focusTarget!,
+                        style: theme.textTheme.bodySmall!.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    if (task.outcome == TaskOutcome.incomplete &&
+                        (elapsed > 0 || task.isFocusRunning))
+                      Text(
+                        stopwatchLabel(elapsed),
+                        key: ValueKey('stopwatch-time-${task.id}'),
+                        style: theme.textTheme.bodySmall!.copyWith(
+                          fontSize: 13,
+                          color: task.isFocusRunning
+                              ? tones.ink
+                              : scheme.onSurfaceVariant,
+                          fontWeight: task.isFocusRunning
+                              ? FontWeight.w700
+                              : null,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    if (elapsed > 0 && muted)
+                      Wrap(
+                        spacing: 6,
+                        children: [
+                          Text(
+                            stopwatchLabel(elapsed),
+                            key: ValueKey('stopwatch-time-${task.id}'),
+                            style: theme.textTheme.bodySmall!.copyWith(
+                              color: scheme.onSurfaceVariant,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            'Recorded time',
+                            style: theme.textTheme.bodySmall!.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
+              ),
+            ),
+            if (task.outcome == TaskOutcome.incomplete) ...[
+              IconButton(
+                key: ValueKey('stopwatch-toggle-${task.id}'),
+                tooltip: timerAction,
+                onPressed: onFocusToggled,
+                style: task.isFocusRunning
+                    ? IconButton.styleFrom(backgroundColor: tones.tint)
+                    : null,
+                color: task.isFocusRunning
+                    ? tones.ink
+                    : scheme.onSurfaceVariant,
+                icon: Icon(
+                  task.isFocusRunning
+                      ? Icons.pause_rounded
+                      : Icons.timer_outlined,
+                  size: 22,
+                ),
+              ),
+            ],
+            if (onDetailsRequested != null)
+              IconButton(
+                tooltip: 'Actions for ${task.name}',
+                onPressed: onDetailsRequested,
+                color: scheme.onSurfaceVariant,
+                icon: const Icon(Icons.more_vert_rounded, size: 22),
               ),
           ],
         ),

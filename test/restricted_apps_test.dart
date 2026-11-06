@@ -99,12 +99,12 @@ void main() {
     (tester) async {
       final bridge = PickerBridge();
       await mount(tester, bridge);
-      expect(find.text('0 SELECTED'), findsOneWidget);
+      expect(find.text('0 selected'), findsOneWidget);
       expect(find.textContaining('No apps selected yet.'), findsOneWidget);
       await tap(tester, 'restricted-app-test.browser');
       await tap(tester, 'restricted-app-test.social');
       expect(bridge.selected, {'test.browser', 'test.social'});
-      expect(find.text('2 SELECTED'), findsOneWidget);
+      expect(find.text('2 selected'), findsOneWidget);
       expect(
         find.textContaining('Waiting for Accessibility access.'),
         findsOneWidget,
@@ -145,10 +145,10 @@ void main() {
       final bridge = PickerBridge()..hold = Completer<void>();
       await mount(tester, bridge);
       await tap(tester, 'restricted-app-test.social');
-      expect(find.text('1 SELECTED'), findsOneWidget);
+      expect(find.text('1 selected'), findsOneWidget);
       expect(bridge.selected, isEmpty);
       await tap(tester, 'restricted-app-test.social');
-      expect(find.text('0 SELECTED'), findsOneWidget);
+      expect(find.text('0 selected'), findsOneWidget);
       bridge.hold!.complete();
       await tester.pumpAndSettle();
       expect(bridge.selected, isEmpty);
@@ -168,7 +168,7 @@ void main() {
         find.textContaining('Could not load installed apps.'),
         findsOneWidget,
       );
-      expect(find.text('1 SELECTED'), findsOneWidget);
+      expect(find.text('1 selected'), findsOneWidget);
       bridge.failDiscovery = false;
       await tester.tap(find.text('Retry app discovery'));
       await tester.pumpAndSettle();
@@ -181,7 +181,7 @@ void main() {
         find.textContaining('No supported launchable apps'),
         findsOneWidget,
       );
-      expect(find.text('0 SELECTED'), findsOneWidget);
+      expect(find.text('0 selected'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       await bridge.close();
     },

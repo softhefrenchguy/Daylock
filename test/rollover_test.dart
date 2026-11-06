@@ -10,6 +10,8 @@ import 'package:daylock/services/local_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'navigation_helpers.dart';
+
 import 'plan_test_helpers.dart';
 
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
@@ -161,7 +163,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Yesterday task'), findsOneWidget);
-    expect(find.text('1 / 1 complete'), findsOneWidget);
+    expect(find.text('1 of 1 kept'), findsOneWidget);
     final saved = (await storage.load())!;
     expect(saved.toJson(), state.toJson());
   });
@@ -178,7 +180,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Tomorrow task'), findsOneWidget);
       expect(find.text('Yesterday task'), findsNothing);
-      expect(find.text('FRIDAY 1 JANUARY'), findsOneWidget);
+      expect(find.text('Friday 1 January'), findsOneWidget);
       expect(
         tester.widget<TodayScreen>(find.byType(TodayScreen)).plan.isCommitted,
         isTrue,
@@ -188,19 +190,19 @@ void main() {
       expect(saved.todayPlan.tasks.single.name, 'Tomorrow task');
       _expectFreshTomorrow(saved, DateTime(2027, 1, 2));
 
-      await tester.tap(find.text('Tomorrow task'));
+      await tester.tap(keepBox('Tomorrow task'));
       await tester.pumpAndSettle();
-      expect(find.text('1 / 1 complete'), findsOneWidget);
-      await tester.tap(find.text('Tomorrow task'));
+      expect(find.text('1 of 1 kept'), findsOneWidget);
+      await tester.tap(keepBox('Tomorrow task'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Start stopwatch'));
+      await tester.tap(find.byTooltip('Start stopwatch'));
       now = now.add(const Duration(minutes: Task.legacyFocusMinutes));
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
-      expect(find.text('0 / 1 complete'), findsOneWidget);
-      await tester.tap(find.text('Tomorrow task'));
+      expect(find.text('0 of 1 kept'), findsOneWidget);
+      await tester.tap(keepBox('Tomorrow task'));
       await tester.pumpAndSettle();
-      expect(find.text('1 / 1 complete'), findsOneWidget);
+      expect(find.text('1 of 1 kept'), findsOneWidget);
       await _openPlan(tester);
       expect(find.text('No commitments planned yet.'), findsOneWidget);
       expect(find.byKey(const ValueKey('commitment-name')), findsNothing);
@@ -215,8 +217,8 @@ void main() {
       );
       await tester.pumpWidget(MainApp(now: () => DateTime(2026, 10, 20)));
       await tester.pumpAndSettle();
-      expect(find.byType(CheckboxListTile), findsNothing);
-      expect(find.text('TUESDAY 20 OCTOBER'), findsOneWidget);
+      expect(find.byType(Checkbox), findsNothing);
+      expect(find.text('Tuesday 20 October'), findsOneWidget);
       final saved = (await LocalStorage().load())!;
       expect(saved.todayPlan.date, DateTime(2026, 10, 20));
       expect(saved.todayPlan.tasks, isEmpty);
@@ -259,7 +261,7 @@ void main() {
     await tester.pumpWidget(MainApp(now: () => now));
     await tester.pumpAndSettle();
     expect(find.text('Tomorrow task'), findsOneWidget);
-    expect(find.text('THURSDAY 8 OCTOBER'), findsOneWidget);
+    expect(find.text('Thursday 8 October'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -321,7 +323,7 @@ void main() {
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
       await _openPlan(tester);
-      await tester.tap(find.text('COMMIT THURSDAY'));
+      await tester.tap(find.text('Lock in Thursday'));
       await tester.pumpAndSettle();
       final oldConfirm = tester
           .widget<FilledButton>(find.byKey(const ValueKey('confirm-commit')))
@@ -356,7 +358,7 @@ void main() {
     storage.ready.complete();
     await tester.pumpAndSettle();
     expect(find.text('Tomorrow task'), findsOneWidget);
-    expect(find.text('THURSDAY 8 OCTOBER'), findsOneWidget);
+    expect(find.text('Thursday 8 October'), findsOneWidget);
     expect((await storage.load())!.todayPlan.date, DateTime(2026, 10, 8));
   });
 }

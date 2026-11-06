@@ -10,6 +10,12 @@ abstract final class DaylockSpace {
   static const double xl = 32;
   static const double radius = 16;
   static const double icon = 20;
+
+  /// Rounded display face that echoes the Daylock wordmark (bundled, offline).
+  static const String displayFont = 'Nunito';
+
+  /// Grouped lists and cards.
+  static const double cardRadius = 18;
 }
 
 abstract final class DaylockTheme {
@@ -42,27 +48,42 @@ abstract final class DaylockTheme {
     final scheme = DaylockPalettes.scheme(colour, brightness);
     final base = ThemeData(useMaterial3: true, colorScheme: scheme);
     final text = base.textTheme
-        .apply(bodyColor: scheme.onSurface, displayColor: scheme.onSurface)
+        .apply(
+          bodyColor: scheme.onSurface,
+          displayColor: scheme.onSurface,
+          fontFamily: 'Roboto',
+        )
         .copyWith(
           displayLarge: TextStyle(
+            fontFamily: DaylockSpace.displayFont,
             fontSize: 60,
-            height: 1.05,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -2.4,
+            height: 1.0,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -1.8,
             color: scheme.onSurface,
           ),
           headlineLarge: TextStyle(
-            fontSize: 32,
+            fontFamily: DaylockSpace.displayFont,
+            fontSize: 34,
+            height: 1.1,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.7,
+            color: scheme.onSurface,
+          ),
+          headlineMedium: TextStyle(
+            fontFamily: DaylockSpace.displayFont,
+            fontSize: 26,
             height: 1.15,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.8,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.3,
             color: scheme.onSurface,
           ),
           titleLarge: TextStyle(
-            fontSize: 21,
+            fontFamily: DaylockSpace.displayFont,
+            fontSize: 20,
             height: 1.3,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.3,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.1,
             color: scheme.onSurface,
           ),
           bodyLarge: TextStyle(
@@ -88,8 +109,7 @@ abstract final class DaylockTheme {
             letterSpacing: 1.5,
             color: scheme.onSurfaceVariant,
           ),
-        )
-        .apply(fontFamily: 'Roboto');
+        );
     return base.copyWith(
       extensions: [DaylockPalettes.colors(colour, brightness)],
       textTheme: text,
@@ -108,16 +128,64 @@ abstract final class DaylockTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(48, 52),
+          minimumSize: const Size(48, 54),
           padding: const EdgeInsets.symmetric(
             horizontal: DaylockSpace.lg,
             vertical: DaylockSpace.md,
           ),
-          textStyle: text.labelLarge,
+          textStyle: text.labelLarge!.copyWith(fontSize: 16),
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(DaylockSpace.radius),
-          ),
+          shape: const StadiumBorder(),
+        ),
+      ),
+      // Standard bottom-edge messages: a floating one can sit over content and
+      // catch taps meant for the commitment underneath it.
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: brightness == Brightness.dark
+            ? const Color(0xFFF1E9FF)
+            : const Color(0xFF241A42),
+        contentTextStyle: text.bodyMedium!.copyWith(
+          fontSize: 15,
+          color: brightness == Brightness.dark
+              ? const Color(0xFF1D1036)
+              : const Color(0xFFF5F1FF),
+        ),
+        actionTextColor: brightness == Brightness.dark
+            ? const Color(0xFF5B2FB0)
+            : const Color(0xFFD9BFFF),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: scheme.surfaceContainerLow,
+        surfaceTintColor: Colors.transparent,
+        showDragHandle: true,
+        dragHandleColor: scheme.outline,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: scheme.surfaceContainerLow,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: text.headlineMedium,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Color.alphaBlend(
+          scheme.onSurface.withValues(alpha: .04),
+          scheme.surfaceContainerLow,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: scheme.outlineVariant),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: scheme.outlineVariant),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: scheme.primary, width: 2),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -136,8 +204,8 @@ abstract final class DaylockTheme {
         ),
       ),
       checkboxTheme: CheckboxThemeData(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        side: BorderSide(color: scheme.outline, width: 1.5),
+        shape: const CircleBorder(),
+        side: BorderSide(color: scheme.outline, width: 2),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
         color: scheme.primary,

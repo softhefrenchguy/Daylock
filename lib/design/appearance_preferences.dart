@@ -17,7 +17,7 @@ class AppearancePreferences {
   final AppearanceMode mode;
   final ColourTheme colour;
   const AppearancePreferences({
-    this.mode = AppearanceMode.dark,
+    this.mode = AppearanceMode.system,
     this.colour = ColourTheme.violet,
   });
 
@@ -34,7 +34,7 @@ class AppearancePreferences {
             AppearanceMode.values
                 .where((mode) => mode.name == json['mode'])
                 .firstOrNull ??
-            AppearanceMode.dark,
+            AppearanceMode.system,
         colour:
             ColourTheme.values
                 .where((colour) => colour.name == json['colour'])

@@ -64,7 +64,7 @@ class DaylockCalendarCommitments extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${activity.completedCount} / ${activity.eligibleCount} complete',
+                  '${activity.completedCount} of ${activity.eligibleCount} kept',
                   style: theme.textTheme.bodyLarge,
                 ),
               ],

@@ -182,7 +182,7 @@ class JourneyAreaTile extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 3),
                       child: Text(
-                        'Latest Highlight',
+                        'Latest achievement',
                         style: theme.textTheme.bodySmall!.copyWith(
                           color: colors.onSurfaceVariant,
                           fontSize: 10,

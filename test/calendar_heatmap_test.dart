@@ -268,7 +268,7 @@ void main() {
       await tester.pumpWidget(_app(_screen(history: history)));
       await tester.pumpAndSettle();
       await _day(tester, 4);
-      expect(find.text('1 / 2 complete'), findsOneWidget);
+      expect(find.text('1 of 2 kept'), findsOneWidget);
       expect(find.text('50%'), findsOneWidget);
       expect(find.text('Historical goal'), findsOneWidget);
       expect(find.text('Historical focus'), findsOneWidget);
@@ -313,7 +313,7 @@ void main() {
       final before = today.toJson();
       await tester.pumpWidget(_app(_screen(today: today)));
       await tester.pumpAndSettle();
-      expect(find.text('1 / 2 complete'), findsOneWidget);
+      expect(find.text('1 of 2 kept'), findsOneWidget);
       expect(find.text('Recorded time: 22 min'), findsOneWidget);
       expect(find.text('Today goal'), findsOneWidget);
       expect(find.byType(CheckboxListTile), findsNothing);
@@ -325,7 +325,7 @@ void main() {
         find.byKey(const ValueKey('calendar-completion-percentage')),
         findsNothing,
       );
-      expect(find.text('COMMITMENT HISTORY'), findsNothing);
+      expect(find.text('Commitment history'), findsNothing);
       expect(find.text('No events scheduled.'), findsOneWidget);
     },
   );
@@ -649,9 +649,9 @@ void main() {
       );
       await tester.pumpAndSettle();
       await navigateApp(tester, 'Calendar');
-      expect(find.text('0 / 1 complete'), findsOneWidget);
+      expect(find.text('0 of 1 kept'), findsOneWidget);
       await _day(tester, 4);
-      expect(find.text('1 / 2 complete'), findsOneWidget);
+      expect(find.text('1 of 2 kept'), findsOneWidget);
       expect(find.text('Past appointment'), findsOneWidget);
       await _day(tester, 9);
       expect(
@@ -692,7 +692,7 @@ void main() {
       now = DateTime(2026, 10, 9, 8);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pumpAndSettle();
-      expect(find.text('COMMITMENT HISTORY'), findsOneWidget);
+      expect(find.text('Commitment history'), findsOneWidget);
       expect(find.text('Today goal'), findsOneWidget);
       expect(
         (_fill(tester, 8).shape! as RoundedRectangleBorder).side,

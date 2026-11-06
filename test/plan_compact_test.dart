@@ -90,15 +90,20 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(
-        tester.getTopLeft(find.text('SCHEDULE')).dy,
-        lessThan(tester.getTopLeft(find.text('Commitments')).dy),
+        tester.getTopLeft(find.textContaining('scheduled event')).dy,
+        lessThan(
+          tester.getTopLeft(find.textContaining(RegExp(r'^Commitments'))).dy,
+        ),
       );
       expect(find.textContaining('Tomorrow ·'), findsOneWidget);
       expect(find.text('PREPARING TOMORROW'), findsNothing);
       expect(find.text('10:00–12:00'), findsOneWidget);
       expect(find.text('Local'), findsOneWidget);
       expect(find.byType(TextField), findsNothing);
-      expect(find.text('+ Add commitment'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('open-commitment-editor')),
+        findsOneWidget,
+      );
       final footer = tester.getRect(
         find.byKey(const ValueKey('plan-commit-bar')),
       );
@@ -182,7 +187,7 @@ void main() {
       final snapshot = plan.toJson();
       await tester.pumpWidget(_screen(plan));
       await tester.pumpAndSettle();
-      final commit = find.widgetWithText(FilledButton, 'COMMIT FRIDAY');
+      final commit = find.widgetWithText(FilledButton, 'Lock in Friday');
       final before = tester.getRect(commit);
       expect(commit.hitTestable(), findsOneWidget);
       expect(find.byType(DaylockPlanTaskRow).evaluate().length, lessThan(25));
@@ -234,7 +239,7 @@ void main() {
       expect(
         tester
             .widget<FilledButton>(
-              find.widgetWithText(FilledButton, 'COMMIT FRIDAY'),
+              find.widgetWithText(FilledButton, 'Lock in Friday'),
             )
             .onPressed,
         isNull,
@@ -281,7 +286,7 @@ void main() {
         expect(plan.tasks.single.minimumFocusMinutes, isNull);
         expect(plan.tasks.single.focusTarget, isNull);
         expect(
-          find.widgetWithText(FilledButton, 'COMMIT FRIDAY').hitTestable(),
+          find.widgetWithText(FilledButton, 'Lock in Friday').hitTestable(),
           findsOneWidget,
         );
         expect(tester.takeException(), isNull);
@@ -299,15 +304,15 @@ void main() {
       );
       await tester.pumpWidget(_screen(plan, scale: 3));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('COMMIT FRIDAY'));
-      await tester.tap(find.text('COMMIT FRIDAY'));
+      await tester.ensureVisible(find.text('Lock in Friday'));
+      await tester.tap(find.text('Lock in Friday'));
       await tester.pumpAndSettle();
       final cancel = find.text('Keep planning');
       await tester.ensureVisible(cancel);
       await tester.tap(cancel);
       await tester.pumpAndSettle();
       expect(plan.isCommitted, isFalse);
-      await tester.tap(find.text('COMMIT FRIDAY'));
+      await tester.tap(find.text('Lock in Friday'));
       await confirmPlanCommit(tester);
       expect(plan.isCommitted, isTrue);
       expect(

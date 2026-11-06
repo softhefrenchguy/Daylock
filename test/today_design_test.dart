@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:daylock/design/daylock_scene.dart';
 import 'package:daylock/design/daylock_task_row.dart';
 import 'package:daylock/design/daylock_theme.dart';
 import 'package:daylock/design/daylock_widgets.dart';
@@ -13,6 +14,9 @@ import 'package:daylock/screens/today_screen.dart';
 import 'package:daylock/services/local_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'navigation_helpers.dart';
+
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
@@ -86,8 +90,8 @@ void main() {
         );
       }
     }
-    expect(DaylockTheme.light.scaffoldBackgroundColor, const Color(0xFFF8F6FC));
-    expect(DaylockTheme.dark.scaffoldBackgroundColor, const Color(0xFF100D1D));
+    expect(DaylockTheme.light.scaffoldBackgroundColor, const Color(0xFFF8F4FD));
+    expect(DaylockTheme.dark.scaffoldBackgroundColor, const Color(0xFF120E26));
   });
 
   testWidgets(
@@ -135,14 +139,17 @@ void main() {
     await tester.pumpWidget(_screen(tasks: [], onPlan: () => openPlan = true));
     await tester.pumpAndSettle();
     expect(find.text('A clear day.'), findsOneWidget);
-    expect(find.text('0 / 0 complete'), findsOneWidget);
-    expect(find.text('Day complete'), findsNothing);
+    expect(find.text('A clear day.'), findsOneWidget);
+    expect(find.textContaining('Day complete'), findsNothing);
     expect(find.byTooltip('Freedom Control is off'), findsOneWidget);
-    await _tap(tester, find.byKey(const ValueKey('freedom-indicator')));
-    expect(find.textContaining('18:00'), findsOneWidget);
+    // Off: one line and an invitation, not a checklist that cannot be met.
+    expect(
+      find.text('Earn your apps back by keeping your word.'),
+      findsOneWidget,
+    );
     expect(
       find.textContaining('completion is required to earn Freedom'),
-      findsOneWidget,
+      findsNothing,
     );
     expect(find.byType(CheckboxListTile), findsNothing);
     await _tap(tester, find.text('Plan tomorrow'));
@@ -156,26 +163,20 @@ void main() {
       await tester.pumpWidget(_screen(tasks: [goal]));
       await tester.pumpAndSettle();
       expect(find.byTooltip('Freedom Control is off'), findsOneWidget);
-      await _tap(tester, find.byKey(const ValueKey('freedom-indicator')));
-      expect(find.text('0 / 1 eligible commitments complete'), findsOneWidget);
-      await _tap(tester, find.text('Take a walk'));
+      expect(find.text('0 of 1 kept'), findsOneWidget);
+      expect(find.text('1 more and the sun is up'), findsOneWidget);
+      await _tap(tester, keepBox('Take a walk'));
       expect(goal.isCompleted, isTrue);
-      expect(find.text('1 / 1 complete'), findsOneWidget);
-      expect(find.text('100%'), findsOneWidget);
-      expect(find.text('Day complete'), findsOneWidget);
-      await _tap(tester, find.byKey(const ValueKey('freedom-indicator')));
-      expect(find.text('1 / 1 eligible commitments complete'), findsOneWidget);
-      expect(
-        tester
-            .widget<LinearProgressIndicator>(
-              find.byType(LinearProgressIndicator),
-            )
-            .value,
-        1,
-      );
-      await _tap(tester, find.text('Take a walk'));
+      expect(find.text('1 of 1 kept'), findsOneWidget);
+      expect(find.textContaining('Day complete'), findsOneWidget);
+      // Keeping it offers an Undo straight away.
+      expect(find.byKey(const ValueKey('kept-snackbar')), findsOneWidget);
+      // The sky header carries the progress as the sun's height.
+      final scene = tester.widget<DaylockScene>(find.byType(DaylockScene));
+      expect(scene.progress, 1);
+      await _tap(tester, keepBox('Take a walk'));
       expect(goal.isCompleted, isFalse);
-      expect(find.text('Day complete'), findsNothing);
+      expect(find.textContaining('Day complete'), findsNothing);
     },
   );
 
@@ -199,7 +200,13 @@ void main() {
     expect(task.isCompleted, isFalse);
     await _tap(tester, control);
     expect(task.isFocusRunning, isFalse);
-    await _tap(tester, find.text('Read'));
+    await _tap(
+      tester,
+      find.descendant(
+        of: find.widgetWithText(DaylockTaskRow, 'Read'),
+        matching: find.byType(Checkbox),
+      ),
+    );
     expect(task.isCompleted, isTrue);
     expect(find.byKey(ValueKey('stopwatch-toggle-${task.id}')), findsNothing);
     expect(find.text('23:12'), findsOneWidget);
@@ -215,7 +222,7 @@ void main() {
     await tester.pumpWidget(_screen(tasks: [task], reducedMotion: true));
     await tester.pump();
     expect(find.byKey(ValueKey('stopwatch-toggle-${task.id}')), findsNothing);
-    expect(find.text('Day complete'), findsOneWidget);
+    expect(find.textContaining('Day complete'), findsOneWidget);
     for (final animation in tester.widgetList<TweenAnimationBuilder<double>>(
       find.byType(TweenAnimationBuilder<double>),
     )) {
@@ -258,14 +265,20 @@ void main() {
             tester,
             find.byKey(ValueKey('stopwatch-toggle-${tasks[1].id}')),
           );
-          await _tap(tester, find.text('Another goal'));
+          await _tap(
+            tester,
+            find.descendant(
+              of: find.widgetWithText(DaylockTaskRow, 'Another goal'),
+              matching: find.byType(Checkbox),
+            ),
+          );
           expect(tasks.last.isCompleted, isTrue);
           tasks[1].accumulatedFocusMilliseconds = 180 * 60000;
           await tester.pumpWidget(
             _screen(tasks: tasks, brightness: brightness, scale: scale),
           );
           await tester.pumpAndSettle();
-          await _tap(tester, find.text(tasks[1].name));
+          await _tap(tester, keepBox(tasks[1].name));
           expect(tasks[1].isCompleted, isTrue);
           expect(
             find.byKey(ValueKey('stopwatch-toggle-${tasks[1].id}')),

@@ -1,4 +1,6 @@
 import 'package:daylock/design/daylock_palette.dart';
+import 'package:daylock/design/daylock_surfaces.dart';
+import 'package:daylock/design/daylock_task_row.dart';
 import 'package:daylock/design/daylock_theme.dart';
 import 'package:daylock/models/daily_plan.dart';
 import 'package:daylock/models/task.dart';
@@ -87,10 +89,15 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
-          await tester.tap(find.text('Walk'));
+          await tester.tap(
+            find.descendant(
+              of: find.widgetWithText(DaylockTaskRow, 'Walk'),
+              matching: find.byType(Checkbox),
+            ),
+          );
           await tester.pumpAndSettle();
           expect(goal.isCompleted, isTrue);
-          expect(find.text('1 / 2 complete'), findsOneWidget);
+          expect(find.text('1 of 2 kept'), findsOneWidget);
           expect(find.byType(Checkbox), findsNWidgets(2));
           expect(find.text('23:00'), findsOneWidget);
           final button = find.byKey(ValueKey('stopwatch-toggle-${focus.id}'));
@@ -98,15 +105,13 @@ void main() {
           await tester.tap(button);
           expect(started, isTrue);
           expect(focus.isCompleted, isFalse);
-          await tester.tap(find.byKey(const ValueKey('freedom-indicator')));
-          await tester.pumpAndSettle();
-          final status = tester.widget<AnimatedContainer>(
+          // Freedom off: a quiet strip on the theme's own card surface.
+          final status = tester.widget<DaylockGroup>(
             find.byKey(const ValueKey('freedom-status')),
           );
-          expect(
-            (status.decoration as BoxDecoration).color,
-            theme.extension<DaylockColors>()!.statusSurface,
-          );
+          expect(status.color, isNull);
+          expect(find.byTooltip('Freedom Control is off'), findsOneWidget);
+          expect(find.text('Turn on'), findsOneWidget);
           expect(tester.takeException(), isNull);
         },
       );
@@ -128,11 +133,11 @@ void main() {
       }
     }
     final violet = DaylockTheme.dark;
-    expect(violet.colorScheme.surface, const Color(0xFF100D1D));
-    expect(violet.colorScheme.primary, const Color(0xFFB988F0));
+    expect(violet.colorScheme.surface, const Color(0xFF120E26));
+    expect(violet.colorScheme.primary, const Color(0xFFC08BFF));
     expect(
       violet.extension<DaylockColors>()!.statusSurface,
-      const Color(0xFF211A2E),
+      const Color(0xFF241A4A),
     );
   });
 

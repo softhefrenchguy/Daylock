@@ -1,25 +1,61 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../design/area_tones.dart';
+import '../design/daylock_freedom_status.dart';
+import '../design/daylock_scene.dart';
+import '../design/daylock_surfaces.dart';
 import '../design/daylock_task_row.dart';
 import '../design/daylock_theme.dart';
 import '../design/daylock_widgets.dart';
-import '../models/daily_plan.dart';
-import '../models/task.dart';
 import '../models/area.dart';
-import '../design/daily_progress_card.dart';
-import 'task_actions_sheet.dart';
-import '../services/freedom_service.dart';
+import '../models/commitment_progress.dart';
+import '../models/daily_plan.dart';
 import '../models/freedom_settings.dart';
-import '../design/daylock_freedom_status.dart';
+import '../models/task.dart';
+import '../services/freedom_service.dart';
+import 'task_actions_sheet.dart';
+
+const _weekdays = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+const _months = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+String daylockDateLabel(DateTime date) =>
+    '${_weekdays[date.weekday - 1]} ${date.day} ${_months[date.month - 1]}';
+
+String daylockWeekday(DateTime date) => _weekdays[date.weekday - 1];
 
 class TodayScreen extends StatefulWidget {
   final DailyPlan plan;
+  final DailyPlan? tomorrowPlan;
   final AreaBook? areas;
   final VoidCallback onTaskChanged;
   final ValueChanged<Task> onFocusToggled;
   final VoidCallback? onPlanRequested;
   final VoidCallback? onSettingsRequested;
+  final VoidCallback? onFreedomRequested;
   final DateTime currentTime;
   final FreedomEligibility? freedomEligibility;
   final void Function(Task task, TaskOutcome outcome, String? reason)?
@@ -28,12 +64,14 @@ class TodayScreen extends StatefulWidget {
   const TodayScreen({
     super.key,
     required this.plan,
+    this.tomorrowPlan,
     this.areas,
     required this.onTaskChanged,
     required this.onFocusToggled,
     required this.currentTime,
     this.onPlanRequested,
     this.onSettingsRequested,
+    this.onFreedomRequested,
     this.onOutcomeChanged,
     this.freedomEligibility,
   });
@@ -46,7 +84,8 @@ class TodayScreenState extends State<TodayScreen> {
   final Set<ModalRoute<dynamic>> _ownedModals = {};
   bool _openingModal = false;
   bool _showAll = false;
-  final GlobalKey _freedomCard = GlobalKey();
+  bool _freedomOpen = false;
+
   FreedomEligibility get _currentFreedom =>
       widget.freedomEligibility ??
       const FreedomService().evaluate(
@@ -87,8 +126,25 @@ class TodayScreenState extends State<TodayScreen> {
 
   @override
   void dispose() {
+    _undoTimer?.cancel();
     _dismissModal();
     super.dispose();
+  }
+
+  Task? _undoTask;
+  DailyPlan? _undoPlan;
+  Timer? _undoTimer;
+
+  void _undoKept() {
+    final task = _undoTask, source = _undoPlan;
+    _undoTimer?.cancel();
+    setState(() => _undoTask = _undoPlan = null);
+    if (task != null &&
+        source != null &&
+        _canChange(source, task) &&
+        task.isCompleted) {
+      _applyOutcome(task, TaskOutcome.incomplete, null);
+    }
   }
 
   @override
@@ -117,6 +173,7 @@ class TodayScreenState extends State<TodayScreen> {
             data: Theme.of(Navigator.of(sheetContext).context),
             child: TaskActionsSheet(
               task: task,
+              area: widget.areas?.resolve(task.areaId),
               currentTime: currentTime,
               canChange: () => _canChange(source, task),
             ),
@@ -141,60 +198,60 @@ class TodayScreenState extends State<TodayScreen> {
         _ownedModals.removeWhere((route) => !route.isActive);
         if (reason == null || !_canChange(source, task)) return;
       }
-      final change = widget.onOutcomeChanged;
-      if (change != null) {
-        change(task, outcome, reason);
-      } else {
-        task.changeOutcome(outcome, now: currentTime, reason: reason);
-        onTaskChanged();
-      }
+      _applyOutcome(task, outcome, reason);
     } finally {
       _openingModal = false;
     }
   }
 
-  void _showFreedom() {
-    final target = _freedomCard.currentContext;
-    if (target != null) {
-      Scrollable.ensureVisible(
-        target,
-        duration: daylockMotion(context),
-        curve: Curves.easeOut,
-      );
+  void _applyOutcome(Task task, TaskOutcome outcome, String? reason) {
+    final change = widget.onOutcomeChanged;
+    if (change != null) {
+      change(task, outcome, reason);
+    } else {
+      task.changeOutcome(outcome, now: currentTime, reason: reason);
+      onTaskChanged();
     }
+  }
+
+  void _toggleKept(Task task) {
+    final source = plan;
+    if (!_canChange(source, task)) return;
+    final keeping = !task.isCompleted;
+    _applyOutcome(
+      task,
+      keeping ? TaskOutcome.completed : TaskOutcome.incomplete,
+      null,
+    );
+    // A local Undo bar: it never hides the app's own messages (such as a
+    // failed save) and it disappears when you leave Today.
+    _undoTimer?.cancel();
+    setState(() {
+      _undoTask = keeping ? task : null;
+      _undoPlan = keeping ? source : null;
+    });
+    if (!keeping) return;
+    _undoTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted) setState(() => _undoTask = _undoPlan = null);
+    });
+    SemanticsService.sendAnnouncement(
+      View.of(context),
+      'Kept ${task.name}',
+      Directionality.of(context),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final now = plan.date;
-    const weekdays = [
-      'MONDAY',
-      'TUESDAY',
-      'WEDNESDAY',
-      'THURSDAY',
-      'FRIDAY',
-      'SATURDAY',
-      'SUNDAY',
-    ];
-    const months = [
-      'JANUARY',
-      'FEBRUARY',
-      'MARCH',
-      'APRIL',
-      'MAY',
-      'JUNE',
-      'JULY',
-      'AUGUST',
-      'SEPTEMBER',
-      'OCTOBER',
-      'NOVEMBER',
-      'DECEMBER',
-    ];
     final summary = plan.progress;
     final empty = plan.tasks.isEmpty;
     final eligibility = _currentFreedom;
+    final tomorrow = widget.tomorrowPlan;
+    final tomorrowLocked =
+        tomorrow != null && tomorrow.isCommitted && tomorrow.tasks.isNotEmpty;
+    final earned = eligibility.settings.enabled && eligibility.earned;
+
     final visible = <Task>[];
     if (_showAll || plan.tasks.length <= 3) {
       visible.addAll(plan.tasks);
@@ -210,197 +267,654 @@ class TodayScreenState extends State<TodayScreen> {
         );
       }
     }
-    return SafeArea(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final padding = constraints.maxWidth < 360
-              ? DaylockSpace.md
-              : DaylockSpace.lg;
-          return SingleChildScrollView(
-            key: const ValueKey('today-content'),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: 640,
-                  minHeight: constraints.maxHeight,
-                ),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(padding, 12, padding, 24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${weekdays[now.weekday - 1]} ${now.day} ${months[now.month - 1]}',
-                        style: theme.textTheme.labelLarge!.copyWith(
-                          color: colors.primary,
-                          fontSize: 13,
-                        ),
+
+    final mood = earned
+        ? SceneMood.earned
+        : empty && tomorrowLocked
+        ? SceneMood.night
+        : SceneMood.dawn;
+    final fraction = summary.fraction ?? 0;
+    final recorded = plan.tasks.fold<int>(
+      0,
+      (total, task) => total + task.focusMillisecondsAt(currentTime),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final padding = constraints.maxWidth < 360
+            ? DaylockSpace.md
+            : DaylockSpace.lg;
+        Widget section(Widget child) => Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: padding),
+              child: child,
+            ),
+          ),
+        );
+        final content = SingleChildScrollView(
+          key: const ValueKey('today-content'),
+          padding: EdgeInsets.only(bottom: _undoTask == null ? 32 : 96),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DaylockSkyHeader(
+                mood: mood,
+                progress: empty ? 0 : fraction,
+                height: earned ? 400 : 262,
+                horizontalPadding: padding,
+                title: 'Today',
+                subtitle: daylockDateLabel(plan.date),
+                actions: [
+                  if (onSettingsRequested != null)
+                    DaylockSkyButton(
+                      buttonKey: const ValueKey('open-settings'),
+                      icon: Icons.settings_outlined,
+                      tooltip: 'Settings',
+                      onPressed: onSettingsRequested,
+                    ),
+                ],
+                bottom: earned
+                    ? _EarnedHeadline(
+                        eligibility: eligibility,
+                        onTap: () =>
+                            setState(() => _freedomOpen = !_freedomOpen),
+                      )
+                    : empty
+                    ? null
+                    : _ProgressHeadline(
+                        summary: summary,
+                        recordedMilliseconds: recorded,
                       ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Semantics(
-                              header: true,
-                              child: Text(
-                                'Today',
-                                style: theme.textTheme.headlineLarge!.copyWith(
-                                  fontSize: 36,
-                                ),
-                              ),
-                            ),
+              ),
+              if (earned)
+                section(
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tomorrowLocked
+                              ? 'You kept your word and ${daylockWeekday(tomorrow.date)} is already committed. Enjoy it.'
+                              : 'You kept your word. Enjoy it.',
+                          style: theme.textTheme.bodyLarge!.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
-                          IconButton(
-                            key: const ValueKey('freedom-indicator'),
-                            tooltip: !eligibility.settings.enabled
-                                ? 'Freedom Control is off'
-                                : eligibility.earned
-                                ? 'Freedom earned'
-                                : 'Freedom not yet earned',
-                            onPressed: _showFreedom,
-                            icon: Icon(
-                              !eligibility.settings.enabled
-                                  ? Icons.lock_outline_rounded
-                                  : eligibility.earned
-                                  ? Icons.lock_open_rounded
-                                  : Icons.lock_rounded,
-                              color: eligibility.settings.enabled
-                                  ? colors.primary
-                                  : colors.onSurfaceVariant,
-                            ),
-                          ),
-                          if (onSettingsRequested != null)
-                            IconButton(
-                              key: const ValueKey('open-settings'),
-                              tooltip: 'Settings',
-                              onPressed: onSettingsRequested,
-                              icon: const Icon(Icons.settings_outlined),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      DailyProgressCard(
-                        progress: summary,
-                        recordedMilliseconds: plan.tasks.fold<int>(
-                          0,
-                          (total, task) =>
-                              total + task.focusMillisecondsAt(currentTime),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Your commitments',
-                        style: theme.textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      if (empty)
-                        _EmptyToday(onPlanRequested: onPlanRequested)
-                      else ...[
-                        for (final task in visible)
+                        if (_freedomOpen)
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Semantics(
+                            padding: const EdgeInsets.only(top: 14),
+                            child: _FreedomDetails(eligibility: eligibility),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              if (empty)
+                section(
+                  _EmptyToday(
+                    tomorrow: tomorrowLocked ? tomorrow : null,
+                    areas: widget.areas,
+                    onPlanRequested: onPlanRequested,
+                  ),
+                ),
+              if (!earned)
+                section(
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _FreedomStrip(
+                      eligibility: eligibility,
+                      empty: empty,
+                      open: _freedomOpen,
+                      onToggle: () =>
+                          setState(() => _freedomOpen = !_freedomOpen),
+                      onTurnOn:
+                          widget.onFreedomRequested ?? onSettingsRequested,
+                    ),
+                  ),
+                ),
+              if (!empty)
+                section(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      DaylockSectionHeader(
+                        title: 'Commitments',
+                        padding: EdgeInsets.fromLTRB(0, earned ? 4 : 24, 0, 10),
+                      ),
+                      DaylockGroup(
+                        children: [
+                          for (final task in visible)
+                            Semantics(
                               customSemanticsActions: {
                                 const CustomSemanticsAction(
                                   label: 'Task actions',
                                 ): () =>
                                     _showActions(task),
                               },
-                              child: GestureDetector(
-                                onLongPress: () => _showActions(task),
-                                child: DaylockTaskRow(
-                                  key: ObjectKey(task),
-                                  task: task,
-                                  currentTime: currentTime,
-                                  area: widget.areas?.resolve(task.areaId),
-                                  onGoalChanged: () {
-                                    final outcome = task.isCompleted
-                                        ? TaskOutcome.incomplete
-                                        : TaskOutcome.completed;
-                                    if (widget.onOutcomeChanged != null) {
-                                      widget.onOutcomeChanged!(
-                                        task,
-                                        outcome,
-                                        null,
-                                      );
-                                    } else {
-                                      task.changeOutcome(
-                                        outcome,
-                                        now: currentTime,
-                                      );
-                                      onTaskChanged();
-                                    }
-                                  },
-                                  onFocusToggled: () => onFocusToggled(task),
-                                  onDetailsRequested: () => _showActions(task),
-                                ),
+                              child: DaylockTaskRow(
+                                key: ObjectKey(task),
+                                task: task,
+                                currentTime: currentTime,
+                                area: widget.areas?.resolve(task.areaId),
+                                onGoalChanged: () => _toggleKept(task),
+                                onFocusToggled: () => onFocusToggled(task),
+                                onDetailsRequested: () => _showActions(task),
                               ),
                             ),
-                          ),
-                        if (plan.tasks.length > 3)
-                          Center(
-                            child: TextButton.icon(
-                              key: const ValueKey('today-expand'),
-                              onPressed: () =>
-                                  setState(() => _showAll = !_showAll),
-                              icon: Icon(
-                                _showAll
-                                    ? Icons.expand_less
-                                    : Icons.expand_more,
-                              ),
-                              label: Text(
-                                _showAll
-                                    ? 'Show fewer commitments'
-                                    : 'Show all ${plan.tasks.length} commitments',
-                              ),
-                            ),
-                          ),
-                      ],
-                      const SizedBox(height: 8),
-                      KeyedSubtree(
-                        key: _freedomCard,
-                        child: DaylockFreedomStatus(eligibility: eligibility),
+                        ],
                       ),
+                      if (plan.tasks.length > 3)
+                        Center(
+                          child: TextButton.icon(
+                            key: const ValueKey('today-expand'),
+                            onPressed: () =>
+                                setState(() => _showAll = !_showAll),
+                            icon: Icon(
+                              _showAll ? Icons.expand_less : Icons.expand_more,
+                            ),
+                            label: Text(
+                              _showAll
+                                  ? 'Show fewer commitments'
+                                  : 'Show all ${plan.tasks.length} commitments',
+                            ),
+                          ),
+                        ),
+                      if (summary.excusedCount > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            '${summary.excusedCount} excused',
+                            key: const ValueKey('today-excused-count'),
+                            style: theme.textTheme.bodySmall!.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
+            ],
+          ),
+        );
+        final undo = _undoTask;
+        return Stack(
+          children: [
+            content,
+            if (undo != null)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 16,
+                child: SafeArea(
+                  top: false,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 600),
+                      child: _UndoBar(
+                        key: const ValueKey('kept-snackbar'),
+                        name: undo.name,
+                        onUndo: _undoKept,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _UndoBar extends StatelessWidget {
+  final String name;
+  final VoidCallback onUndo;
+  const _UndoBar({super.key, required this.name, required this.onUndo});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    final background = dark ? const Color(0xFFF1E9FF) : const Color(0xFF241A42);
+    final foreground = dark ? const Color(0xFF1D1036) : const Color(0xFFF5F1FF);
+    final action = dark ? const Color(0xFF5B2FB0) : const Color(0xFFD9BFFF);
+    return Semantics(
+      liveRegion: true,
+      container: true,
+      child: Material(
+        color: background,
+        elevation: 6,
+        shadowColor: Colors.black54,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
+          child: Row(
+            children: [
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: daylockGold(Brightness.dark),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  size: 15,
+                  color: Color(0xFF3A1D05),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Kept: $name',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium!.copyWith(
+                    fontSize: 15,
+                    color: foreground,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: onUndo,
+                style: TextButton.styleFrom(foregroundColor: action),
+                child: const Text('Undo'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _timedLabel(int milliseconds) {
+  final seconds = milliseconds ~/ 1000;
+  final hours = seconds ~/ 3600;
+  final minutes = seconds ~/ 60 % 60;
+  return hours > 0
+      ? '${hours}h ${minutes}m'
+      : minutes > 0
+      ? '${minutes}m ${seconds % 60}s'
+      : '${seconds}s';
+}
+
+class _ProgressHeadline extends StatelessWidget {
+  final CommitmentProgress summary;
+  final int recordedMilliseconds;
+  const _ProgressHeadline({
+    required this.summary,
+    required this.recordedMilliseconds,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final sky = SceneColors.of(theme);
+    final neutral = summary.isNeutral;
+    final headline = neutral
+        ? 'No eligible commitments'
+        : '${summary.completedCount} of ${summary.eligibleCount} kept';
+    final remaining = summary.remainingCount;
+    final status = neutral
+        ? 'Excused commitments don’t count'
+        : summary.isComplete
+        ? 'Day complete'
+        : remaining == 1
+        ? '1 more and the sun is up'
+        : '$remaining more and the sun is up';
+    final timed = recordedMilliseconds > 0
+        ? ' · ${_timedLabel(recordedMilliseconds)} timed'
+        : '';
+    final fraction = summary.fraction;
+    return Semantics(
+      key: const ValueKey('daily-summary'),
+      container: true,
+      label: neutral ? 'No eligible commitments' : 'Commitments complete',
+      value: '${((fraction ?? 0) * 100).round()}%',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            headline,
+            style: theme.textTheme.headlineMedium!.copyWith(color: sky.onSky),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '$status$timed',
+            key: const ValueKey('today-recorded-time'),
+            style: theme.textTheme.bodyMedium!.copyWith(
+              color: sky.onSkyMuted,
+              fontSize: 15,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The conditions plus where app restrictions live.
+class _FreedomDetails extends StatelessWidget {
+  final FreedomEligibility eligibility;
+  const _FreedomDetails({required this.eligibility});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      key: const ValueKey('freedom-details'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FreedomConditions(eligibility: eligibility),
+        const SizedBox(height: 6),
+        Text(
+          'App restrictions are configured in Settings.',
+          style: theme.textTheme.bodySmall!.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EarnedHeadline extends StatelessWidget {
+  final FreedomEligibility eligibility;
+  final VoidCallback onTap;
+  const _EarnedHeadline({required this.eligibility, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final sky = SceneColors.of(theme);
+    return Tooltip(
+      key: const ValueKey('freedom-indicator'),
+      message: 'Freedom earned',
+      excludeFromSemantics: true,
+      child: Semantics(
+        button: true,
+        hint: 'Show Freedom details',
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Column(
+            key: const ValueKey('freedom-earned-headline'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: sky.dark
+                      ? Colors.black.withValues(alpha: .25)
+                      : Colors.white.withValues(alpha: .6),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.lock_open_rounded, size: 16, color: sky.onSky),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Apps unlocked at ${eligibility.settings.timeLabel}',
+                      style: theme.textTheme.bodyMedium!.copyWith(
+                        color: sky.onSky,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Freedom earned.',
+                style: theme.textTheme.displayLarge!.copyWith(
+                  fontSize: 44,
+                  color: sky.onSky,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FreedomStrip extends StatelessWidget {
+  final FreedomEligibility eligibility;
+  final bool empty, open;
+  final VoidCallback onToggle;
+  final VoidCallback? onTurnOn;
+  const _FreedomStrip({
+    required this.eligibility,
+    required this.empty,
+    required this.open,
+    required this.onToggle,
+    this.onTurnOn,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final enabled = eligibility.settings.enabled;
+    final time = eligibility.settings.timeLabel;
+    final tooltip = !enabled
+        ? 'Freedom Control is off'
+        : eligibility.earned
+        ? 'Freedom earned'
+        : 'Freedom not yet earned';
+    final String title, detail;
+    if (!enabled) {
+      title = 'Freedom Control is off';
+      detail = 'Earn your apps back by keeping your word.';
+    } else if (!eligibility.hasEligibleCommitments) {
+      title = 'Apps stay locked today';
+      detail = 'An empty day doesn’t earn Freedom. Commit a plan for tomorrow.';
+    } else if (!eligibility.commitmentsCompleted) {
+      final left = eligibility.eligibleCount - eligibility.completedCount;
+      title = 'Apps unlock at $time';
+      detail = left == 1
+          ? 'Keep 1 more to earn it'
+          : 'Keep $left more to earn it';
+    } else if (!eligibility.tomorrowCommitted) {
+      title = 'Apps unlock at $time';
+      detail = 'Commit tomorrow’s plan to earn it';
+    } else {
+      title = 'Waiting for Freedom Time';
+      detail = 'Everything’s kept. Apps unlock at $time';
+    }
+    return Tooltip(
+      key: const ValueKey('freedom-indicator'),
+      message: tooltip,
+      excludeFromSemantics: true,
+      child: DaylockGroup(
+        key: const ValueKey('freedom-status'),
+        color: enabled
+            ? Color.alphaBlend(
+                scheme.primary.withValues(
+                  alpha: theme.brightness == Brightness.dark ? .14 : .10,
+                ),
+                scheme.surfaceContainerLow,
+              )
+            : null,
+        children: [
+          InkWell(
+            onTap: enabled ? onToggle : onTurnOn,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact =
+                      constraints.maxWidth < 270 ||
+                      MediaQuery.textScalerOf(context).scale(1) > 1.3;
+                  final turnOn = FilledButton.tonal(
+                    key: const ValueKey('freedom-turn-on'),
+                    onPressed: onTurnOn,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(48, 40),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      backgroundColor: scheme.primary.withValues(alpha: .22),
+                      foregroundColor: scheme.onSurface,
+                    ),
+                    child: const Text('Turn on'),
+                  );
+                  final text = Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        key: const ValueKey('freedom-title'),
+                        style: theme.textTheme.titleMedium!.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (enabled || empty)
+                        Text(
+                          detail,
+                          style: theme.textTheme.bodyMedium!.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      if (!enabled && compact)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: turnOn,
+                        ),
+                    ],
+                  );
+                  return Row(
+                    children: [
+                      DaylockIconTile(
+                        icon: enabled
+                            ? Icons.lock_rounded
+                            : Icons.lock_outline_rounded,
+                        color: scheme.primary,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(child: text),
+                      if (!enabled && !compact)
+                        turnOn
+                      else if (enabled)
+                        Icon(
+                          open
+                              ? Icons.expand_less_rounded
+                              : Icons.expand_more_rounded,
+                          semanticLabel: open
+                              ? 'Hide Freedom details'
+                              : 'Show Freedom details',
+                          color: scheme.onSurfaceVariant,
+                        ),
+                    ],
+                  );
+                },
               ),
             ),
-          );
-        },
+          ),
+          if (enabled && open)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+              child: _FreedomDetails(eligibility: eligibility),
+            ),
+        ],
       ),
     );
   }
 }
 
 class _EmptyToday extends StatelessWidget {
+  final DailyPlan? tomorrow;
+  final AreaBook? areas;
   final VoidCallback? onPlanRequested;
-  const _EmptyToday({this.onPlanRequested});
+  const _EmptyToday({this.tomorrow, this.areas, this.onPlanRequested});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final locked = tomorrow;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: DaylockSpace.lg),
+      padding: const EdgeInsets.only(top: 12, bottom: 4),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(
-            Icons.wb_sunny_outlined,
-            color: theme.colorScheme.primary,
-            size: 32,
+          Text(
+            locked == null
+                ? 'A clear day.'
+                : 'All set for ${daylockWeekday(locked.date)}.',
+            style: theme.textTheme.headlineLarge,
           ),
-          const SizedBox(height: DaylockSpace.md),
-          Text('A clear day.', style: theme.textTheme.headlineLarge),
           const SizedBox(height: DaylockSpace.sm),
           Text(
-            'No commitments for today.\nMake a deliberate plan for tomorrow.',
+            locked == null
+                ? 'No commitments for today. Plan tomorrow, and tomorrow’s sun is yours to raise.'
+                : 'Nothing planned today, and tomorrow is locked in. Rest is the plan.',
             style: theme.textTheme.bodyLarge!.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: scheme.onSurfaceVariant,
             ),
           ),
-          if (onPlanRequested != null) ...[
+          if (locked != null) ...[
+            const SizedBox(height: 18),
+            DaylockGroup(
+              key: const ValueKey('tomorrow-locked'),
+              children: [
+                ListTile(
+                  leading: DaylockIconTile(
+                    icon: Icons.lock_rounded,
+                    color: scheme.primary,
+                    size: 36,
+                  ),
+                  title: Text(
+                    '${daylockWeekday(locked.date)}’s ${locked.tasks.length}',
+                    style: theme.textTheme.titleLarge,
+                  ),
+                  trailing: onPlanRequested == null
+                      ? null
+                      : TextButton(
+                          onPressed: onPlanRequested,
+                          child: const Text('View'),
+                        ),
+                ),
+                for (final task in locked.tasks.take(5))
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 16, 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: areas == null
+                                ? scheme.primary
+                                : AreaTones.forContext(
+                                    context,
+                                    Color(areas!.resolve(task.areaId).colour),
+                                  ).ink,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            task.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyLarge,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ] else if (onPlanRequested != null) ...[
             const SizedBox(height: DaylockSpace.lg),
             DaylockAction(
               label: 'Plan tomorrow',

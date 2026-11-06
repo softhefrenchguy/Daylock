@@ -443,37 +443,39 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     }
   }
 
-  void _openSettings() => _navigatorKey.currentState!.push(
-    MaterialPageRoute<void>(
-      builder: (_) => ValueListenableBuilder<AppearancePreferences>(
-        valueListenable: _appearance,
-        builder: (context, preferences, _) => ValueListenableBuilder<int>(
-          valueListenable: _planningChanges,
-          builder: (context, revision, _) => SettingsScreen(
-            readFreedom: () => const FreedomService().evaluate(
-              now: _now(),
-              settings: freedomSettings,
-              todayPlan: todayPlan,
-              tomorrowPlan: tomorrowPlan,
+  void _openSettings([SettingsDestination? destination]) =>
+      _navigatorKey.currentState!.push(
+        MaterialPageRoute<void>(
+          builder: (_) => ValueListenableBuilder<AppearancePreferences>(
+            valueListenable: _appearance,
+            builder: (context, preferences, _) => ValueListenableBuilder<int>(
+              valueListenable: _planningChanges,
+              builder: (context, revision, _) => SettingsScreen(
+                readFreedom: () => const FreedomService().evaluate(
+                  now: _now(),
+                  settings: freedomSettings,
+                  todayPlan: todayPlan,
+                  tomorrowPlan: tomorrowPlan,
+                ),
+                preferences: preferences,
+                onChanged: _changeAppearance,
+                freedomSettings: freedomSettings,
+                onFreedomChanged: _changeFreedomSettings,
+                routineCount: routines.routines.length,
+                onRoutinesRequested: _openRoutines,
+                onAreasRequested: _openAreas,
+                areaCount: areas.active.length,
+                detectionBridge: _detectionBridge,
+                notificationService: _notifications,
+                notificationPreferences: notificationPreferences,
+                onNotificationsChanged: _changeNotifications,
+                onSetupRequested: () => _openTutorial(restart: true),
+                initialDestination: destination,
+              ),
             ),
-            preferences: preferences,
-            onChanged: _changeAppearance,
-            freedomSettings: freedomSettings,
-            onFreedomChanged: _changeFreedomSettings,
-            routineCount: routines.routines.length,
-            onRoutinesRequested: _openRoutines,
-            onAreasRequested: _openAreas,
-            areaCount: areas.active.length,
-            detectionBridge: _detectionBridge,
-            notificationService: _notifications,
-            notificationPreferences: notificationPreferences,
-            onNotificationsChanged: _changeNotifications,
-            onSetupRequested: () => _openTutorial(restart: true),
           ),
         ),
-      ),
-    ),
-  );
+      );
 
   Future<void> _openTutorial({bool restart = false}) async {
     if (_tutorialOpen || _isLoading || _loadFailed) return;
@@ -494,7 +496,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             onAreasRequested: _openAreas,
             onRoutinesRequested: _openRoutines,
             onCalendarRequested: () => _openCalendar(),
-            onSettingsRequested: _openSettings,
+            onSettingsRequested: () => _openSettings(),
             onJourneyRequested: () => _navigatorKey.currentState!.push(
               MaterialPageRoute<void>(
                 builder: (_) => Scaffold(
@@ -831,7 +833,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       builder: (_) => ValueListenableBuilder<int>(
         valueListenable: _journeyChanges,
         builder: (context, revision, _) => Scaffold(
-          appBar: AppBar(title: const Text('Highlights')),
+          appBar: AppBar(title: const Text('Achievements')),
           body: SafeArea(
             child: Center(
               child: ConstrainedBox(
@@ -844,11 +846,13 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
                       child: OutlinedButton.icon(
                         onPressed: () => _editHighlight(),
                         icon: const Icon(Icons.add),
-                        label: const Text('Add Highlight'),
+                        label: const Text('Add achievement'),
                       ),
                     ),
                     if (highlights.highlights.isEmpty)
-                      const Text('Keep the moments that matter to you.'),
+                      const Text(
+                        'Things you’re proud of: a driving licence, a first 10k, a finished chapter.',
+                      ),
                     for (final highlight in highlights.newestFirst)
                       JourneyHighlightTile(
                         highlight: highlight,
@@ -875,15 +879,15 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           );
           if (matches.isEmpty) {
             return Scaffold(
-              appBar: AppBar(title: const Text('Highlight')),
+              appBar: AppBar(title: const Text('Achievement')),
               body: const Center(
-                child: Text('This Highlight has been removed.'),
+                child: Text('This achievement has been removed.'),
               ),
             );
           }
           final highlight = matches.single;
           return Scaffold(
-            appBar: AppBar(title: const Text('Highlight')),
+            appBar: AppBar(title: const Text('Achievement')),
             body: SafeArea(
               child: Center(
                 child: ConstrainedBox(
@@ -949,14 +953,14 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       context: context,
       builder: (dialogContext) => AlertDialog(
         scrollable: true,
-        title: const Text('Delete Highlight?'),
+        title: const Text('Delete achievement?'),
         content: Text(
           'Remove “${highlight.title}”? Your commitments and Areas will stay as they are.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Keep Highlight'),
+            child: const Text('Keep achievement'),
           ),
           FilledButton(
             key: const ValueKey('confirm-delete-highlight'),
@@ -1095,6 +1099,8 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       TodayScreen(
         key: _todayScreenKey,
         plan: planForToday,
+        tomorrowPlan: planForTomorrow,
+        onFreedomRequested: () => _openSettings(SettingsDestination.freedom),
         areas: areas,
         freedomEligibility: const FreedomService().evaluate(
           now: _now(),
@@ -1104,7 +1110,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         ),
         onOutcomeChanged: (task, outcome, reason) =>
             _changeTaskOutcome(task, planForToday, outcome, reason),
-        onSettingsRequested: _openSettings,
+        onSettingsRequested: () => _openSettings(),
         onPlanRequested: () => setState(() {
           selectedPage = 1;
         }),
@@ -1195,18 +1201,18 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.today_outlined),
-            selectedIcon: Icon(Icons.today),
+            icon: Icon(Icons.wb_sunny_outlined),
+            selectedIcon: Icon(Icons.wb_sunny_rounded),
             label: 'Today',
           ),
           NavigationDestination(
-            icon: Icon(Icons.edit_note_outlined),
-            selectedIcon: Icon(Icons.edit_note),
+            icon: Icon(Icons.bedtime_outlined),
+            selectedIcon: Icon(Icons.bedtime_rounded),
             label: 'Plan',
           ),
           NavigationDestination(
-            icon: Icon(Icons.auto_stories_outlined),
-            selectedIcon: Icon(Icons.auto_stories),
+            icon: Icon(Icons.landscape_outlined),
+            selectedIcon: Icon(Icons.landscape_rounded),
             label: 'Journey',
           ),
         ],

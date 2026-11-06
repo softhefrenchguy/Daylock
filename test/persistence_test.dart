@@ -10,6 +10,8 @@ import 'package:daylock/services/local_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'navigation_helpers.dart';
+
 import 'plan_test_helpers.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,7 +37,7 @@ void main() {
     );
     await tester.pumpWidget(MainApp(now: () => _testNow));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Existing goal'));
+    await tester.tap(keepBox('Existing goal'));
     await tester.pumpAndSettle();
 
     await _openPlan(tester);
@@ -60,15 +62,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await _reopenApp(tester);
-    expect(find.text('1 / 3 complete'), findsOneWidget);
-    expect(
-      tester
-          .widget<CheckboxListTile>(
-            find.widgetWithText(CheckboxListTile, 'Existing goal'),
-          )
-          .value,
-      isTrue,
-    );
+    expect(find.text('1 of 3 kept'), findsOneWidget);
+    expect(tester.widget<Checkbox>(keepBox('Existing goal')).value, isTrue);
     expect(find.text('Take a walk'), findsNothing);
     await _openPlan(tester);
     expect(
@@ -86,7 +81,7 @@ void main() {
     expect(find.byKey(const ValueKey('commitment-name')), findsNothing);
 
     final commitButton = find.ancestor(
-      of: find.textContaining(RegExp(r'^COMMIT ')),
+      of: find.textContaining(RegExp(r'^Lock in ')),
       matching: find.byType(FilledButton),
     );
     await tester.ensureVisible(commitButton);
@@ -95,8 +90,8 @@ void main() {
     await tester.pumpAndSettle();
     await _reopenApp(tester);
 
-    expect(find.text('1 / 3 complete'), findsOneWidget);
-    expect(find.byType(CheckboxListTile), findsNWidgets(3));
+    expect(find.text('1 of 3 kept'), findsOneWidget);
+    expect(find.byType(Checkbox), findsNWidgets(3));
     await _openPlan(tester);
     expect(find.text("Tomorrow's plan is committed."), findsOneWidget);
     expect(find.byType(DaylockPlanTaskRow), findsNWidgets(2));
@@ -135,8 +130,8 @@ void main() {
     );
     await tester.pumpWidget(MainApp(now: () => _testNow));
     await tester.pumpAndSettle();
-    expect(find.byType(CheckboxListTile), findsNothing);
-    expect(find.text('0 / 0 complete'), findsOneWidget);
+    expect(find.byType(Checkbox), findsNothing);
+    expect(find.text('A clear day.'), findsOneWidget);
   });
 
   testWidgets('Broken data stays intact and load can be retried', (
@@ -181,7 +176,7 @@ void main() {
     await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
     expect(find.text('Recovered task'), findsOneWidget);
-    expect(find.text('1 / 1 complete'), findsOneWidget);
+    expect(find.text('1 of 1 kept'), findsOneWidget);
     await _openPlan(tester);
     expect(find.text('Locked draft'), findsOneWidget);
     expect(find.text("Tomorrow's plan is committed."), findsOneWidget);
@@ -211,14 +206,14 @@ void main() {
     await tester.pumpWidget(MainApp(now: () => _testNow));
     await tester.pumpAndSettle();
     expect(find.text('Legacy today'), findsOneWidget);
-    expect(find.text('1 / 1 complete'), findsOneWidget);
+    expect(find.text('1 of 1 kept'), findsOneWidget);
     expect(find.text('Existing goal'), findsNothing);
     await _openPlan(tester);
     expect(find.text('Legacy tomorrow'), findsOneWidget);
     expect(find.text("Tomorrow's plan is committed."), findsOneWidget);
     expect(find.byKey(const ValueKey('commitment-name')), findsNothing);
     await _reopenApp(tester);
-    expect(find.text('1 / 1 complete'), findsOneWidget);
+    expect(find.text('1 of 1 kept'), findsOneWidget);
     await _openPlan(tester);
     expect(find.text('Legacy tomorrow'), findsOneWidget);
     expect(
@@ -248,24 +243,24 @@ void main() {
     );
     await tester.pumpWidget(MainApp(now: () => _testNow));
     await tester.pumpAndSettle();
-    expect(find.text('THURSDAY 31 DECEMBER'), findsOneWidget);
-    await tester.tap(find.text('Dated today'));
+    expect(find.text('Thursday 31 December'), findsOneWidget);
+    await tester.tap(keepBox('Dated today'));
     await tester.pumpAndSettle();
-    expect(find.text('1 / 1 complete'), findsOneWidget);
+    expect(find.text('1 of 1 kept'), findsOneWidget);
     await _openPlan(tester);
-    expect(find.text('COMMIT FRIDAY'), findsOneWidget);
+    expect(find.text('Lock in Friday'), findsOneWidget);
     expect(find.text('Dated tomorrow'), findsOneWidget);
-    await tester.ensureVisible(find.text('COMMIT FRIDAY'));
-    await tester.tap(find.text('COMMIT FRIDAY'));
+    await tester.ensureVisible(find.text('Lock in Friday'));
+    await tester.tap(find.text('Lock in Friday'));
     await confirmPlanCommit(tester);
     await tester.pumpAndSettle();
     expect(find.text("Tomorrow's plan is committed."), findsOneWidget);
 
     await _reopenApp(tester);
-    expect(find.text('THURSDAY 31 DECEMBER'), findsOneWidget);
-    expect(find.text('1 / 1 complete'), findsOneWidget);
+    expect(find.text('Thursday 31 December'), findsOneWidget);
+    expect(find.text('1 of 1 kept'), findsOneWidget);
     await _openPlan(tester);
-    expect(find.text('COMMIT FRIDAY'), findsNothing);
+    expect(find.text('Lock in Friday'), findsNothing);
     expect(
       tester.widget<PlanScreen>(find.byType(PlanScreen)).plan.isCommitted,
       isTrue,

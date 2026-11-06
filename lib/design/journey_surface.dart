@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Shared tinted glass-like surface, with contrast supplied by the active theme.
+import 'daylock_theme.dart';
+
+/// Shared flat card. Elevation is declared once: a fill in dark mode and a
+/// soft shadow in light mode. [accent] adds only a faint tint when emphasized.
 class JourneySurface extends StatelessWidget {
   final Widget child;
   final Color? accent;
@@ -12,54 +15,36 @@ class JourneySurface extends StatelessWidget {
     required this.child,
     this.accent,
     this.onTap,
-    this.radius = 20,
+    this.radius = DaylockSpace.cardRadius,
     this.emphasized = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final tint = accent ?? scheme.primary;
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final base = scheme.surfaceContainerLow;
+    final fill = emphasized && accent != null
+        ? Color.alphaBlend(accent!.withValues(alpha: dark ? .10 : .05), base)
+        : base;
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
-        boxShadow: [
-          BoxShadow(
-            color: tint.withValues(
-              alpha: dark ? (emphasized ? .12 : .045) : .025,
-            ),
-            blurRadius: 20,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        boxShadow: dark
+            ? null
+            : [
+                BoxShadow(
+                  color: scheme.primary.withValues(alpha: .07),
+                  blurRadius: 18,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Material(
-        color: dark ? scheme.surface : scheme.surfaceContainerLow,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radius),
-          side: BorderSide(
-            color: Color.alphaBlend(
-              tint.withValues(alpha: emphasized ? .8 : .45),
-              scheme.outlineVariant,
-            ),
-          ),
-        ),
+        color: fill,
+        borderRadius: BorderRadius.circular(radius),
         clipBehavior: Clip.antiAlias,
-        child: Ink(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                tint.withValues(alpha: dark ? .22 : .09),
-                tint.withValues(alpha: .035),
-                tint.withValues(alpha: dark ? .10 : .055),
-              ],
-            ),
-          ),
-          child: onTap == null ? child : InkWell(onTap: onTap, child: child),
-        ),
+        child: onTap == null ? child : InkWell(onTap: onTap, child: child),
       ),
     );
   }

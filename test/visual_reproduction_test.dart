@@ -8,7 +8,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:daylock/design/daylock_task_row.dart';
 import 'package:daylock/design/daylock_theme.dart';
-import 'package:daylock/design/journey_surface.dart';
+import 'package:daylock/design/area_tones.dart';
+import 'package:daylock/design/daylock_scene.dart';
 
 import '../tool/visual_fixture.dart';
 
@@ -56,12 +57,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       if (state == 0) {
+        // A fully kept day raises the sun all the way.
         expect(
-          tester
-              .widget<CircularProgressIndicator>(
-                find.byType(CircularProgressIndicator),
-              )
-              .value,
+          tester.widget<DaylockScene>(find.byType(DaylockScene).first).progress,
           1,
         );
         for (final row in find.byType(DaylockTaskRow).evaluate()) {
@@ -74,7 +72,7 @@ void main() {
       if (state < 2) {
         expect(
           tester
-              .getBottomRight(find.byKey(const ValueKey('freedom-status')))
+              .getBottomRight(find.byKey(const ValueKey('freedom-indicator')))
               .dy,
           lessThanOrEqualTo(tester.getTopLeft(find.byType(NavigationBar)).dy),
         );
@@ -109,13 +107,10 @@ void main() {
       await tester.pumpWidget(VisualFixture(initialState: state));
       await tester.pumpAndSettle();
       final bottom = state == 0
-          ? find.byKey(const ValueKey('freedom-status'))
+          ? find.byKey(const ValueKey('freedom-indicator'))
           : state == 2
-          ? find.ancestor(
-              of: find.text('No commitments planned yet.'),
-              matching: find.byType(JourneySurface),
-            )
-          : find.byKey(const ValueKey('daily-history'));
+          ? find.text('Add one small step for tomorrow.')
+          : find.byKey(const ValueKey('journey-effort-summary'));
       final limit = state == 2
           ? find.byKey(const ValueKey('plan-commit-bar'))
           : find.byType(NavigationBar);
@@ -148,9 +143,14 @@ void main() {
       );
       for (final color in [Colors.green, Colors.blue]) {
         await show(color);
+        // The checkbox ink is derived from the user's Area colour.
         expect(
-          tester.widget<JourneySurface>(find.byType(JourneySurface)).accent,
-          Color(color.toARGB32()),
+          tester.widget<Checkbox>(find.byType(Checkbox)).activeColor,
+          AreaTones.of(
+            Color(color.toARGB32()),
+            brightness: Brightness.dark,
+            surface: DaylockTheme.dark.colorScheme.surfaceContainerLow,
+          ).ink,
         );
         expect(jsonEncode(task.toJson()), original);
       }

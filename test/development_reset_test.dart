@@ -77,7 +77,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
         if (find.text('Go to the gym').evaluate().isNotEmpty ||
             find.text('Take Back Control').evaluate().isNotEmpty ||
-            find.text('0 / 0 complete').evaluate().isNotEmpty) {
+            find.text('A clear day.').evaluate().isNotEmpty) {
           break;
         }
       }
@@ -107,7 +107,7 @@ void main() {
           isNull,
         );
         expect(find.text('Go to the gym'), findsNothing);
-        expect(find.text('0 / 0 complete'), findsOneWidget);
+        expect(find.text('A clear day.'), findsOneWidget);
       } else {
         expect(saved.toJson(), oldState.toJson());
         expect(

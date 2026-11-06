@@ -2,6 +2,7 @@ import 'package:daylock/main.dart';
 import 'package:daylock/design/daylock_plan_rows.dart';
 import 'package:daylock/screens/today_screen.dart';
 import 'package:daylock/services/local_storage.dart';
+import 'package:daylock/design/daylock_task_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -22,8 +23,8 @@ void main() {
       var now = DateTime(2026, 10, 7, 12);
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      expect(find.text('0 / 0 complete'), findsOneWidget);
-      expect(find.byType(CheckboxListTile), findsNothing);
+      expect(find.text('A clear day.'), findsOneWidget);
+      expect(find.byType(Checkbox), findsNothing);
       expect(
         tester.widget<TodayScreen>(find.byType(TodayScreen)).plan.tasks,
         isEmpty,
@@ -40,10 +41,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      expect(find.text('0 / 0 complete'), findsOneWidget);
+      expect(find.text('A clear day.'), findsOneWidget);
       await _navigate(tester, 'Plan');
       expect(find.text('No commitments planned yet.'), findsOneWidget);
-      final commit = find.widgetWithText(FilledButton, 'COMMIT THURSDAY');
+      final commit = find.widgetWithText(FilledButton, 'Lock in Thursday');
       expect(tester.widget<FilledButton>(commit).onPressed, isNull);
 
       await enterPlanText(
@@ -69,7 +70,7 @@ void main() {
       await confirmPlanCommit(tester);
       await tester.pumpAndSettle();
       await _navigate(tester, 'Today');
-      expect(find.text('0 / 0 complete'), findsOneWidget);
+      expect(find.textContaining('All set for'), findsOneWidget);
 
       for (final state in [
         AppLifecycleState.inactive,
@@ -88,10 +89,10 @@ void main() {
       }
       await tester.pumpAndSettle();
       expect(
-        find.widgetWithText(CheckboxListTile, 'My first goal'),
+        find.widgetWithText(DaylockTaskRow, 'My first goal'),
         findsOneWidget,
       );
-      expect(find.text('0 / 1 complete'), findsOneWidget);
+      expect(find.text('0 of 1 kept'), findsOneWidget);
       saved = (await LocalStorage().load())!;
       expect(saved.todayPlan.tasks.single.name, 'My first goal');
       expect(saved.todayPlan.isCommitted, isTrue);

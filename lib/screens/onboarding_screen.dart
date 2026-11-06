@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../design/journey_surface.dart';
+import '../design/daylock_scene.dart';
+import '../design/daylock_surfaces.dart';
 import '../models/onboarding_steps.dart';
 import '../models/routine.dart';
 import '../models/task.dart';
@@ -95,9 +97,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     'Take Back Control',
     'Set Up App Blocking',
     'Choose Your Distractions',
-    'Set Your First Goal',
+    'Set Your First Commitment',
     'Your Daily Rhythm',
-    'Give Your Goals a Home',
+    'Give Your Commitments a Home',
     'Build Your Routines',
     'See Your Journey Grow',
     "You're Almost Ready!",
@@ -263,66 +265,88 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     };
   }
 
+  static const _cardHues = [
+    DaylockHues.violet,
+    DaylockHues.pink,
+    DaylockHues.teal,
+    DaylockHues.amber,
+    DaylockHues.blue,
+  ];
+  int _cardIndex = 0;
+
   Widget _card(
     IconData icon,
     String title,
     String body, {
     Widget? action,
     bool checked = false,
-  }) => Padding(
-    padding: const EdgeInsets.only(bottom: 14),
-    child: JourneySurface(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  checked ? Icons.check_circle : icon,
-                  color: checked
-                      ? Colors.green
-                      : Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium,
+  }) {
+    final theme = Theme.of(context);
+    final hue = checked
+        ? daylockGold(theme.brightness)
+        : _cardHues[_cardIndex++ % _cardHues.length];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: JourneySurface(
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  DaylockIconTile(
+                    icon: checked ? Icons.check_rounded : icon,
+                    color: hue,
                   ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: theme.textTheme.titleLarge!.copyWith(fontSize: 18),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                body,
+                style: theme.textTheme.bodyMedium!.copyWith(
+                  height: 1.5,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(body, style: const TextStyle(height: 1.5)),
-            if (action != null) ...[const SizedBox(height: 16), action],
-          ],
+              ),
+              if (action != null) ...[const SizedBox(height: 14), action],
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
+
   List<Widget> _content() {
     final s = widget.bridge.status.value;
     final n = widget.notifications.status.value;
     switch (_step) {
       case 0:
         return [
-          const Text(
-            'Stop mindless scrolling. Complete your goals before unlocking your distracting apps.',
+          Text(
+            'Plan your day. Earn your freedom. Keep your commitments before your distracting apps unlock.',
+            style: Theme.of(context).textTheme.bodyLarge,
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 22),
           for (final entry in [
-            (Icons.edit_note, 'Create goals'),
+            (Icons.bedtime_outlined, 'Plan tomorrow'),
             (Icons.lock_outline, 'Block distractions'),
-            (Icons.check_circle_outline, 'Complete goals'),
+            (Icons.check_circle_outline, 'Keep your word'),
             (Icons.lock_open, 'Unlock apps'),
           ])
             _card(entry.$1, entry.$2, switch (entry.$2) {
-              'Create goals' => 'Choose one meaningful step for tomorrow.',
+              'Plan tomorrow' =>
+                'Choose a few meaningful commitments the evening before.',
               'Block distractions' => 'You choose which apps to restrict.',
-              'Complete goals' =>
-                'Keep your commitments, then commit tomorrow’s plan.',
+              'Keep your word' =>
+                'Keep today’s commitments, then lock in tomorrow’s plan.',
               _ => 'Reach your Freedom Time and enjoy your earned break.',
             }),
         ];
@@ -635,9 +659,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           ),
           _card(
             Icons.auto_awesome_outlined,
-            'Highlights: keep the moments',
+            'Achievements: keep the moments',
             'Save a milestone with a title, date, note and illustration. Link it to an Area if you want. '
-                'Highlights celebrate your own moments; they do not complete tasks or unlock apps.',
+                'Achievements celebrate what you’re proud of; they do not complete tasks or unlock apps.',
           ),
           _card(
             Icons.history,
@@ -748,100 +772,160 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       if (!didPop && !_busy) unawaited(_move(_step - 1));
     },
     child: Scaffold(
-      appBar: AppBar(
-        leading: _step == 0
-            ? null
-            : IconButton(
-                tooltip: 'Previous step',
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _busy ? null : () => _move(_step - 1),
+      body: Builder(
+        builder: (context) {
+          _cardIndex = 0;
+          final theme = Theme.of(context);
+          final sky = SceneColors.of(theme);
+          final last = _step >= OnboardingSteps.ready;
+          // Back and Save & leave stay pinned while the step scrolls.
+          final controls = SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: Row(
+                children: [
+                  if (_step > 0)
+                    DaylockSkyButton(
+                      tooltip: 'Previous step',
+                      icon: Icons.arrow_back_rounded,
+                      onPressed: _busy ? null : () => _move(_step - 1),
+                    ),
+                  const Spacer(),
+                  DaylockSkyButton(
+                    tooltip: 'Save & leave',
+                    icon: Icons.close_rounded,
+                    onPressed: _busy ? null : widget.onExit,
+                  ),
+                ],
               ),
-        actions: [
-          IconButton(
-            onPressed: _busy ? null : widget.onExit,
-            tooltip: 'Save & leave',
-            icon: const Icon(Icons.close),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 640),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+            ),
+          );
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: Stack(
+                children: [
+                  Column(
                     children: [
-                      Text(
-                        'SETUP · ${_step + 1} OF ${OnboardingSteps.complete}',
-                        style: Theme.of(context).textTheme.labelLarge,
+                      Expanded(
+                        child: SingleChildScrollView(
+                          controller: _scroll,
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              DaylockScene(
+                                mood: last ? SceneMood.earned : SceneMood.dawn,
+                                progress:
+                                    (_step + 1) / OnboardingSteps.complete,
+                                height: last ? 300 : 236,
+                                child: SafeArea(
+                                  bottom: false,
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      12,
+                                      8,
+                                      12,
+                                      0,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 48),
+                                        Padding(
+                                          padding: const EdgeInsets.fromLTRB(
+                                            12,
+                                            4,
+                                            12,
+                                            0,
+                                          ),
+                                          child: Text(
+                                            'Step ${_step + 1} of ${OnboardingSteps.complete}',
+                                            style: theme.textTheme.labelLarge!
+                                                .copyWith(
+                                                  color: sky.onSkyMuted,
+                                                ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              AnimatedSwitcher(
+                                duration:
+                                    MediaQuery.disableAnimationsOf(context)
+                                    ? Duration.zero
+                                    : const Duration(milliseconds: 200),
+                                child: Padding(
+                                  key: ValueKey(_step),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    24,
+                                    4,
+                                    24,
+                                    0,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Semantics(
+                                        header: true,
+                                        child: Text(
+                                          _titles[_step],
+                                          style: theme.textTheme.headlineLarge,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 18),
+                                      ..._content(),
+                                      if (_message != null)
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 16,
+                                          ),
+                                          child: Semantics(
+                                            liveRegion: true,
+                                            child: Text(_message!),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      LinearProgressIndicator(
-                        value: (_step + 1) / OnboardingSteps.complete,
+                      SafeArea(
+                        top: false,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: _busy || !_canContinue
+                                  ? null
+                                  : () => _move(_step + 1),
+                              child: Text(switch (_step) {
+                                0 => 'Get Started',
+                                OnboardingSteps.test => 'Finish Setup',
+                                OnboardingSteps.ready => 'Go to Daylock',
+                                _ => 'Continue',
+                              }),
+                            ),
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 20),
                     ],
                   ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    controller: _scroll,
-                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-                    child: AnimatedSwitcher(
-                      duration: MediaQuery.disableAnimationsOf(context)
-                          ? Duration.zero
-                          : const Duration(milliseconds: 200),
-                      child: Column(
-                        key: ValueKey(_step),
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            _titles[_step],
-                            style: Theme.of(context).textTheme.headlineLarge,
-                          ),
-                          const SizedBox(height: 24),
-                          ..._content(),
-                          if (_message != null)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              child: Semantics(
-                                liveRegion: true,
-                                child: Text(_message!),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: _busy || !_canContinue
-                          ? null
-                          : () => _move(_step + 1),
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Text(switch (_step) {
-                          0 => 'Get Started',
-                          OnboardingSteps.test => 'Finish Setup',
-                          OnboardingSteps.ready => 'Go to Daylock',
-                          _ => 'Continue',
-                        }),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                  Positioned(top: 0, left: 0, right: 0, child: controls),
+                ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     ),
   );

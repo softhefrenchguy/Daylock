@@ -17,6 +17,9 @@ import 'package:daylock/services/calendar_service.dart';
 import 'package:daylock/services/local_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'navigation_helpers.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
@@ -289,7 +292,7 @@ void main() {
         604001,
       );
       expect(saved.history.summaryForDate(_day)!.completionPercentage, 50);
-      await tester.tap(find.text('Next day goal'));
+      await tester.tap(keepBox('Next day goal'));
       await tester.pumpAndSettle();
       expect((await _saved(tester)).history.toJson(), saved.history.toJson());
       await tester.pumpWidget(const SizedBox());

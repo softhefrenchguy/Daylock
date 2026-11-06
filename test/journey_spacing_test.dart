@@ -40,7 +40,7 @@ void main() {
     (width: 412.0, height: 892.0, count: 3),
   ]) {
     testWidgets(
-      'Complete overview fits ${sample.width}x${sample.height} with ${sample.count} Highlights',
+      'First screen shows streak, totals and achievements at ${sample.width}x${sample.height} with ${sample.count} Highlights',
       (tester) async {
         fixture.phone(tester, width: sample.width, height: sample.height);
         final data = JourneyData(
@@ -72,10 +72,11 @@ void main() {
         );
         await tester.pumpAndSettle();
         final navigationTop = tester.getRect(find.byType(NavigationBar)).top;
+        // What matters most is visible before any scrolling.
         for (final id in [
-          'featured-highlights',
-          'daily-history',
-          'past-chapters',
+          'journey-streak',
+          'journey-effort-summary',
+          'highlight-first',
         ]) {
           final entry = fixture.key(id);
           expect(
@@ -85,9 +86,16 @@ void main() {
           );
           expect(entry.hitTestable(), findsOneWidget);
         }
-        final scroll = tester.state<ScrollableState>(fixture.vertical).position;
-        expect(scroll.pixels, 0);
-        expect(scroll.maxScrollExtent, lessThanOrEqualTo(.5));
+        // The rest is a short scroll away.
+        for (final id in ['daily-history', 'past-chapters']) {
+          await tester.scrollUntilVisible(
+            fixture.key(id),
+            200,
+            scrollable: fixture.vertical,
+          );
+          await tester.pumpAndSettle();
+          expect(fixture.key(id).hitTestable(), findsOneWidget);
+        }
         expect(tester.takeException(), isNull);
       },
     );

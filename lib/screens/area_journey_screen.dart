@@ -115,7 +115,7 @@ class _AreaJourneyScreenState extends State<AreaJourneyScreen> {
                   colour: Color(widget.area.colour),
                 ),
                 const SizedBox(height: 24),
-                const DaylockLabel('HIGHLIGHTS'),
+                const DaylockLabel('ACHIEVEMENTS'),
                 if (highlights.isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 12),
@@ -134,7 +134,7 @@ class _AreaJourneyScreenState extends State<AreaJourneyScreen> {
                   child: OutlinedButton.icon(
                     onPressed: widget.onAddHighlight,
                     icon: const Icon(Icons.add),
-                    label: const Text('Add Highlight'),
+                    label: const Text('Add achievement'),
                   ),
                 ),
                 const SizedBox(height: 24),

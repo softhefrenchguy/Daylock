@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../design/daylock_palette.dart';
+import '../design/area_tones.dart';
+import '../design/daylock_scene.dart';
+import '../design/daylock_surfaces.dart';
 import '../design/journey_surface.dart';
-import '../design/daylock_illustrations.dart';
 import '../design/daylock_plan_rows.dart';
 import '../design/daylock_theme.dart';
 import '../design/daylock_widgets.dart';
@@ -13,6 +14,7 @@ import '../models/task.dart';
 import '../models/area.dart';
 import '../design/daylock_areas.dart';
 import 'commitment_editor.dart';
+import 'today_screen.dart' show daylockDateLabel, daylockWeekday;
 import '../models/routine.dart';
 import '../services/routine_service.dart';
 import '../design/daylock_routine_suggestions.dart';
@@ -149,7 +151,7 @@ class _PlanScreenState extends State<PlanScreen> {
         _activeModal = ModalRoute.of(dialogContext);
         return AlertDialog(
           title: const Text('Remove commitment?'),
-          content: Text('Remove ${task.name} from tomorrow?s draft?'),
+          content: Text('Remove ${task.name} from tomorrow\u2019s draft?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
@@ -229,9 +231,11 @@ class _PlanScreenState extends State<PlanScreen> {
         _activeModal = ModalRoute.of(dialogContext);
         return AlertDialog(
           scrollable: true,
-          title: const Text('Commit tomorrow?'),
-          content: const Text(
-            'This locks tomorrow’s commitments. You won’t be able to add or change them.',
+          title: Text('Lock in ${daylockWeekday(plan.date)}?'),
+          content: Text(
+            plan.tasks.length == 1
+                ? 'This locks your commitment for ${daylockWeekday(plan.date)}. You won\u2019t be able to add or change it.'
+                : 'This locks your ${plan.tasks.length} commitments for ${daylockWeekday(plan.date)}. You won\u2019t be able to add or change them.',
           ),
           actions: [
             TextButton(
@@ -252,7 +256,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   Navigator.of(dialogContext).pop(true);
                 }
               },
-              child: const Text('Commit'),
+              child: const Text('Lock it in'),
             ),
           ],
         );
@@ -271,451 +275,382 @@ class _PlanScreenState extends State<PlanScreen> {
     final colors = theme.colorScheme;
     final plan = widget.plan;
     final scheduled = Event.forDate(widget.events, plan.date);
-    const weekdays = [
-      'MONDAY',
-      'TUESDAY',
-      'WEDNESDAY',
-      'THURSDAY',
-      'FRIDAY',
-      'SATURDAY',
-      'SUNDAY',
-    ];
-    return SafeArea(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final padding = constraints.maxWidth < 360
-              ? DaylockSpace.md
-              : DaylockSpace.lg;
-          return Column(
-            children: [
-              Expanded(
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 640),
-                    child: CustomScrollView(
-                      key: const ValueKey('plan-content'),
-                      keyboardDismissBehavior:
-                          ScrollViewKeyboardDismissBehavior.onDrag,
-                      slivers: [
-                        SliverPadding(
-                          padding: EdgeInsets.fromLTRB(
-                            padding,
-                            36,
-                            padding,
-                            DaylockSpace.md,
+    final weekday = daylockWeekday(plan.date);
+    final sky = SceneColors.of(theme);
+    final editable = !plan.isCommitted;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final padding = constraints.maxWidth < 360
+            ? DaylockSpace.md
+            : DaylockSpace.lg;
+        Widget boxed(Widget child) => SliverToBoxAdapter(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: padding),
+                child: child,
+              ),
+            ),
+          ),
+        );
+        return Column(
+          children: [
+            Expanded(
+              child: CustomScrollView(
+                key: const ValueKey('plan-content'),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: DaylockSkyHeader(
+                      mood: SceneMood.night,
+                      height: 196,
+                      horizontalPadding: padding,
+                      title: 'Plan',
+                      subtitle: 'Tomorrow · ${daylockDateLabel(plan.date)}',
+                      belowTitle: Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 5,
                           ),
-                          sliver: SliverToBoxAdapter(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Semantics(
-                                  header: true,
-                                  child: Text(
-                                    'Plan',
-                                    style: theme.textTheme.headlineLarge!
-                                        .copyWith(fontSize: 36),
-                                  ),
-                                ),
-                                const SizedBox(height: DaylockSpace.xs),
-                                Text(
-                                  'Tomorrow · ${MaterialLocalizations.of(context).formatFullDate(plan.date)}',
-                                  style: theme.textTheme.bodyMedium!.copyWith(
-                                    color: colors.onSurfaceVariant,
-                                  ),
-                                ),
-                                const SizedBox(height: DaylockSpace.xs),
-                                Text(
-                                  plan.isCommitted ? 'Committed' : 'Draft',
-                                  style: theme.textTheme.labelMedium!.copyWith(
-                                    color: colors.primary,
-                                  ),
-                                ),
-                                const SizedBox(height: DaylockSpace.md),
-                                if (!plan.isCommitted &&
-                                    widget.routineSuggestions.isNotEmpty &&
-                                    widget.onRoutineAction != null) ...[
-                                  JourneySurface(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                      ),
-                                      child: DaylockRoutineSuggestions(
-                                        areas: widget.areas,
-                                        suggestions: widget.routineSuggestions,
-                                        onAction: (suggestion, action) {
-                                          if (_editable(plan)) {
-                                            widget.onRoutineAction!(
-                                              suggestion,
-                                              action,
-                                            );
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: DaylockSpace.md),
-                                ],
-                                JourneySurface(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(14),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.event_outlined,
-                                          color: colors.primary,
-                                          size: 28,
-                                        ),
-                                        const SizedBox(width: 14),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              DaylockLabel(
-                                                'SCHEDULE',
-                                                color: colors.primary,
-                                              ),
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                scheduled.isEmpty
-                                                    ? 'No scheduled events for tomorrow.'
-                                                    : '${scheduled.length} scheduled events',
-                                                style: theme
-                                                    .textTheme
-                                                    .bodySmall!
-                                                    .copyWith(
-                                                      color: colors
-                                                          .onSurfaceVariant,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
+                          decoration: BoxDecoration(
+                            color: sky.dark
+                                ? Colors.black.withValues(alpha: .28)
+                                : Colors.white.withValues(alpha: .65),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Text(
+                            plan.isCommitted ? 'Committed' : 'Draft',
+                            style: theme.textTheme.labelLarge!.copyWith(
+                              color: sky.onSky,
+                              fontSize: 13,
                             ),
                           ),
                         ),
-                        SliverPadding(
-                          padding: EdgeInsets.symmetric(horizontal: padding),
-                          sliver: SliverList.builder(
-                            itemCount: scheduled.length,
-                            itemBuilder: (context, index) => Padding(
-                              padding: const EdgeInsets.only(top: 6),
-                              child: JourneySurface(
-                                radius: 14,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                  ),
-                                  child: DaylockPlanEventRow(
-                                    event: scheduled[index],
-                                    date: plan.date,
-                                  ),
+                      ),
+                    ),
+                  ),
+                  if (editable &&
+                      widget.routineSuggestions.isNotEmpty &&
+                      widget.onRoutineAction != null)
+                    boxed(
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8, bottom: 8),
+                        child: JourneySurface(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            child: DaylockRoutineSuggestions(
+                              areas: widget.areas,
+                              suggestions: widget.routineSuggestions,
+                              onAction: (suggestion, action) {
+                                if (_editable(plan)) {
+                                  widget.onRoutineAction!(suggestion, action);
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  boxed(
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.event_outlined,
+                            size: 20,
+                            color: colors.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Semantics(
+                              label: 'Schedule',
+                              child: Text(
+                                scheduled.isEmpty
+                                    ? 'No scheduled events for tomorrow.'
+                                    : scheduled.length == 1
+                                    ? '1 scheduled event'
+                                    : '${scheduled.length} scheduled events',
+                                style: theme.textTheme.bodyMedium!.copyWith(
+                                  color: colors.onSurfaceVariant,
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        SliverPadding(
-                          padding: EdgeInsets.fromLTRB(
-                            padding,
-                            0,
-                            padding,
-                            DaylockSpace.sm,
-                          ),
-                          sliver: SliverToBoxAdapter(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Wrap(
-                                  alignment: WrapAlignment.spaceBetween,
-                                  crossAxisAlignment: WrapCrossAlignment.center,
-                                  spacing: 12,
-                                  children: [
-                                    Wrap(
-                                      spacing: 8,
-                                      crossAxisAlignment:
-                                          WrapCrossAlignment.center,
-                                      children: [
-                                        Text(
-                                          'Commitments',
-                                          style: theme.textTheme.titleMedium!
-                                              .copyWith(
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                        ),
-                                        Text(
-                                          '${plan.tasks.length}',
-                                          style: theme.textTheme.labelLarge,
-                                        ),
-                                      ],
-                                    ),
-                                    if (!plan.isCommitted && plan.tasks.isEmpty)
-                                      FilledButton(
-                                        key: const ValueKey(
-                                          'open-commitment-editor',
-                                        ),
-                                        onPressed: _addCommitment,
-                                        style: daylockGradientActionStyle(
-                                          context,
-                                        ),
-                                        child: const Text('+ Add commitment'),
-                                      )
-                                    else if (!plan.isCommitted)
-                                      TextButton(
-                                        key: const ValueKey(
-                                          'open-commitment-editor',
-                                        ),
-                                        onPressed: _addCommitment,
-                                        child: const Text('+ Add commitment'),
-                                      ),
-                                  ],
-                                ),
-                                if (plan.tasks.isEmpty) ...[
-                                  const SizedBox(height: 8),
-                                  JourneySurface(
-                                    radius: 20,
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 20,
-                                        vertical: 20,
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          SizedBox(
-                                            width: 136,
-                                            child: DaylockIllustration(
-                                              accent: colors.primary,
-                                              planner: true,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Text(
-                                            'No commitments planned yet.',
-                                            textAlign: TextAlign.center,
-                                            style: theme.textTheme.titleMedium!
-                                                .copyWith(
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Text(
-                                            plan.isCommitted
-                                                ? 'Tomorrow is locked.'
-                                                : 'Add one small step for tomorrow.',
-                                            textAlign: TextAlign.center,
-                                            style: theme.textTheme.bodyMedium!
-                                                .copyWith(
-                                                  color:
-                                                      colors.onSurfaceVariant,
-                                                ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
-                        SliverPadding(
-                          padding: EdgeInsets.fromLTRB(
-                            padding,
-                            0,
-                            padding,
-                            DaylockSpace.md,
-                          ),
-                          sliver: SliverList.builder(
-                            itemCount: plan.tasks.length,
-                            itemBuilder: (context, index) {
-                              final task = plan.tasks[index];
-                              final selectedArea = widget.areas?.resolve(
-                                task.areaId,
-                              );
-                              final areaName = selectedArea == null
-                                  ? null
-                                  : '${selectedArea.name}${selectedArea.isArchived ? ' (archived)' : ''}';
-                              return Padding(
-                                key: ValueKey('plan-task-$index'),
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: JourneySurface(
-                                  accent: selectedArea == null
-                                      ? colors.primary
-                                      : Color(selectedArea.colour),
-                                  emphasized: true,
-                                  radius: 16,
-                                  child: Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      12,
-                                      0,
-                                      8,
-                                      8,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Expanded(
-                                              child: DaylockPlanTaskRow(
-                                                task: task,
-                                                area: selectedArea,
-                                                areaAction: widget.areas == null
-                                                    ? null
-                                                    : !plan.isCommitted &&
-                                                          widget.onTaskAreaChanged !=
-                                                              null
-                                                    ? TextButton(
-                                                        key: ValueKey(
-                                                          'edit-task-area-$index',
-                                                        ),
-                                                        onPressed: () =>
-                                                            _changeArea(task),
-                                                        style:
-                                                            TextButton.styleFrom(
-                                                              padding:
-                                                                  EdgeInsets
-                                                                      .zero,
-                                                              minimumSize:
-                                                                  const Size(
-                                                                    48,
-                                                                    36,
-                                                                  ),
-                                                              alignment: Alignment
-                                                                  .centerLeft,
-                                                              visualDensity:
-                                                                  VisualDensity
-                                                                      .compact,
-                                                            ),
-                                                        child: Text(
-                                                          areaName!,
-                                                          style: theme
-                                                              .textTheme
-                                                              .bodySmall!
-                                                              .copyWith(
-                                                                color: colors
-                                                                    .onSurfaceVariant,
-                                                              ),
-                                                        ),
-                                                      )
-                                                    : Text(
-                                                        areaName!,
-                                                        style: theme
-                                                            .textTheme
-                                                            .bodySmall!
-                                                            .copyWith(
-                                                              color: colors
-                                                                  .onSurfaceVariant,
-                                                            ),
-                                                      ),
-                                              ),
-                                            ),
-                                            if (!plan.isCommitted &&
-                                                (widget.onTaskEdited != null ||
-                                                    widget.onTaskRemoved !=
-                                                        null))
-                                              PopupMenuButton<String>(
-                                                key: ValueKey(
-                                                  'plan-task-actions-$index',
-                                                ),
-                                                tooltip:
-                                                    'Actions for ${task.name}',
-                                                onSelected: (action) {
-                                                  if (action == 'edit') {
-                                                    _editCommitment(task);
-                                                  }
-                                                  if (action == 'remove') {
-                                                    _removeCommitment(task);
-                                                  }
-                                                },
-                                                itemBuilder: (_) => [
-                                                  if (widget.onTaskEdited !=
-                                                      null)
-                                                    const PopupMenuItem(
-                                                      value: 'edit',
-                                                      child: Text(
-                                                        'Edit commitment',
-                                                      ),
-                                                    ),
-                                                  if (widget.onTaskRemoved !=
-                                                      null)
-                                                    const PopupMenuItem(
-                                                      value: 'remove',
-                                                      child: Text(
-                                                        'Remove commitment',
-                                                      ),
-                                                    ),
-                                                ],
-                                              ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              // This takes layout space rather than overlaying the last row. Its own
-              // scroll view keeps actions reachable at extreme text/keyboard sizes.
-              ConstrainedBox(
-                key: const ValueKey('plan-commit-bar'),
-                constraints: BoxConstraints(
-                  maxHeight: constraints.maxHeight * .5,
-                ),
-                child: SingleChildScrollView(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: colors.surface,
-                      border: Border(
-                        top: BorderSide(color: colors.outlineVariant),
+                        ],
                       ),
                     ),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 640),
+                  ),
+                  if (scheduled.isNotEmpty)
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                  if (scheduled.isNotEmpty)
+                    SliverList.builder(
+                      itemCount: scheduled.length,
+                      itemBuilder: (context, index) => _segment(
+                        padding: padding,
+                        first: index == 0,
+                        last: index == scheduled.length - 1,
                         child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: padding,
-                            vertical: 12,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: DaylockPlanEventRow(
+                            event: scheduled[index],
+                            date: plan.date,
                           ),
-                          child: plan.isCommitted
-                              ? const _CommittedPlan()
-                              : DaylockAction(
+                        ),
+                      ),
+                    ),
+                  boxed(
+                    DaylockSectionHeader(
+                      title: plan.tasks.isEmpty
+                          ? 'Commitments'
+                          : 'Commitments \u00b7 ${plan.tasks.length}',
+                      padding: const EdgeInsets.fromLTRB(0, 22, 0, 10),
+                      // Always in the same place, however long the plan is.
+                      action: editable
+                          ? TextButton.icon(
+                              key: const ValueKey('open-commitment-editor'),
+                              onPressed: _addCommitment,
+                              icon: const Icon(Icons.add_rounded, size: 20),
+                              label: const Text(
+                                'Add',
+                                semanticsLabel: 'Add a commitment',
+                              ),
+                            )
+                          : null,
+                    ),
+                  ),
+                  // Built lazily: long plans only build the rows on screen.
+                  SliverList.builder(
+                    itemCount: plan.tasks.isEmpty ? 1 : plan.tasks.length,
+                    itemBuilder: (context, index) {
+                      final count = plan.tasks.isEmpty ? 1 : plan.tasks.length;
+                      final Widget child;
+                      if (index < plan.tasks.length) {
+                        child = _planRow(context, plan, index);
+                      } else if (plan.tasks.isEmpty) {
+                        child = Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'No commitments planned yet.',
+                                style: theme.textTheme.titleLarge,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                plan.isCommitted
+                                    ? 'Tomorrow is locked.'
+                                    : 'Add one small step for tomorrow.',
+                                style: theme.textTheme.bodyMedium!.copyWith(
+                                  color: colors.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      } else {
+                        child = const SizedBox.shrink();
+                      }
+                      return _segment(
+                        padding: padding,
+                        first: index == 0,
+                        last: index == count - 1,
+                        child: child,
+                      );
+                    },
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                ],
+              ),
+            ),
+            // This takes layout space rather than overlaying the last row. Its own
+            // scroll view keeps actions reachable at extreme text/keyboard sizes.
+            ConstrainedBox(
+              key: const ValueKey('plan-commit-bar'),
+              constraints: BoxConstraints(
+                maxHeight: constraints.maxHeight * .5,
+              ),
+              child: SingleChildScrollView(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 640),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(padding, 10, padding, 14),
+                      child: plan.isCommitted
+                          ? const _CommittedPlan()
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                DaylockAction(
                                   key: const ValueKey('commit-tomorrow'),
-                                  label:
-                                      'COMMIT ${weekdays[plan.date.weekday - 1]}',
+                                  label: 'Lock in $weekday',
                                   icon: Icons.lock_outline_rounded,
                                   onPressed: plan.tasks.isEmpty
                                       ? null
                                       : _confirmCommit,
                                 ),
-                        ),
-                      ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  plan.tasks.isEmpty
+                                      ? 'Add at least one commitment to lock in $weekday.'
+                                      : plan.tasks.length == 1
+                                      ? 'Locks this commitment. You can’t change it after.'
+                                      : 'Locks these ${plan.tasks.length}. You can’t change them after.',
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.bodySmall!.copyWith(
+                                    color: colors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
                   ),
                 ),
               ),
-            ],
-          );
-        },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// One row of a rounded group, drawn per row so long lists stay lazy.
+  Widget _segment({
+    required double padding,
+    required bool first,
+    required bool last,
+    required Widget child,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    const radius = Radius.circular(DaylockSpace.cardRadius);
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 640),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: padding),
+          child: Material(
+            color: scheme.surfaceContainerLow,
+            clipBehavior: Clip.antiAlias,
+            borderRadius: BorderRadius.vertical(
+              top: first ? radius : Radius.zero,
+              bottom: last ? radius : Radius.zero,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (!first)
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: scheme.outlineVariant,
+                  ),
+                child,
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _planRow(BuildContext context, DailyPlan plan, int index) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final task = plan.tasks[index];
+    final selectedArea = widget.areas?.resolve(task.areaId);
+    final tones = AreaTones.forContext(
+      context,
+      selectedArea == null ? colors.primary : Color(selectedArea.colour),
+    );
+    final areaName = selectedArea == null
+        ? null
+        : '${selectedArea.name}${selectedArea.isArchived ? ' (archived)' : ''}';
+    final areaStyle = theme.textTheme.bodySmall!.copyWith(
+      fontSize: 13,
+      fontWeight: FontWeight.w500,
+      color: tones.ink,
+    );
+    return Padding(
+      key: ValueKey('plan-task-$index'),
+      padding: const EdgeInsets.fromLTRB(14, 4, 4, 4),
+      child: Row(
+        children: [
+          ExcludeSemantics(
+            child: Container(
+              width: 28,
+              height: 28,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: tones.tint,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                '${index + 1}',
+                style: theme.textTheme.labelLarge!.copyWith(
+                  fontFamily: DaylockSpace.displayFont,
+                  fontWeight: FontWeight.w800,
+                  color: tones.ink,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: DaylockPlanTaskRow(
+              task: task,
+              area: selectedArea,
+              showIcon: false,
+              areaAction: areaName == null
+                  ? null
+                  : !plan.isCommitted && widget.onTaskAreaChanged != null
+                  ? TextButton(
+                      key: ValueKey('edit-task-area-$index'),
+                      onPressed: () => _changeArea(task),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(48, 32),
+                        alignment: Alignment.centerLeft,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      child: Text(areaName, style: areaStyle),
+                    )
+                  : Text(areaName, style: areaStyle),
+            ),
+          ),
+          if (!plan.isCommitted &&
+              (widget.onTaskEdited != null || widget.onTaskRemoved != null))
+            PopupMenuButton<String>(
+              key: ValueKey('plan-task-actions-$index'),
+              tooltip: 'Actions for ${task.name}',
+              icon: Icon(
+                Icons.more_vert_rounded,
+                color: colors.onSurfaceVariant,
+              ),
+              onSelected: (action) {
+                if (action == 'edit') _editCommitment(task);
+                if (action == 'remove') _removeCommitment(task);
+              },
+              itemBuilder: (_) => [
+                if (widget.onTaskEdited != null)
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Text('Edit commitment'),
+                  ),
+                if (widget.onTaskRemoved != null)
+                  const PopupMenuItem(
+                    value: 'remove',
+                    child: Text('Remove commitment'),
+                  ),
+              ],
+            ),
+        ],
       ),
     );
   }
@@ -725,41 +660,44 @@ class _CommittedPlan extends StatelessWidget {
   const _CommittedPlan();
   @override
   Widget build(BuildContext context) {
-    final colors = DaylockColors.of(context);
-    return Container(
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return DaylockGroup(
       key: const ValueKey('committed-plan'),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colors.statusSurface,
-        borderRadius: BorderRadius.circular(12),
+      color: Color.alphaBlend(
+        scheme.primary.withValues(alpha: .12),
+        scheme.surfaceContainerLow,
       ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.lock_outline_rounded,
-            color: colors.statusAccent,
-            size: DaylockSpace.icon,
-          ),
-          const SizedBox(width: DaylockSpace.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Tomorrow's plan is committed.",
-                  style: Theme.of(context).textTheme.labelLarge!
-                      .copyWith(color: colors.onStatus),
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              DaylockIconTile(icon: Icons.lock_rounded, color: scheme.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Tomorrow's plan is committed.",
+                      style: theme.textTheme.titleMedium!.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      'Your commitments are locked.',
+                      style: theme.textTheme.bodyMedium!.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  'Your commitments are locked.',
-                  style: Theme.of(context).textTheme.bodySmall!
-                      .copyWith(color: colors.onStatusMuted),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

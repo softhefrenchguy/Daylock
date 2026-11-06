@@ -8,6 +8,8 @@ import 'package:daylock/models/event.dart';
 import 'package:daylock/models/task.dart';
 import 'package:daylock/screens/plan_screen.dart';
 import 'package:daylock/screens/commitment_editor.dart';
+import 'package:daylock/screens/today_screen.dart' show daylockDateLabel;
+import 'package:daylock/design/daylock_surfaces.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -86,9 +88,7 @@ void main() {
             await tester.pumpAndSettle();
             expect(find.textContaining('Tomorrow ·'), findsOneWidget);
             expect(
-              find.text(
-                'Tomorrow · ${MaterialLocalizations.of(tester.element(find.byType(PlanScreen))).formatFullDate(_date)}',
-              ),
+              find.text('Tomorrow · ${daylockDateLabel(_date)}'),
               findsOneWidget,
             );
             expect(find.byType(TextField), findsNothing);
@@ -118,15 +118,21 @@ void main() {
                 find.byKey(const ValueKey('commit-tomorrow')),
                 findsNothing,
               );
-              final panel = tester.widget<Container>(
+              final panel = tester.widget<DaylockGroup>(
                 find.byKey(const ValueKey('committed-plan')),
               );
               expect(
-                (panel.decoration as BoxDecoration).color,
-                expected.extension<DaylockColors>()!.statusSurface,
+                panel.color,
+                Color.alphaBlend(
+                  expected.colorScheme.primary.withValues(alpha: .12),
+                  expected.colorScheme.surfaceContainerLow,
+                ),
               );
             } else {
-              final commit = find.widgetWithText(FilledButton, 'COMMIT FRIDAY');
+              final commit = find.widgetWithText(
+                FilledButton,
+                'Lock in Friday',
+              );
               await tester.ensureVisible(commit);
               expect(tester.widget<FilledButton>(commit).onPressed, isNotNull);
               final size = tester.getSize(commit);
@@ -216,7 +222,7 @@ void main() {
           expect(plan.tasks.last.minimumFocusMinutes, isNull);
           await tester.pump(const Duration(seconds: 4));
           await tester.pumpAndSettle();
-          await _tap(tester, find.text('COMMIT FRIDAY'));
+          await _tap(tester, find.text('Lock in Friday'));
           await confirmPlanCommit(tester);
           expect(plan.isCommitted, isTrue);
           expect(find.byType(TextField), findsNothing);
@@ -327,11 +333,11 @@ void main() {
       expect(find.byType(DaylockPlanEventRow), findsNWidgets(4));
       expect(find.byType(Checkbox), findsNothing);
       expect(find.byTooltip('Edit Driving lesson'), findsNothing);
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('Commitments'), findsOneWidget);
       expect(
         tester
             .widget<FilledButton>(
-              find.widgetWithText(FilledButton, 'COMMIT FRIDAY'),
+              find.widgetWithText(FilledButton, 'Lock in Friday'),
             )
             .onPressed,
         isNull,

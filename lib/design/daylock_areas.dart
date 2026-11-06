@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/area.dart';
+import 'area_tones.dart';
 
 const areaIcons = <String, IconData>{
   'life': Icons.wb_sunny_outlined,
@@ -51,8 +52,8 @@ class AreaBadge extends StatelessWidget {
   );
 }
 
-/// Expands inside the editor, so rollover closes the entire editing surface.
-class AreaSelector extends StatefulWidget {
+/// Area picker: every active Area as a chip in its own (user-chosen) colour.
+class AreaSelector extends StatelessWidget {
   final AreaBook book;
   final String? selectedId;
   final ValueChanged<String> onChanged;
@@ -63,53 +64,17 @@ class AreaSelector extends StatefulWidget {
     required this.onChanged,
   });
   @override
-  State<AreaSelector> createState() => _AreaSelectorState();
-}
-
-class _AreaSelectorState extends State<AreaSelector> {
-  bool _expanded = false;
-  @override
   Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
+    crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      OutlinedButton(
+      Text(
+        'Area',
         key: const ValueKey('select-area'),
-        onPressed: () => setState(() => _expanded = !_expanded),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final stacked = MediaQuery.textScalerOf(context).scale(14) > 22;
-            final selection = Row(
-              children: [
-                if (!stacked) ...[
-                  const Text('Area'),
-                  const SizedBox(width: 12),
-                ],
-                Expanded(
-                  child: AreaBadge(
-                    area: widget.book.resolve(widget.selectedId),
-                  ),
-                ),
-                Icon(_expanded ? Icons.expand_less : Icons.expand_more),
-              ],
-            );
-            return stacked
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [const Text('Area'), selection],
-                  )
-                : selection;
-          },
-        ),
+        style: Theme.of(context).textTheme.labelLarge!
+            .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
-      if (_expanded)
-        AreaChoices(
-          book: widget.book,
-          selectedId: widget.selectedId,
-          onSelected: (id) {
-            widget.onChanged(id);
-            setState(() => _expanded = false);
-          },
-        ),
+      const SizedBox(height: 8),
+      AreaChoices(book: book, selectedId: selectedId, onSelected: onChanged),
     ],
   );
 }
@@ -125,18 +90,63 @@ class AreaChoices extends StatelessWidget {
     required this.onSelected,
   });
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      for (final area in book.active)
-        ListTile(
-          key: ValueKey('choose-area-${area.id}'),
-          title: AreaBadge(area: area),
-          selected: area.id == book.resolve(selectedId).id,
-          trailing: area.id == book.resolve(selectedId).id
-              ? const Icon(Icons.check)
-              : null,
-          onTap: () => onSelected(area.id),
-        ),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final selected = book.resolve(selectedId).id;
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final area in book.active)
+          Builder(
+            builder: (context) {
+              final tones = AreaTones.forContext(context, Color(area.colour));
+              final on = area.id == selected;
+              return Semantics(
+                selected: on,
+                button: true,
+                child: Material(
+                  key: ValueKey('choose-area-${area.id}'),
+                  color: on ? tones.ink : tones.tint,
+                  shape: const StadiumBorder(),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () => onSelected(area.id),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 44),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 16, 8),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              on
+                                  ? Icons.check_rounded
+                                  : (areaIcons[area.icon] ??
+                                        Icons.wb_sunny_outlined),
+                              size: 18,
+                              color: on ? tones.onInk : tones.ink,
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                area.name,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.labelLarge!.copyWith(
+                                  color: on ? tones.onInk : tones.ink,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
 }

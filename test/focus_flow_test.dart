@@ -45,7 +45,7 @@ void main() {
     }
     await tester.pump(const Duration(seconds: 4));
     await tester.pumpAndSettle();
-    final commit = find.widgetWithText(FilledButton, 'COMMIT THURSDAY');
+    final commit = find.widgetWithText(FilledButton, 'Lock in Thursday');
     await tester.ensureVisible(commit);
     await tester.tap(commit);
     await confirmPlanCommit(tester);
@@ -73,20 +73,25 @@ void main() {
       ]);
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Read'));
+      await tester.tap(
+        find.descendant(
+          of: find.widgetWithText(DaylockTaskRow, 'Read'),
+          matching: find.byType(Checkbox),
+        ),
+      );
       await tester.pumpAndSettle();
       var task = (await LocalStorage().load())!.todayPlan.tasks.single;
       expect(task.isCompleted, isTrue);
       expect(task.accumulatedFocusMilliseconds, 0);
-      await tester.tap(find.text('Read'));
+      await tester.tap(keepBox('Read'));
       await tester.pumpAndSettle();
       await _tapFocus(tester, 'Read');
       await tester.pumpAndSettle();
       now = now.add(const Duration(minutes: 2, seconds: 23));
       await tester.pump(const Duration(seconds: 1));
       expect(find.text('02:23'), findsOneWidget);
-      expect(find.text('0 / 1 complete'), findsOneWidget);
-      await tester.tap(find.text('Read'));
+      expect(find.text('0 of 1 kept'), findsOneWidget);
+      await tester.tap(keepBox('Read'));
       await tester.pumpAndSettle();
       task = (await LocalStorage().load())!.todayPlan.tasks.single;
       expect(task.isCompleted, isTrue);
@@ -131,9 +136,9 @@ void main() {
       await _navigate(tester, 'Today');
       expect(find.text('10:00'), findsOneWidget);
       await tester.ensureVisible(find.text('Walk'));
-      await tester.tap(find.text('Walk'));
+      await tester.tap(keepBox('Walk'));
       await tester.pump();
-      expect(find.text('1 / 3 complete'), findsOneWidget);
+      expect(find.text('1 of 3 kept'), findsOneWidget);
       await _tapFocus(tester, 'Study');
       await tester.pumpAndSettle();
       saved = (await LocalStorage().load())!;
@@ -158,12 +163,12 @@ void main() {
     _resume(tester);
     await tester.pump();
     expect(find.text('23:00'), findsOneWidget);
-    expect(find.text('Pause stopwatch'), findsOneWidget);
+    expect(find.byTooltip('Pause stopwatch'), findsOneWidget);
     _background(tester);
     now = now.add(const Duration(hours: 2));
     _resume(tester);
     await tester.pumpAndSettle();
-    expect(find.text('0 / 1 complete'), findsOneWidget);
+    expect(find.text('0 of 1 kept'), findsOneWidget);
     final saved = (await LocalStorage().load())!;
     expect(
       saved.todayPlan.tasks.single.accumulatedFocusMilliseconds,
@@ -201,7 +206,7 @@ void main() {
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
       expect(find.text('23:00'), findsOneWidget);
-      expect(find.text('Resume stopwatch'), findsOneWidget);
+      expect(find.byTooltip('Resume stopwatch'), findsOneWidget);
     },
   );
 
@@ -352,7 +357,11 @@ void main() {
 
 Finder _action(String name) => find.descendant(
   of: find.widgetWithText(DaylockTaskRow, name),
-  matching: find.byType(TextButton),
+  matching: find.byWidgetPredicate(
+    (widget) =>
+        widget.key is ValueKey<String> &&
+        (widget.key! as ValueKey<String>).value.startsWith('stopwatch-toggle-'),
+  ),
 );
 
 Future<void> _tapFocus(WidgetTester tester, String name) async {

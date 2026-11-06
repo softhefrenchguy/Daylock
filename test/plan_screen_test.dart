@@ -49,11 +49,14 @@ void main() {
       await tester.pumpWidget(MainApp(now: () => _now));
       await tester.pumpAndSettle();
       await _page(tester, 'Plan');
-      final commit = find.widgetWithText(FilledButton, 'COMMIT FRIDAY');
+      final commit = find.widgetWithText(FilledButton, 'Lock in Friday');
       expect(tester.widget<FilledButton>(commit).onPressed, isNull);
       expect(commit.hitTestable(), findsOneWidget);
       expect(find.byType(TextField), findsNothing);
-      expect(find.text('+ Add commitment'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('open-commitment-editor')),
+        findsOneWidget,
+      );
       tester.widget<PlanScreen>(find.byType(PlanScreen)).onCommitTomorrow();
       await tester.pump();
       expect(
@@ -119,7 +122,7 @@ void main() {
         await _page(tester, 'Calendar');
         await _page(tester, 'Today');
         expect(find.text('Read a chapter'), findsNothing);
-        expect(find.text('0 / 3 complete'), findsOneWidget);
+        expect(find.text('0 of 3 kept'), findsOneWidget);
         await _page(tester, 'Plan');
         expect(find.text('Read a chapter'), findsOneWidget);
         expect(find.byType(TextField), findsNothing);
@@ -135,33 +138,39 @@ void main() {
       );
       await tester.pumpWidget(MainApp(now: () => _now));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Existing goal'));
+      await tester.tap(keepBox('Existing goal'));
       await tester.pumpAndSettle();
       await _page(tester, 'Plan');
       await _add(tester, 'Take a walk');
       await _add(tester, 'Read a chapter', focus: true);
       final earlier = tester.widget<PlanScreen>(find.byType(PlanScreen));
-      await tester.tap(find.text('COMMIT FRIDAY'));
+      await tester.tap(find.text('Lock in Friday'));
       await tester.pumpAndSettle();
       expect(earlier.plan.isCommitted, isFalse);
-      expect(find.text('Commit tomorrow?'), findsOneWidget);
+      expect(find.text('Lock in Friday?'), findsOneWidget);
       await tester.tap(find.text('Keep planning'));
       await tester.pumpAndSettle();
       expect(earlier.plan.isCommitted, isFalse);
-      expect(find.text('+ Add commitment'), findsOneWidget);
-      await tester.tap(find.text('COMMIT FRIDAY'));
+      expect(
+        find.byKey(const ValueKey('open-commitment-editor')),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Lock in Friday'));
       await confirmPlanCommit(tester);
       expect(find.text("Tomorrow's plan is committed."), findsOneWidget);
-      expect(find.text('+ Add commitment'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('open-commitment-editor')),
+        findsNothing,
+      );
       expect(find.byType(TextField), findsNothing);
-      expect(find.text('COMMIT FRIDAY'), findsNothing);
+      expect(find.text('Lock in Friday'), findsNothing);
       earlier.onTaskCreated(Task(name: 'Late addition', type: TaskType.goal));
       earlier.onCommitTomorrow();
       await tester.pumpAndSettle();
       expect(find.text('Late addition'), findsNothing);
       expect(earlier.plan.tasks, hasLength(2));
       await _page(tester, 'Today');
-      expect(find.text('1 / 3 complete'), findsOneWidget);
+      expect(find.text('1 of 3 kept'), findsOneWidget);
       await _page(tester, 'Plan');
       expect(find.text("Tomorrow's plan is committed."), findsOneWidget);
       final saved = (await LocalStorage().load())!;

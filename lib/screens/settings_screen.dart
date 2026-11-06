@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../services/freedom_service.dart';
-import '../design/daylock_illustrations.dart';
+import '../design/daylock_freedom_status.dart';
+import '../design/daylock_surfaces.dart';
 import '../design/journey_surface.dart';
 import 'appearance_settings_content.dart';
 export 'appearance_settings_content.dart' show AppearancePreview;
@@ -32,6 +33,7 @@ class SettingsScreen extends StatefulWidget {
   final ValueChanged<NotificationPreferences>? onNotificationsChanged;
   final NotificationService? notificationService;
   final VoidCallback? onSetupRequested;
+  final SettingsDestination? initialDestination;
   const SettingsScreen({
     super.key,
     this.readFreedom,
@@ -48,6 +50,7 @@ class SettingsScreen extends StatefulWidget {
     this.onNotificationsChanged,
     this.notificationService,
     this.onSetupRequested,
+    this.initialDestination,
   });
 
   @override
@@ -70,6 +73,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    final destination = widget.initialDestination;
+    if (destination != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _open(destination);
+      });
+    }
     // Presentation only: re-read existing eligibility while Settings is open.
     _clock = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted && widget.readFreedom != null) _revision.value++;
@@ -208,38 +217,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
             eligibility: s.readFreedom?.call(),
             settings: s.freedomSettings,
           ),
-          JourneySurface(
-            child: Column(
-              children: [
-                SwitchListTile(
-                  key: const ValueKey('freedom-enabled'),
-                  title: const Text('Freedom Control'),
-                  value: s.freedomSettings.enabled,
-                  onChanged: s.onFreedomChanged == null
-                      ? null
-                      : (value) => s.onFreedomChanged!(
-                          s.freedomSettings.copyWith(enabled: value),
-                        ),
-                ),
-                const Divider(indent: 16, endIndent: 16),
-                ListTile(
-                  key: const ValueKey('freedom-time'),
-                  title: const Text('Freedom Time'),
-                  subtitle: Text(s.freedomSettings.timeLabel),
-                  trailing: const Icon(Icons.schedule_outlined),
-                  onTap: s.onFreedomChanged == null
-                      ? null
-                      : () => _chooseFreedomTime(context),
-                ),
-              ],
-            ),
+          DaylockGroup(
+            children: [
+              SwitchListTile(
+                key: const ValueKey('freedom-enabled'),
+                title: const Text('Freedom Control'),
+                value: s.freedomSettings.enabled,
+                onChanged: s.onFreedomChanged == null
+                    ? null
+                    : (value) => s.onFreedomChanged!(
+                        s.freedomSettings.copyWith(enabled: value),
+                      ),
+              ),
+              ListTile(
+                key: const ValueKey('freedom-time'),
+                title: const Text('Freedom Time'),
+                subtitle: Text(s.freedomSettings.timeLabel),
+                trailing: const Icon(Icons.schedule_outlined),
+                onTap: s.onFreedomChanged == null
+                    ? null
+                    : () => _chooseFreedomTime(context),
+              ),
+            ],
           ),
           if (bridge != null)
             ValueListenableBuilder<InstagramDetectionStatus>(
               valueListenable: bridge.status,
-              builder: (context, status, _) => Column(
+              builder: (context, status, _) => DaylockGroup(
                 children: [
                   SettingsNavigationCard(
+                    grouped: true,
+                    tint: DaylockHues.pink,
                     id: 'settings-restricted',
                     icon: Icons.lock_outline_rounded,
                     title: 'Restricted Apps',
@@ -251,8 +259,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         : '${status.selectedPackages.length} selected, switch off',
                     onTap: () => _open(SettingsDestination.restricted),
                   ),
-                  const SizedBox(height: 12),
                   SettingsNavigationCard(
+                    grouped: true,
+                    tint: DaylockHues.blue,
                     id: 'settings-diagnostics',
                     icon: Icons.accessibility_new_rounded,
                     title: 'Accessibility',
@@ -284,57 +293,96 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => SettingsPage(
-    title: 'Settings',
-    children: [
-      for (final item in const [
-        (
-          SettingsDestination.freedom,
-          Icons.lock_outline_rounded,
-          'Freedom Control',
-          'Restricted apps, Freedom Time and permissions',
-        ),
-        (
-          SettingsDestination.planning,
-          Icons.checklist_rounded,
-          'Planning & Routines',
-          'Recurring commitments and planning',
-        ),
-        (
-          SettingsDestination.appearance,
-          Icons.palette_outlined,
-          'Appearance',
-          'Theme, colours and Areas',
-        ),
-        (
-          SettingsDestination.notifications,
-          Icons.notifications_outlined,
-          'Notifications',
-          'Reminders and alerts',
-        ),
-        (
-          SettingsDestination.about,
-          Icons.info_outline_rounded,
-          'About',
-          'App information',
-        ),
-      ])
-        SettingsNavigationCard(
-          id: 'settings-${item.$1.name}',
-          icon: item.$2,
-          title: item.$3,
-          subtitle: item.$4,
-          onTap: () => _open(item.$1),
-        ),
-      SettingsNavigationCard(
-        id: 'settings-setup',
-        icon: Icons.explore_outlined,
-        title: 'Run Setup Tutorial',
-        subtitle: 'Permissions, distractions and your first commitment',
-        onTap: widget.onSetupRequested,
+  Widget build(BuildContext context) {
+    final freedom = widget.freedomSettings;
+    final row = <SettingsDestination, (IconData, Color, String, String, String?)>{
+      SettingsDestination.freedom: (
+        Icons.lock_outline_rounded,
+        DaylockHues.violet,
+        'Freedom Control',
+        'Restricted apps, Freedom Time and permissions',
+        '${freedom.enabled ? 'On' : 'Off'} \u00b7 ${freedom.timeLabel}',
       ),
-    ],
-  );
+      SettingsDestination.planning: (
+        Icons.checklist_rounded,
+        DaylockHues.teal,
+        'Planning & Routines',
+        'Recurring commitments and planning',
+        widget.routineCount == 1
+            ? '1 routine'
+            : '${widget.routineCount} routines',
+      ),
+      SettingsDestination.appearance: (
+        Icons.palette_outlined,
+        DaylockHues.pink,
+        'Appearance',
+        'Theme, colours and Areas',
+        '${widget.preferences.mode.label} \u00b7 ${widget.preferences.colour.label}',
+      ),
+      SettingsDestination.notifications: (
+        Icons.notifications_outlined,
+        DaylockHues.amber,
+        'Notifications',
+        'Reminders and alerts',
+        null,
+      ),
+    };
+    return SettingsPage(
+      title: 'Settings',
+      children: [
+        DaylockGroup(
+          children: [
+            for (final entry in row.entries)
+              SettingsNavigationCard(
+                grouped: true,
+                id: 'settings-${entry.key.name}',
+                icon: entry.value.$1,
+                tint: entry.value.$2,
+                title: entry.value.$3,
+                subtitle: entry.value.$4,
+                value: entry.value.$5,
+                onTap: () => _open(entry.key),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        DaylockGroup(
+          children: [
+            SettingsNavigationCard(
+              grouped: true,
+              id: 'settings-setup',
+              icon: Icons.explore_outlined,
+              tint: DaylockHues.blue,
+              title: 'Run Setup Tutorial',
+              subtitle: 'Permissions, distractions and your first commitment',
+              onTap: widget.onSetupRequested,
+            ),
+            SettingsNavigationCard(
+              grouped: true,
+              id: 'settings-about',
+              icon: Icons.info_outline_rounded,
+              tint: DaylockHues.grey,
+              title: 'About',
+              subtitle: 'App information',
+              onTap: () => _open(SettingsDestination.about),
+            ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 28),
+          child: Text(
+            'Plan your day. Earn your freedom.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium!.copyWith(
+              fontFamily: 'Nunito',
+              fontWeight: FontWeight.w800,
+              color: Theme.of(context).colorScheme.outline,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class SettingsPage extends StatelessWidget {
@@ -402,6 +450,11 @@ class SettingsNavigationCard extends StatelessWidget {
   final String id, title, subtitle;
   final IconData icon;
   final VoidCallback? onTap;
+  final Color? tint;
+  final String? value;
+
+  /// Inside a [DaylockGroup]: no surface of its own.
+  final bool grouped;
   const SettingsNavigationCard({
     super.key,
     required this.id,
@@ -409,42 +462,62 @@ class SettingsNavigationCard extends StatelessWidget {
     required this.subtitle,
     required this.icon,
     this.onTap,
+    this.tint,
+    this.value,
+    this.grouped = false,
   });
   @override
-  Widget build(BuildContext context) => JourneySurface(
-    key: ValueKey(id),
-    onTap: onTap,
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-      child: Row(
-        children: [
-          Icon(icon, size: 24, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium!
-                      .copyWith(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final row = InkWell(
+      key: grouped ? ValueKey(id) : null,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+        child: Row(
+          children: [
+            DaylockIconTile(icon: icon, color: tint ?? scheme.primary),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.bodyLarge!.copyWith(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  // The current value says more than a description, so it
+                  // takes the second line when there is one.
+                  Semantics(
+                    label: value == null ? null : subtitle,
+                    child: Text(
+                      value ?? subtitle,
+                      style: theme.textTheme.bodyMedium!.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          const Icon(Icons.chevron_right_rounded, size: 20),
-        ],
+            const SizedBox(width: 4),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 22,
+              color: scheme.onSurfaceVariant,
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+    if (grouped) return row;
+    return JourneySurface(key: ValueKey(id), child: row);
+  }
 }
 
 class _FreedomSettingsHero extends StatelessWidget {
@@ -457,66 +530,15 @@ class _FreedomSettingsHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final e = eligibility;
-    final waiting =
-        e != null &&
-        e.settings.enabled &&
-        e.currentPlans &&
-        !e.timeReached &&
-        e.commitmentsCompleted &&
-        e.tomorrowCommitted;
-    final title = !settings.enabled
-        ? 'Freedom Control is off'
-        : e == null
-        ? 'Freedom status unavailable'
-        : e.earned
-        ? 'Freedom earned'
-        : waiting
-        ? 'Waiting for Freedom Time'
-        : 'Freedom not yet earned';
-    final colors = Theme.of(context).colorScheme;
+    if (e != null) return DaylockFreedomStatus(eligibility: e);
     return JourneySurface(
-      emphasized: true,
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            DaylockLabel('FREEDOM', color: colors.primary),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Freedom Time \u00b7 ${settings.timeLabel}',
-                        style: Theme.of(context).textTheme.bodyMedium!
-                            .copyWith(color: colors.onSurfaceVariant),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 76,
-                  child: DaylockIllustration(
-                    accent: colors.primary,
-                    lockIcon: e?.earned == true
-                        ? Icons.lock_open_rounded
-                        : waiting
-                        ? Icons.schedule_rounded
-                        : Icons.lock_outline_rounded,
-                  ),
-                ),
-              ],
-            ),
-          ],
+        padding: const EdgeInsets.all(18),
+        child: Text(
+          settings.enabled
+              ? 'Freedom status unavailable'
+              : 'Freedom Control is off',
+          style: Theme.of(context).textTheme.titleLarge,
         ),
       ),
     );

@@ -224,7 +224,7 @@ void main() {
       expect(find.text('Calendar & Daily History'), findsOneWidget);
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
-      expect(find.text('Give Your Goals a Home'), findsOneWidget);
+      expect(find.text('Give Your Commitments a Home'), findsOneWidget);
       await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Study'));
       await tester.tap(find.widgetWithText(ChoiceChip, 'Study'));
       await tester.pumpAndSettle();
@@ -235,7 +235,7 @@ void main() {
       expect(find.byType(AreasScreen), findsOneWidget);
       await tester.pageBack();
       await tester.pumpAndSettle();
-      expect(find.text('Give Your Goals a Home'), findsOneWidget);
+      expect(find.text('Give Your Commitments a Home'), findsOneWidget);
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
       expect(find.text('Build Your Routines'), findsOneWidget);
@@ -258,7 +258,7 @@ void main() {
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
       expect(find.text('See Your Journey Grow'), findsOneWidget);
-      expect(find.text('Highlights: keep the moments'), findsOneWidget);
+      expect(find.text('Achievements: keep the moments'), findsOneWidget);
       expect(find.text('Daily History & Past Chapters'), findsOneWidget);
       await decision('Explore Journey');
       expect(find.byType(JourneyScreen), findsOneWidget);
@@ -331,6 +331,8 @@ void main() {
         MainApp(storage: storage, now: () => date, onboardingEnabled: true),
       );
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Create a commitment'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Create a commitment'));
       await tester.pumpAndSettle();
       await tester.enterText(
@@ -379,6 +381,8 @@ void main() {
     await tester.pumpWidget(
       MainApp(storage: storage, now: () => date, onboardingEnabled: true),
     );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Create a commitment'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Create a commitment'));
     await tester.pumpAndSettle();
@@ -499,6 +503,8 @@ void main() {
             .onPressed,
         isNull,
       );
+      await tester.ensureVisible(find.text('Test a selected app'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Test a selected app'));
       await tester.pump();
       bridge.status.value = ready(
