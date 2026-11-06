@@ -335,8 +335,8 @@ class _ScenePainter extends CustomPainter {
         ..moveTo(0, h - d[0])
         ..cubicTo(d[1] * sx, h - d[2], d[3] * sx, h - d[4], d[5] * sx, h - d[6])
         ..cubicTo(d[7] * sx, h - d[8], d[9] * sx, h - d[10], w, h - d[11])
-        ..lineTo(w, h)
-        ..lineTo(0, h)
+        ..lineTo(w, h + 2) // past the edge: no seam at fractional pixel ratios
+        ..lineTo(0, h + 2)
         ..close();
     }
 

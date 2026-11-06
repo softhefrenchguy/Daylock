@@ -96,3 +96,6 @@ daylock.state.*
 *.heapdump
 *.jfr
 *.dmp
+
+# Generated sample data for store screenshots
+tool/state_*.json

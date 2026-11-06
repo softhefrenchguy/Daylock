@@ -120,16 +120,24 @@ class DaylockSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: padding,
-    child: Row(
-      children: [
-        Expanded(
-          child: Semantics(
-            header: true,
-            child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+    child: LayoutBuilder(
+      // The action takes only the width it needs (at most 55%), so the
+      // heading is not squeezed onto two lines.
+      builder: (context, constraints) => Row(
+        children: [
+          Expanded(
+            child: Semantics(
+              header: true,
+              child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+            ),
           ),
-        ),
-        if (action != null) Flexible(child: action!),
-      ],
+          if (action != null)
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: constraints.maxWidth * .55),
+              child: action!,
+            ),
+        ],
+      ),
     ),
   );
 }
