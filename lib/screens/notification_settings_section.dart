@@ -165,6 +165,26 @@ class NotificationSettingsSection extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          JourneySurface(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                children: [
+                  toggle(
+                    'focus',
+                    'Running Stopwatch',
+                    preferences.focus,
+                    (v) => onChanged(preferences.copyWith(focus: v)),
+                  ),
+                  const Text(
+                    'Shows a quiet notification with Pause while a stopwatch runs, '
+                    'and nudges you every 2 hours so it isn’t left on by mistake.',
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       );
     },

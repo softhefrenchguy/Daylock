@@ -61,6 +61,28 @@ deadline. If Flutter settles a genuinely due timer before the inexact alarm, the
 mirror retains that already-earned deadline for notification delivery only; it
 does not alter elapsed time or task completion rules.
 
+## Running stopwatch
+
+The fourth preference (stored as `focus`, shown as **Running Stopwatch**) no
+longer means Focus completion. While a stopwatch runs on today's plan, Android
+shows a silent, ongoing notification (id 7405) titled "Timing · <commitment>"
+with a live counter that includes time recorded earlier, a tap that opens the
+task, and a **Pause** button. Pause opens Daylock with an `action: pause`
+payload; the app pauses only the named task, on the same date, if it is still
+running, and confirms with a snackbar.
+
+If a stopwatch keeps running, `NotificationPolicy` posts one alerting nudge
+("Still timing <commitment>?") each time its recorded time passes another 2 hours
+(`STOPWATCH_NUDGE_MS`). Nudges use the existing at-most-once ledger with keys
+`date|stopwatch|index|count`, and the next alarm is set at the next 2-hour mark,
+so a long-forgotten timer gets one nudge per mark rather than a burst. The mirror
+carries `runningSinceMs` (wall time the running segment started) and `elapsedMs`
+for today only; older records without them load as not running. A timer from a
+previous date is never shown. With only this preference on and no stopwatch
+running, nothing is scheduled. The channel `daylock_focus` is renamed "Running
+stopwatch"; blocking it in Android settings hides both the ongoing notification
+and the nudges.
+
 ## Permission and channels
 
 The app never automatically opens a notification permission dialog. In Settings,
@@ -75,7 +97,7 @@ Manifest additions:
 - Non-exported `NotificationAlarmReceiver` and `NotificationRestoreReceiver`.
 - Boot/package/time/timezone/app-block/channel-block system broadcast filters.
 - Four default-importance channels: `daylock_plan`, `daylock_commitments`,
-  `daylock_freedom`, `daylock_focus`.
+  `daylock_freedom`, `daylock_focus` (Running stopwatch).
 - A monochrome Daylock lock notification icon, with private lock-screen content.
 
 The notifications plugin adds `VIBRATE`. No exact-alarm, full-screen-intent,

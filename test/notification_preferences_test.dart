@@ -131,10 +131,7 @@ void main() {
     final before = state.toJson();
     final data = notificationSnapshot(state, start);
     final focus = ((data['today'] as Map)['tasks'] as List).single as Map;
-    expect(
-      focus['deadlineMs'],
-      isNull,
-    );
+    expect(focus['deadlineMs'], isNull);
     expect(state.toJson(), before);
     task.pauseFocus(start.add(const Duration(minutes: 10)));
     expect(
@@ -169,5 +166,48 @@ void main() {
       expect(status.permission, NotificationPermission.unsupported);
       expect(status.explanation, contains('Android'));
     }
+  });
+
+  test('snapshot carries only today’s running stopwatch for the ongoing notification', () {
+    final start = DateTime.utc(2026, 10, 14, 12);
+    final task = Task(
+      name: 'Study',
+      accumulatedFocusMilliseconds: 5 * 60000,
+      focusStartedAt: start,
+    );
+    final state = notificationFixture(task: task);
+    state.tomorrowPlan.tasks.single.startFocus(start);
+    Map today() =>
+        ((notificationSnapshot(state, start)['today'] as Map)['tasks'] as List)
+                .single
+            as Map;
+    expect(today()['runningSinceMs'], start.millisecondsSinceEpoch);
+    expect(today()['elapsedMs'], 5 * 60000);
+    final tomorrow =
+        ((notificationSnapshot(state, start)['tomorrow'] as Map)['tasks']
+                    as List)
+                .single
+            as Map;
+    expect(tomorrow['runningSinceMs'], isNull, reason: 'never tomorrow');
+    expect(tomorrow['elapsedMs'], 0);
+    task.pauseFocus(start.add(const Duration(minutes: 10)));
+    expect(today()['runningSinceMs'], isNull);
+    expect(today()['elapsedMs'], 15 * 60000);
+  });
+
+  test('notification targets read the Pause action', () {
+    final pause = NotificationTarget.fromJson({
+      'screen': 'today',
+      'date': '2026-10-14',
+      'taskIndex': 0,
+      'taskName': 'Study',
+      'action': 'pause',
+    });
+    expect(pause.pausesStopwatch, isTrue);
+    expect(pause.taskIndex, 0);
+    expect(
+      NotificationTarget.fromJson({'screen': 'plan'}).pausesStopwatch,
+      isFalse,
+    );
   });
 }

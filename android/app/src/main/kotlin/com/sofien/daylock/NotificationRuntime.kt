@@ -31,7 +31,10 @@ object NotificationRuntime {
     private const val ALARM_ID = 7400
     val worker = Executors.newSingleThreadExecutor()
     private val categories = mapOf("plan" to "Plan Tomorrow", "commitments" to "Commitment reminders",
-        "freedom" to "Freedom", "focus" to "Focus completion")
+        "freedom" to "Freedom", "focus" to "Running stopwatch")
+    /** The ongoing "Timing …" notification; reminders use 7401–7404. */
+    private const val RUNNING_ID = 7405
+    private const val PAUSE_REQUEST = 7406
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     private fun repository(context: Context) = ReminderRepository(
@@ -56,7 +59,7 @@ object NotificationRuntime {
     private fun cancelAlarm(context: Context) { context.getSystemService(AlarmManager::class.java).cancel(alarmIntent(context)) }
     private fun clearNotifications(context: Context) {
         val manager = NotificationManagerCompat.from(context)
-        (7401..7404).forEach(manager::cancel)
+        (7401..RUNNING_ID).forEach(manager::cancel)
     }
     fun invalidate(context: Context) {
         // Cancellation happens even if committing the invalidation fails.
@@ -86,6 +89,8 @@ object NotificationRuntime {
             decision.message?.let { show(context, it) }
         }
         record = repo.load()
+        showRunning(context, NotificationPolicy.running(record.snapshot, record.valid, now, zone)
+            ?.takeIf { "focus" in channels })
         val next = NotificationPolicy.evaluate(record.snapshot, record.valid, record.seen, now, zone, channels).nextAlarmMs
         if (next != null) context.getSystemService(AlarmManager::class.java)
             .setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next, alarmIntent(context))
@@ -113,6 +118,39 @@ object NotificationRuntime {
             .setPriority(NotificationCompat.PRIORITY_DEFAULT).build()
         manager.notify(message.id, notification)
     }
+    private fun ensureChannel(context: Context, category: String) {
+        if (Build.VERSION.SDK_INT >= 26) {
+            context.getSystemService(NotificationManager::class.java).createNotificationChannel(
+                NotificationChannel("daylock_$category", categories.getValue(category), NotificationManager.IMPORTANCE_DEFAULT))
+        }
+    }
+    private fun openIntent(context: Context, requestCode: Int, payload: String) = PendingIntent.getActivity(context,
+        requestCode, Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(TAP, payload)
+        }, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
+    /** A silent, ongoing notification with a live counter while a stopwatch
+     * runs, so it isn't forgotten. Pause opens Daylock, which pauses it. */
+    private fun showRunning(context: Context, running: RunningStopwatch?) {
+        val manager = NotificationManagerCompat.from(context)
+        if (running == null) { manager.cancel(RUNNING_ID); return }
+        ensureChannel(context, "focus")
+        val message = ReminderMessage("focus", "", "", running.date, running.index, running.task.name)
+        val notification = NotificationCompat.Builder(context, "daylock_focus")
+            .setSmallIcon(R.drawable.ic_stat_daylock)
+            .setContentTitle("Timing · ${running.task.name}")
+            .setContentText("Pause it when you stop.")
+            .setUsesChronometer(true).setShowWhen(true).setWhen(running.chronometerBaseMs)
+            .setOngoing(true).setSilent(true).setOnlyAlertOnce(true)
+            .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
+            .setContentIntent(openIntent(context, RUNNING_ID, message.payload()))
+            .addAction(0, "Pause", openIntent(context, PAUSE_REQUEST, message.payload("pause")))
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setPriority(NotificationCompat.PRIORITY_LOW).build()
+        try { manager.notify(RUNNING_ID, notification) } catch (_: SecurityException) { }
+    }
+
     fun receive(context: Context, pending: BroadcastReceiver.PendingResult) {
         val app = context.applicationContext
         worker.execute {

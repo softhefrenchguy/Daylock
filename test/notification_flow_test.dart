@@ -43,6 +43,8 @@ class _Notifications extends NotificationService {
   }
 }
 
+NotificationPreferences _prefs = const NotificationPreferences();
+
 void main() {
   setUp(
     () => SharedPreferencesAsyncPlatform.instance =
@@ -261,4 +263,117 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
+
+  testWidgets(
+    'the running stopwatch notification is mirrored and its Pause pauses only that task',
+    (tester) async {
+      await LocalStorage().save(notificationFixture());
+      final service = _Notifications();
+      var now = DateTime(2026, 10, 14, 12);
+      await tester.pumpWidget(
+        MainApp(notificationService: service, now: () => now),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Start stopwatch'));
+      await tester.pumpAndSettle();
+      Map task() =>
+          ((service.snapshots.last['today'] as Map)['tasks'] as List).single
+              as Map;
+      expect(task()['runningSinceMs'], isNotNull);
+      Future<Task> saved() async =>
+          (await tester.runAsync(() => LocalStorage().load()))!
+              .todayPlan
+              .tasks
+              .single;
+      // Stale or mismatched Pause taps change nothing.
+      for (final stale in const [
+        NotificationTarget(
+          'today',
+          date: '2026-10-13',
+          taskIndex: 0,
+          taskName: 'Study maths',
+          action: 'pause',
+        ),
+        NotificationTarget(
+          'today',
+          date: '2026-10-14',
+          taskIndex: 0,
+          taskName: 'Something else',
+          action: 'pause',
+        ),
+        NotificationTarget(
+          'today',
+          date: '2026-10-14',
+          taskIndex: 3,
+          taskName: 'Study maths',
+          action: 'pause',
+        ),
+      ]) {
+        service.onTap!(stale);
+        await tester.pumpAndSettle();
+        expect((await saved()).isFocusRunning, isTrue);
+      }
+      now = now.add(const Duration(minutes: 7));
+      service.onTap!(
+        const NotificationTarget(
+          'today',
+          date: '2026-10-14',
+          taskIndex: 0,
+          taskName: 'Study maths',
+          action: 'pause',
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Paused Study maths.'), findsOneWidget);
+      expect(find.byType(TaskActionsSheet), findsNothing);
+      final paused = await saved();
+      expect(paused.isFocusRunning, isFalse);
+      expect(paused.accumulatedFocusMilliseconds, 7 * 60000);
+      expect(task()['runningSinceMs'], isNull);
+      // A second Pause (already paused) does not restart it.
+      service.onTap!(
+        const NotificationTarget(
+          'today',
+          date: '2026-10-14',
+          taskIndex: 0,
+          taskName: 'Study maths',
+          action: 'pause',
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect((await saved()).isFocusRunning, isFalse);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets('Settings has a Running Stopwatch toggle that saves', (
+    tester,
+  ) async {
+    await LocalStorage().save(notificationFixture());
+    final service = _Notifications();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: StatefulBuilder(
+              builder: (context, update) {
+                return NotificationSettingsSection(
+                  service: service,
+                  preferences: _prefs,
+                  onChanged: (value) => update(() => _prefs = value),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Running Stopwatch'), findsOneWidget);
+    final toggle = find.widgetWithText(SwitchListTile, 'Running Stopwatch');
+    await tester.ensureVisible(toggle);
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    expect(_prefs.focus, isFalse);
+  });
 }

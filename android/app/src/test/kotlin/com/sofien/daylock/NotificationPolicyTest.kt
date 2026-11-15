@@ -209,8 +209,74 @@ class NotificationPolicyTest {
         assertEquals(2, payload.getInt("taskIndex"))
         assertEquals("Study", payload.getString("taskName"))
     }
+    private fun runningTask(since: String, elapsedMinutes: Long = 0, name: String = "Gym") =
+        ReminderTask(name, "incomplete", null, null, time(since), elapsedMinutes * 60_000)
+    private val stopwatchOnly = ReminderPreferences(false, false, false, true, 1200, 840)
+
+    @Test fun runningStopwatchIsFoundOnlyForTodayWhenEnabled() {
+        val s = snapshot(listOf(task(), runningTask("2026-10-14T09:00:00")), prefs = stopwatchOnly)
+        val running = NotificationPolicy.running(s, true, time("2026-10-14T10:00:00"), zone)!!
+        assertEquals(1, running.index)
+        assertEquals("Gym", running.task.name)
+        assertNull(NotificationPolicy.running(s, true, time("2026-10-15T00:30:00"), zone))
+        assertNull(NotificationPolicy.running(s, false, time("2026-10-14T10:00:00"), zone))
+        val off = snapshot(listOf(runningTask("2026-10-14T09:00:00")), prefs = stopwatchOnly.copy(focus = false))
+        assertNull(NotificationPolicy.running(off, true, time("2026-10-14T10:00:00"), zone))
+        val done = snapshot(listOf(runningTask("2026-10-14T09:00:00").copy(outcome = "completed")), prefs = stopwatchOnly)
+        assertNull(NotificationPolicy.running(done, true, time("2026-10-14T10:00:00"), zone))
+    }
+    @Test fun chronometerIncludesTimeRecordedBeforeThisRun() {
+        val s = snapshot(listOf(runningTask("2026-10-14T09:00:00", elapsedMinutes = 30)), prefs = stopwatchOnly)
+        val running = NotificationPolicy.running(s, true, time("2026-10-14T09:10:00"), zone)!!
+        assertEquals(time("2026-10-14T08:30:00"), running.chronometerBaseMs)
+    }
+    @Test fun forgottenStopwatchIsNudgedEveryTwoHoursOnce() {
+        val s = snapshot(listOf(runningTask("2026-10-14T09:00:00", elapsedMinutes = 30)), prefs = stopwatchOnly)
+        val early = eval(s, "2026-10-14T10:00:00")
+        assertTrue(messages(early).isEmpty())
+        // 30 recorded minutes + 1h30 running = 2 hours.
+        assertEquals(time("2026-10-14T10:30:00"), early.nextAlarmMs)
+        val due = eval(s, "2026-10-14T10:31:00")
+        val nudge = messages(due).single()
+        assertEquals("focus", nudge.category)
+        assertEquals("Still timing Gym?", nudge.title)
+        assertTrue(nudge.body.contains("2 hours"))
+        assertEquals(0, nudge.taskIndex)
+        assertTrue(messages(eval(s, "2026-10-14T11:00:00", consumed(due))).isEmpty())
+        assertEquals(time("2026-10-14T12:30:00"), eval(s, "2026-10-14T11:00:00", consumed(due)).nextAlarmMs)
+        assertTrue(messages(eval(s, "2026-10-14T12:31:00", consumed(due))).single().body.contains("4 hours"))
+    }
+    @Test fun stopwatchNudgesRespectTheirToggleAndBlockedChannel() {
+        val s = snapshot(listOf(runningTask("2026-10-14T06:00:00")))
+        assertTrue(messages(eval(s, "2026-10-14T09:00:00")).any { it.category == "focus" })
+        val off = snapshot(listOf(runningTask("2026-10-14T06:00:00")),
+            prefs = ReminderPreferences(true, true, true, false, 1200, 840))
+        assertFalse(messages(eval(off, "2026-10-14T09:00:00")).any { it.category == "focus" })
+        assertFalse(messages(eval(s, "2026-10-14T09:00:00", allowed = channels - "focus")).any { it.category == "focus" })
+    }
+    @Test fun stopwatchToggleAloneSchedulesNothingWithoutARunningStopwatch() {
+        assertNull(eval(snapshot(prefs = stopwatchOnly), "2026-10-14T09:00:00").nextAlarmMs)
+    }
+    @Test fun pausePayloadCarriesTheTaskAndAction() {
+        val payload = org.json.JSONObject(ReminderMessage("focus", "", "", "2026-10-14", 2, "Gym").payload("pause"))
+        assertEquals("pause", payload.getString("action"))
+        assertEquals(2, payload.getInt("taskIndex"))
+        assertEquals("Gym", payload.getString("taskName"))
+        assertTrue(org.json.JSONObject(ReminderMessage("plan", "", "", "2026-10-14").payload()).isNull("action"))
+    }
+    @Test fun runningFieldsRoundTripAndOldRecordsStillLoad() {
+        val s = snapshot(listOf(runningTask("2026-10-14T09:00:00", elapsedMinutes = 5)))
+        assertEquals(s, ReminderCodec.snapshot(ReminderCodec.encode(s)))
+        val legacy = ReminderCodec.encode(snapshot())
+        val tasks = legacy.getJSONObject("today").getJSONArray("tasks")
+        for (i in 0 until tasks.length()) { tasks.getJSONObject(i).remove("runningSinceMs"); tasks.getJSONObject(i).remove("elapsedMs") }
+        val loaded = ReminderCodec.snapshot(legacy)
+        assertNull(loaded.today.tasks.single().runningSinceMs)
+        assertEquals(0L, loaded.today.tasks.single().elapsedMs)
+    }
 }
 
 private object InstantHelper {
     fun local(ms: Long, zone: ZoneId) = java.time.Instant.ofEpochMilli(ms).atZone(zone)
+
 }

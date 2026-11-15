@@ -11,12 +11,19 @@ data class ReminderPreferences(val plan: Boolean, val commitments: Boolean, val 
     val focus: Boolean, val planMinute: Int, val commitmentMinute: Int) {
     init { require(planMinute in 0..1439 && commitmentMinute in 0..1439) }
 }
-data class ReminderTask(val name: String, val outcome: String, val minimumMinutes: Int?, val deadlineMs: Long?) {
+data class ReminderTask(val name: String, val outcome: String, val minimumMinutes: Int?, val deadlineMs: Long?,
+    /** Wall time the running stopwatch segment started; null when not running. */
+    val runningSinceMs: Long? = null,
+    /** Time recorded before the running segment. */
+    val elapsedMs: Long = 0) {
     init {
         require(outcome in setOf("incomplete", "completed", "excused"))
         require(minimumMinutes == null || minimumMinutes > 0)
         require(deadlineMs == null || (minimumMinutes != null && deadlineMs > 0 && outcome != "excused"))
+        require(elapsedMs >= 0 && (runningSinceMs == null || runningSinceMs > 0))
     }
+    val running get() = runningSinceMs != null && outcome == "incomplete"
+    fun recordedAt(now: Long): Long = elapsedMs + if (runningSinceMs == null) 0L else maxOf(0L, now - runningSinceMs)
     val eligible get() = outcome != "excused"
     fun complete(now: Long) = outcome == "completed"
 }
@@ -61,7 +68,10 @@ object ReminderCodec {
                     val t = tasks.getJSONObject(i)
                     ReminderTask(t.getString("name"), t.getString("outcome"),
                         if (t.isNull("minimumMinutes")) null else t.getInt("minimumMinutes"),
-                        if (t.isNull("deadlineMs")) null else t.getLong("deadlineMs"))
+                        if (t.isNull("deadlineMs")) null else t.getLong("deadlineMs"),
+                        // Absent in records saved before stopwatch notifications.
+                        if (!t.has("runningSinceMs") || t.isNull("runningSinceMs")) null else t.getLong("runningSinceMs"),
+                        t.optLong("elapsedMs", 0))
                 })
         }
         return ReminderSnapshot(ReminderPreferences(p.getBoolean("planTomorrow"), p.getBoolean("commitments"),
@@ -72,7 +82,8 @@ object ReminderCodec {
     fun encode(value: ReminderSnapshot): JSONObject {
         fun plan(p: ReminderPlan) = JSONObject().put("date", p.date).put("committed", p.committed)
             .put("tasks", JSONArray(p.tasks.map { t -> JSONObject().put("name", t.name).put("outcome", t.outcome)
-                .put("minimumMinutes", t.minimumMinutes ?: JSONObject.NULL).put("deadlineMs", t.deadlineMs ?: JSONObject.NULL) }))
+                .put("minimumMinutes", t.minimumMinutes ?: JSONObject.NULL).put("deadlineMs", t.deadlineMs ?: JSONObject.NULL)
+                .put("runningSinceMs", t.runningSinceMs ?: JSONObject.NULL).put("elapsedMs", t.elapsedMs) }))
         val p = value.preferences
         return JSONObject().put("version", 1)
             .put("preferences", JSONObject().put("planTomorrow", p.plan).put("commitments", p.commitments)
@@ -85,8 +96,15 @@ object ReminderCodec {
 data class ReminderMessage(val category: String, val title: String, val body: String,
     val date: String, val taskIndex: Int? = null, val taskName: String? = null) {
     val id get() = when (category) { "plan" -> 7401; "commitments" -> 7402; "freedom" -> 7403; else -> 7404 }
-    fun payload(): String = JSONObject().put("screen", if (category == "plan") "plan" else "today")
-        .put("date", date).put("taskIndex", taskIndex ?: JSONObject.NULL).put("taskName", taskName ?: JSONObject.NULL).toString()
+    fun payload(action: String? = null): String = JSONObject().put("screen", if (category == "plan") "plan" else "today")
+        .put("date", date).put("taskIndex", taskIndex ?: JSONObject.NULL).put("taskName", taskName ?: JSONObject.NULL)
+        .put("action", action ?: JSONObject.NULL).toString()
+}
+
+/** Today's running stopwatch, shown as an ongoing notification. */
+data class RunningStopwatch(val date: String, val index: Int, val task: ReminderTask) {
+    /** Wall time at which a counter starting from zero would read the total. */
+    val chronometerBaseMs get() = task.runningSinceMs!! - task.elapsedMs
 }
 data class ReminderDecision(val keys: Set<String>, val message: ReminderMessage?)
 data class ReminderEvaluation(val decisions: List<ReminderDecision>, val nextAlarmMs: Long?)
@@ -96,6 +114,18 @@ data class ReminderEvaluation(val decisions: List<ReminderDecision>, val nextAla
  * Reuses the same native Freedom policy used by the existing FreedomService bridge.
  */
 object NotificationPolicy {
+    /** A running stopwatch gets a nudge each time it passes another interval. */
+    const val STOPWATCH_NUDGE_MS = 2 * 60 * 60 * 1000L
+
+    fun running(s: ReminderSnapshot?, valid: Boolean, now: Long, zone: ZoneId): RunningStopwatch? {
+        if (!valid || s == null || !s.preferences.focus) return null
+        val day = Instant.ofEpochMilli(now).atZone(zone).toLocalDate().toString()
+        // Yesterday's timer is settled by the app at midnight; never show it.
+        if (s.today.date != day) return null
+        val index = s.today.tasks.indexOfFirst { it.running }
+        return if (index < 0) null else RunningStopwatch(day, index, s.today.tasks[index])
+    }
+
     fun evaluate(s: ReminderSnapshot?, valid: Boolean, seen: Set<String>, now: Long, zone: ZoneId,
         allowed: Set<String>): ReminderEvaluation {
         if (!valid || s == null || allowed.isEmpty()) return ReminderEvaluation(emptyList(), null)
@@ -113,8 +143,8 @@ object NotificationPolicy {
             if (p.plan) add("plan")
             if (p.commitments) add("commitments")
             if (p.freedom && s.freedomEnabled) add("freedom")
-            // The old Focus-completion preference is retained on disk only.
-            // Optional stopwatches have no completion deadline or timer alert.
+            // "focus" now means the running-stopwatch notification and nudges.
+            if (p.focus) add("focus")
         }.intersect(allowed)
         if (enabled.isEmpty()) return ReminderEvaluation(emptyList(), null)
         val decisions = mutableListOf<ReminderDecision>()
@@ -153,9 +183,24 @@ object NotificationPolicy {
                 decisions.add(ReminderDecision(setOf(timeKey), ReminderMessage("freedom", "Freedom Time is here", body, day)))
             } else if (now < time && timeKey !in seen) upcoming.add(time)
         }
+        val stopwatch = if ("focus" in enabled) running(s, true, now, zone) else null
+        if (stopwatch != null) {
+            val task = stopwatch.task
+            val recorded = task.recordedAt(now)
+            val passed = recorded / STOPWATCH_NUDGE_MS
+            val key = "$day|stopwatch|${stopwatch.index}|$passed"
+            if (passed >= 1 && key !in seen) {
+                val hours = passed * STOPWATCH_NUDGE_MS / 3_600_000
+                decisions.add(ReminderDecision(setOf(key), ReminderMessage("focus", "Still timing ${task.name}?",
+                    "Your stopwatch has been running for $hours hours. Pause it if you've stopped.",
+                    day, stopwatch.index, task.name)))
+            }
+            upcoming.add(task.runningSinceMs!! + (passed + 1) * STOPWATCH_NUDGE_MS - task.elapsedMs)
+        }
         // One wake at midnight reconciles dates even when Flutter never opens.
         // No repeating service, polling job or exact-alarm permission is used.
-        if (enabled.isNotEmpty()) {
+        // Stopwatch notifications alone only need it while one is running.
+        if (enabled.any { it != "focus" } || stopwatch != null) {
             upcoming.add(date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli())
         }
         return ReminderEvaluation(decisions, upcoming.filter { it > now }.minOrNull())

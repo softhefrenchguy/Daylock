@@ -670,6 +670,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       _refreshClock();
       _navigatorKey.currentState?.popUntil((route) => route.isFirst);
       setState(() => selectedPage = target.screen == 'plan' ? 1 : 0);
+      if (target.pausesStopwatch) return _pauseFromNotification(target);
       if (target.screen != 'plan' &&
           target.date == notificationDate(todayPlan.date) &&
           target.taskIndex != null &&
@@ -686,6 +687,25 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       }
     });
     WidgetsBinding.instance.ensureVisualUpdate();
+  }
+
+  /// The running-stopwatch notification's Pause button. Only pauses the
+  /// exact task it named, on the same day, if it is still running.
+  void _pauseFromNotification(NotificationTarget target) {
+    final index = target.taskIndex;
+    final tasks = todayPlan.tasks;
+    if (target.date != notificationDate(todayPlan.date) ||
+        index == null ||
+        index < 0 ||
+        index >= tasks.length) {
+      return;
+    }
+    final task = tasks[index];
+    if (task.name != target.taskName || !task.isFocusRunning) return;
+    _toggleFocus(task, todayPlan);
+    _messengerKey.currentState?.showSnackBar(
+      SnackBar(content: Text('Paused ${task.name}.')),
+    );
   }
 
   void _openAreas() => _navigatorKey.currentState!.push(

@@ -56,7 +56,7 @@ class AndroidNotificationService extends NotificationService {
       'plan': 'Plan Tomorrow',
       'commitments': 'Commitment reminders',
       'freedom': 'Freedom',
-      'focus': 'Focus completion',
+      'focus': 'Running stopwatch',
     }.entries) {
       await android.createNotificationChannel(
         AndroidNotificationChannel(

@@ -34,18 +34,24 @@ class NotificationTarget {
   final String screen;
   final String? date, taskName;
   final int? taskIndex;
+
+  /// Set by a notification button, e.g. `pause` on the running stopwatch.
+  final String? action;
   const NotificationTarget(
     this.screen, {
     this.date,
     this.taskIndex,
     this.taskName,
+    this.action,
   });
+  bool get pausesStopwatch => action == 'pause';
   factory NotificationTarget.fromJson(Map<String, dynamic> json) =>
       NotificationTarget(
         json['screen'] == 'plan' ? 'plan' : 'today',
         date: json['date'] as String?,
         taskIndex: json['taskIndex'] as int?,
         taskName: json['taskName'] as String?,
+        action: json['action'] as String?,
       );
 }
 
@@ -62,6 +68,11 @@ Map<String, dynamic> notificationSnapshot(DaylockState state, DateTime now) {
           'outcome': task.outcome.name,
           'minimumMinutes': task.minimumFocusMinutes,
           'deadlineMs': null,
+          // Drives the ongoing "Timing …" notification and its nudges.
+          'runningSinceMs': allowTimers && task.isFocusRunning
+              ? task.focusStartedAt!.millisecondsSinceEpoch
+              : null,
+          'elapsedMs': allowTimers ? task.accumulatedFocusMilliseconds : 0,
         },
     ],
   };
