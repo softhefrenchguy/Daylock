@@ -579,10 +579,8 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   void _goToTourStop(int index) {
     if (index < 0) return;
     if (index >= daylockTour.length) return _endTour();
-    setState(() {
-      _tourStep = index;
-      selectedPage = daylockTour[index].page;
-    });
+    // The overlay switches tabs itself, once the bubble has faded out.
+    setState(() => _tourStep = index);
   }
 
   void _endTour() {
@@ -1206,6 +1204,11 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
                     key: const ValueKey('app-tour'),
                     index: _tourStep!,
                     searchRoot: () => _navigatorKey.currentContext,
+                    onShowPage: (page) {
+                      if (page != selectedPage) {
+                        setState(() => selectedPage = page);
+                      }
+                    },
                     onNext: () => _goToTourStop(_tourStep! + 1),
                     onBack: () => _goToTourStop(_tourStep! - 1),
                     onClose: _endTour,
@@ -1367,7 +1370,12 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         if (!didPop) _endTour();
       },
       child: Scaffold(
-        body: pages[selectedPage],
+        // During the tour, tabs fade in rather than cut.
+        body: _TourPageFade(
+          key: ValueKey(selectedPage),
+          enabled: _tourStep != null,
+          child: pages[selectedPage],
+        ),
         bottomNavigationBar: NavigationBar(
           selectedIndex: selectedPage,
           onDestinationSelected: (index) {
@@ -1410,4 +1418,31 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     onAllHighlights: _openHighlights,
     onDailyHistory: () => _openCalendar(),
   );
+}
+
+/// Fades a tab in when the guided tour switches to it. Outside the tour the
+/// tab appears at once, as before.
+class _TourPageFade extends StatelessWidget {
+  final bool enabled;
+  final Widget child;
+  const _TourPageFade({super.key, required this.enabled, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!enabled || MediaQuery.disableAnimationsOf(context)) return child;
+    return TweenAnimationBuilder<double>(
+      // Starts partly visible so the swap never dips to black under the dim.
+      tween: Tween(begin: .35, end: 1),
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+      child: child,
+      builder: (context, t, child) => Opacity(
+        opacity: t,
+        child: Transform.translate(
+          offset: Offset(0, 18 * (1 - t)),
+          child: child,
+        ),
+      ),
+    );
+  }
 }

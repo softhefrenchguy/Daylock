@@ -344,6 +344,7 @@ void main() {
                   child: AppTourOverlay(
                     index: 0,
                     searchRoot: () => context,
+                    onShowPage: (_) {},
                     onNext: () {},
                     onBack: () {},
                     onClose: () {},
@@ -649,6 +650,51 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byTooltip('Save & leave'), findsOneWidget);
       expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets(
+    'Tour transitions ignore double taps and Skip fades out before closing',
+    (tester) async {
+      final storage = LocalStorage();
+      await storage.save(
+        DaylockState(
+          todayPlan: DailyPlan(
+            date: DateTime(2026, 11, 5),
+            tasks: [Task(name: 'Keep today')],
+            isCommitted: true,
+          ),
+          tomorrowPlan: DailyPlan(
+            date: DateTime(2026, 11, 6),
+            tasks: [Task(name: 'Keep tomorrow')],
+          ),
+        ),
+      );
+      await storage.saveOnboardingStep(OnboardingSteps.ready);
+      await tester.pumpWidget(
+        MainApp(
+          storage: storage,
+          now: () => DateTime(2026, 11, 5),
+          onboardingEnabled: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Take the tour'));
+      await tester.pumpAndSettle();
+      expect(find.text('1 of ${daylockTour.length}'), findsOneWidget);
+      final next = find.byKey(const ValueKey('tour-next'));
+      await tester.tap(next);
+      await tester.pump(const Duration(milliseconds: 60));
+      await tester.tap(next, warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(find.text('2 of ${daylockTour.length}'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('tour-skip')));
+      await tester.pump(const Duration(milliseconds: 60));
+      // Still on screen while it fades out.
+      expect(find.byKey(const ValueKey('app-tour')), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('app-tour')), findsNothing);
       await tester.pumpWidget(const SizedBox());
     },
   );

@@ -41,6 +41,19 @@ anyone add, keep or lock anything; system Back closes it. A stop whose target is
 missing shows the bubble without a spotlight. Settings → "Take the App Tour"
 replays it. Tour progress is not saved.
 
+Moving between stops is choreographed so nothing jumps: the bubble fades out and
+the spotlight closes in place, then the tab changes (the tour asks MainApp to
+show it, and the new tab drifts up and fades in from partly visible so it never
+dips to black), the target scrolls into view only if it isn't already fully on
+screen, the spotlight opens on it, and the bubble eases in last. On the same tab
+the spotlight glides from one target to the next. The text only changes while
+the bubble is hidden, the bubble's sun glides to its new height, taps are ignored
+mid-transition (a double tap can't skip a stop), and the tour fades in at the
+start and out on Skip or Done. Setup pages slide in the direction of travel with
+a crossfade, scroll back to the top smoothly, and the Ready page's taller, warmer
+sky crossfades and grows instead of snapping. Reduce Motion turns all of this
+into instant changes.
+
 Steps 4–7 were feature-tour pages and are no longer shown. Progress saved on one
 of them resumes at the Blocking test when blocking is set up, otherwise at Ready.
 The existing Xiaomi power-review confirmation is preserved. `OnboardingSteps`

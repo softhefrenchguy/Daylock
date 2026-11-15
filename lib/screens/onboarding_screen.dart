@@ -48,6 +48,9 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen>
     with WidgetsBindingObserver {
   late int _step;
+
+  /// True when the last move went forward; steps slide in from that side.
+  bool _forward = true;
   late bool _powerReviewed;
   bool _busy = false, _testing = false, _verified = false;
   DateTime? _testStarted;
@@ -139,8 +142,22 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         widget.onExit();
         return true;
       }
-      if (_scroll.hasClients) _scroll.jumpTo(0);
-      setState(() => _step = step);
+      if (_scroll.hasClients && _scroll.offset > 0) {
+        final reduce = MediaQuery.disableAnimationsOf(context);
+        unawaited(
+          _scroll.animateTo(
+            0,
+            duration: reduce
+                ? Duration.zero
+                : const Duration(milliseconds: 360),
+            curve: Curves.easeInOutCubic,
+          ),
+        );
+      }
+      setState(() {
+        _forward = step > _step;
+        _step = step;
+      });
       return true;
     } catch (_) {
       if (mounted) {
@@ -619,6 +636,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     }
   }
 
+  Duration _motion(int milliseconds) => MediaQuery.disableAnimationsOf(context)
+      ? Duration.zero
+      : Duration(milliseconds: milliseconds);
+
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: _step == 0,
@@ -669,49 +690,93 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              DaylockScene(
-                                mood: last ? SceneMood.earned : SceneMood.dawn,
-                                progress: (_position + 1) / _sequence.length,
-                                height: last ? 300 : 236,
-                                child: SafeArea(
-                                  bottom: false,
-                                  child: Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      12,
-                                      8,
-                                      12,
-                                      0,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const SizedBox(height: 48),
-                                        Padding(
-                                          padding: const EdgeInsets.fromLTRB(
-                                            12,
-                                            4,
-                                            12,
-                                            0,
-                                          ),
-                                          child: Text(
-                                            'Step ${_position + 1} of ${_sequence.length}',
-                                            style: theme.textTheme.labelLarge!
-                                                .copyWith(
-                                                  color: sky.onSkyMuted,
-                                                ),
-                                          ),
+                              AnimatedSize(
+                                duration: _motion(500),
+                                curve: Curves.easeInOutCubic,
+                                alignment: Alignment.topCenter,
+                                child: AnimatedSwitcher(
+                                  duration: _motion(600),
+                                  switchInCurve: Curves.easeOut,
+                                  switchOutCurve: Curves.easeIn,
+                                  layoutBuilder: (current, previous) => Stack(
+                                    alignment: Alignment.topCenter,
+                                    children: [...previous, ?current],
+                                  ),
+                                  child: DaylockScene(
+                                    key: ValueKey(last),
+                                    mood: last
+                                        ? SceneMood.earned
+                                        : SceneMood.dawn,
+                                    progress:
+                                        (_position + 1) / _sequence.length,
+                                    height: last ? 300 : 236,
+                                    child: SafeArea(
+                                      bottom: false,
+                                      child: Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          12,
+                                          8,
+                                          12,
+                                          0,
                                         ),
-                                      ],
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const SizedBox(height: 48),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                    12,
+                                                    4,
+                                                    12,
+                                                    0,
+                                                  ),
+                                              child: Text(
+                                                'Step ${_position + 1} of ${_sequence.length}',
+                                                style: theme
+                                                    .textTheme
+                                                    .labelLarge!
+                                                    .copyWith(
+                                                      color: sky.onSkyMuted,
+                                                    ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                               AnimatedSwitcher(
-                                duration:
-                                    MediaQuery.disableAnimationsOf(context)
-                                    ? Duration.zero
-                                    : const Duration(milliseconds: 200),
+                                duration: _motion(380),
+                                reverseDuration: _motion(220),
+                                switchInCurve: Curves.easeOutCubic,
+                                switchOutCurve: Curves.easeInCubic,
+                                // Keep both steps pinned to the top while
+                                // they cross, so the page doesn't jump.
+                                layoutBuilder: (current, previous) => Stack(
+                                  alignment: Alignment.topCenter,
+                                  children: [...previous, ?current],
+                                ),
+                                transitionBuilder: (child, animation) {
+                                  final incoming = child.key == ValueKey(_step);
+                                  // Forward: new step from the right, old to
+                                  // the left. Back mirrors it.
+                                  final side =
+                                      (_forward == incoming ? 1.0 : -1.0) * .08;
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: SlideTransition(
+                                      position: Tween(
+                                        begin: Offset(side, 0),
+                                        end: Offset.zero,
+                                      ).animate(animation),
+                                      child: child,
+                                    ),
+                                  );
+                                },
                                 child: Padding(
                                   key: ValueKey(_step),
                                   padding: const EdgeInsets.fromLTRB(
