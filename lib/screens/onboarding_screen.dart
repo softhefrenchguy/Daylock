@@ -241,6 +241,25 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   bool get _powerReady =>
       !widget.bridge.status.value.xiaomiDevice || _powerReviewed;
 
+  /// App blocking is optional. Without Accessibility, setup skips choosing
+  /// apps and the blocking test; Daylock still works as a planner.
+  bool get _blockingSetUp {
+    final s = widget.bridge.status.value;
+    return s.supported && _permissionReady;
+  }
+
+  int get _nextStep => switch (_step) {
+    1 when !_blockingSetUp => 3,
+    OnboardingSteps.journey when !_blockingSetUp => OnboardingSteps.ready,
+    _ => _step + 1,
+  };
+
+  int get _previousStep => switch (_step) {
+    3 when !_blockingSetUp => 1,
+    OnboardingSteps.ready when !_blockingSetUp => OnboardingSteps.journey,
+    _ => _step - 1,
+  };
+
   Future<void> _reviewPower(bool reviewed) async {
     setState(() => _busy = true);
     try {
@@ -260,28 +279,17 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   bool get _canContinue {
     final s = widget.bridge.status.value;
     return switch (_step) {
-      1 => _permissionReady && _powerReady,
+      // Accessibility is optional; the Xiaomi check only matters once on.
+      1 => !_blockingSetUp || _powerReady,
       2 =>
         !s.supported ||
             (s.selectedPackages.isNotEmpty &&
                 s.selectionError == null &&
                 s.error == null),
       3 => widget.hasGoal(),
-      OnboardingSteps.test =>
-        !s.supported ||
-            (_verified &&
-                _permissionReady &&
-                _powerReady &&
-                s.blockingEnabled &&
-                s.selectedPackages.contains(_testedPackage) &&
-                widget.hasGoal()),
-      OnboardingSteps.ready =>
-        !s.supported ||
-            (_permissionReady &&
-                _powerReady &&
-                s.blockingEnabled &&
-                s.selectedPackages.isNotEmpty &&
-                widget.hasGoal()),
+      // The test can be skipped; "Finish Setup" appears only once verified.
+      OnboardingSteps.test => widget.hasGoal(),
+      OnboardingSteps.ready => widget.hasGoal(),
       _ => true,
     };
   }
@@ -413,9 +421,19 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 ],
               ),
             ),
+          if (s.supported)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Text(
+                'App blocking is optional. Without it, Daylock still plans your days and tracks your commitments. '
+                'You can turn it on later in Settings.',
+                key: const ValueKey('setup-blocking-optional'),
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
           _card(
             Icons.accessibility_new,
-            'Accessibility access',
+            'Accessibility access · optional',
             !s.supported
                 ? 'Blocking is available on Android. You can still use the planner here.'
                 : s.enabled && s.connected
@@ -773,7 +791,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             ),
           if (!_powerReady)
             const Text(
-              'Go back to Set Up App Blocking and confirm the Xiaomi battery setting before finishing setup.',
+              'Go back to Set Up App Blocking and confirm the Xiaomi battery setting so blocking keeps working.',
             ),
           if (s.error != null) Text(s.error!),
           TextButton(
@@ -789,6 +807,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             'Your preferences and commitment are saved. Start with Today, plan tomorrow, and watch your Journey grow.',
             checked: true,
           ),
+          if (s.supported && !_blockingSetUp)
+            _card(
+              Icons.lock_open_outlined,
+              'App blocking is off',
+              'Daylock won’t restrict any apps. If you want it later, open Settings and turn on app restrictions.',
+            ),
         ];
     }
   }
@@ -797,7 +821,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   Widget build(BuildContext context) => PopScope(
     canPop: _step == 0,
     onPopInvokedWithResult: (didPop, _) {
-      if (!didPop && !_busy) unawaited(_move(_step - 1));
+      if (!didPop && !_busy) unawaited(_move(_previousStep));
     },
     child: Scaffold(
       body: Builder(
@@ -817,7 +841,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     DaylockSkyButton(
                       tooltip: 'Previous step',
                       icon: Icons.arrow_back_rounded,
-                      onPressed: _busy ? null : () => _move(_step - 1),
+                      onPressed: _busy ? null : () => _move(_previousStep),
                     ),
                   const Spacer(),
                   DaylockSkyButton(
@@ -935,9 +959,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             child: FilledButton(
                               onPressed: _busy || !_canContinue
                                   ? null
-                                  : () => _move(_step + 1),
+                                  : () => _move(_nextStep),
                               child: Text(switch (_step) {
                                 0 => 'Get Started',
+                                1
+                                    when !_blockingSetUp &&
+                                        widget.bridge.status.value.supported =>
+                                  'Continue without blocking',
+                                OnboardingSteps.test when !_verified =>
+                                  'Skip test for now',
                                 OnboardingSteps.test => 'Finish Setup',
                                 OnboardingSteps.ready => 'Go to Daylock',
                                 _ => 'Continue',

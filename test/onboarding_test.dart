@@ -459,26 +459,54 @@ void main() {
     },
   );
 
-  testWidgets('Permission step waits for actual connection and updates live', (
+  testWidgets(
+    'Accessibility is optional: setup continues without it and skips blocking steps',
+    (tester) async {
+      final bridge = TutorialBridge()..status.value = ready(enabled: false);
+      final saved = <int>[];
+      await mount(tester, bridge, 1, saved);
+      expect(
+        find.byKey(const ValueKey('setup-blocking-optional')),
+        findsOneWidget,
+      );
+      expect(find.text('Accessibility access · optional'), findsOneWidget);
+      await tester.tap(find.text('Continue without blocking'));
+      await tester.pumpAndSettle();
+      // Choosing apps is skipped; Back returns to the permission step.
+      expect(saved, [3]);
+      expect(find.text('Set Your First Commitment'), findsOneWidget);
+      await tester.tap(find.byTooltip('Previous step'));
+      await tester.pumpAndSettle();
+      expect(saved, [3, 1]);
+      expect(find.text('Set Up App Blocking'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets('Without blocking, the tour skips the test and can finish', (
     tester,
   ) async {
     final bridge = TutorialBridge()..status.value = ready(enabled: false);
     final saved = <int>[];
+    await mount(tester, bridge, OnboardingSteps.journey, saved);
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(saved, [OnboardingSteps.ready]);
+    expect(find.text('App blocking is off'), findsOneWidget);
+    await tester.tap(find.text('Go to Daylock'));
+    await tester.pumpAndSettle();
+    expect(saved, [OnboardingSteps.ready, OnboardingSteps.complete]);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Connecting Accessibility updates the step live', (tester) async {
+    final bridge = TutorialBridge()..status.value = ready(enabled: false);
+    final saved = <int>[];
     await mount(tester, bridge, 1, saved);
-    expect(
-      tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Continue'))
-          .onPressed,
-      isNull,
-    );
+    expect(find.text('Continue without blocking'), findsOneWidget);
     bridge.status.value = ready();
     await tester.pumpAndSettle();
-    expect(
-      tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Continue'))
-          .onPressed,
-      isNotNull,
-    );
+    expect(find.text('Continue without blocking'), findsNothing);
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     expect(saved, [2]);
@@ -497,14 +525,9 @@ void main() {
         );
       final saved = <int>[];
       await mount(tester, bridge, OnboardingSteps.test, saved);
-      expect(
-        tester
-            .widget<FilledButton>(
-              find.widgetWithText(FilledButton, 'Finish Setup'),
-            )
-            .onPressed,
-        isNull,
-      );
+      // Unverified: the test can be skipped but never reports success.
+      expect(find.text('Finish Setup'), findsNothing);
+      expect(find.text('Skip test for now'), findsOneWidget);
       await tester.ensureVisible(find.text('Test a selected app'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Test a selected app'));
@@ -515,14 +538,7 @@ void main() {
         lock: 'requested_unconfirmed',
       );
       await tester.pump();
-      expect(
-        tester
-            .widget<FilledButton>(
-              find.widgetWithText(FilledButton, 'Finish Setup'),
-            )
-            .onPressed,
-        isNull,
-      );
+      expect(find.text('Finish Setup'), findsNothing);
       bridge.status.value = ready(
         detected: DateTime.now(),
         restriction: 'lock_shown',

@@ -17,7 +17,15 @@ Replay resets only this progress key. Leaving setup keeps its last saved step.
 Storage failures show a retry message and never mark completion.
 
 The sequence is Welcome, Permissions, Restricted apps, First commitment,
-Today & Plan, Areas, Routines, Journey, Blocking test, and Ready. The four new
+Today & Plan, Areas, Routines, Journey, Blocking test, and Ready.
+
+App blocking is optional. On the Permissions step, "Continue without blocking"
+moves on without Accessibility; setup then skips Restricted apps and the
+Blocking test, and Ready notes that blocking is off and can be turned on later
+in Settings. Connecting Accessibility switches the button back to Continue and
+restores the full path. The Xiaomi power confirmation is required only once
+Accessibility is connected. The Blocking test can be skipped ("Skip test for
+now"); "Finish Setup" appears only after a verified lock screen. The four new
 walkthrough pages also introduce stopwatches, task outcomes/excuses, Freedom
 conditions, scheduled events, Calendar/Daily History, Highlights, Past Chapters,
 notification preferences and appearance settings.
@@ -64,7 +72,8 @@ completion of the expanded walkthrough.
   opening. There is no artificial lock screen or simulated Freedom result.
 
 Only a fresh detection of that tested package plus `lock_shown` and `shown`
-visibility evidence unlocks Finish Setup on Android. A launch request, Home
+visibility evidence shows Finish Setup on Android; otherwise the button skips
+the test without claiming success. A launch request, Home
 action or fallback notification alone is not reported as a verified lock screen.
 Permissions and selection are rechecked before completion. Interrupted tests
 resume the test step and must run again. Permission changes refresh on resume.
@@ -93,7 +102,9 @@ permissions, battery exemptions, packages or release-signing changes are added.
    Test system Back, Save & leave, small screens and large accessibility text.
 3. Review the Accessibility disclosure. Cancel should not open settings; Agree
    should. Return with access disabled, enabled but disconnected, then connected.
-   Continue should require a real connection. Test notification grant and denial.
+   Without a connection the button reads "Continue without blocking" and skips
+   app selection and the test; once connected it reads Continue. Test
+   notification grant and denial.
    On Xiaomi / Redmi / Poco, check the No restrictions guidance, app-specific
    App info shortcut and durable user confirmation. Merely opening App info must
    not count as confirmation. On Samsung/Pixel, the Xiaomi card must not appear.
