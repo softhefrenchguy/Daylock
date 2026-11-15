@@ -29,6 +29,10 @@ class Task {
   final String id;
   String name;
   String? areaId;
+
+  /// The routine that put this commitment in a plan, if any. Edits to the
+  /// task stay on this day; the link only drives Repeat and removal.
+  String? routineId;
   final TaskType type;
   final int? minimumFocusMinutes;
   final String? focusTarget;
@@ -45,6 +49,7 @@ class Task {
     required this.name,
     this.type = TaskType.goal,
     this.areaId = Area.defaultId,
+    this.routineId,
     bool isCompleted = false,
     TaskOutcome? outcome,
     String? excuseReason,
@@ -231,6 +236,7 @@ class Task {
     'outcome': outcome.name,
     'excuseReason': excuseReason,
     if (areaId != null) 'areaId': areaId,
+    if (routineId != null) 'routineId': routineId,
     if (minimumFocusMinutes != null) 'minimumFocusMinutes': minimumFocusMinutes,
     if (focusTarget != null) 'focusTarget': focusTarget,
     'accumulatedFocusMilliseconds': accumulatedFocusMilliseconds,
@@ -255,6 +261,7 @@ class Task {
       name: json['name'] as String,
       type: type,
       areaId: readAreaId(json['areaId']),
+      routineId: json['routineId'] as String?,
       outcome: outcome,
       excuseReason: json['excuseReason'] as String?,
       minimumFocusMinutes: json['minimumFocusMinutes'] as int?,

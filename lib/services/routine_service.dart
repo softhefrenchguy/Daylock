@@ -1,76 +1,46 @@
+import '../models/area.dart';
+import '../models/daily_plan.dart';
 import '../models/routine.dart';
 import '../models/task.dart';
-import '../models/area.dart';
 
-class RoutineSuggestion {
-  final String routineId, routineName;
-  final DateTime date;
-  final int revision;
-  final RoutineStep step;
-  const RoutineSuggestion({
-    required this.routineId,
-    required this.routineName,
-    required this.date,
-    required this.revision,
-    required this.step,
-  });
-}
-
-class RoutineResolution {
+class RoutineApplication {
   final RoutineBook book;
-  final Task? task;
-  final bool changed;
-  const RoutineResolution({
-    required this.book,
-    this.task,
-    required this.changed,
-  });
+  final List<Task> added;
+  const RoutineApplication({required this.book, this.added = const []});
+  bool get changed => added.isNotEmpty;
 }
 
 class RoutineService {
   const RoutineService();
-  List<RoutineSuggestion> suggestions(RoutineBook book, DateTime date) =>
-      List.unmodifiable([
-        for (final routine in book.routines)
-          if (!routine.decisions.containsKey(routineDateKey(date)))
-            RoutineSuggestion(
-              routineId: routine.id,
-              routineName: routine.name,
-              date: DateTime(date.year, date.month, date.day),
-              revision: routine.revision,
-              step: routine.nextStep,
-            ),
-      ]);
-  RoutineResolution resolve(
+
+  /// Routines due on [plan]'s date that have not been handled for that date
+  /// yet. A committed plan is never changed.
+  List<Routine> due(RoutineBook book, DailyPlan plan) => [
+    if (!plan.isCommitted)
+      for (final routine in book.routines)
+        if (routine.schedule.isDue(plan.date) &&
+            !routine.decisions.containsKey(routineDateKey(plan.date)) &&
+            !plan.tasks.any((task) => task.routineId == routine.id))
+          routine,
+  ];
+
+  /// Builds each due routine's next step as a real commitment for [plan].
+  /// The caller appends [RoutineApplication.added] and saves both together.
+  RoutineApplication apply(
     RoutineBook book,
-    RoutineSuggestion suggestion,
-    RoutineAction action,
-    DateTime planDate, {
+    DailyPlan plan, {
     AreaBook? areas,
   }) {
-    if (routineDateKey(suggestion.date) != routineDateKey(planDate)) {
-      return RoutineResolution(book: book, changed: false);
+    final routines = due(book, plan);
+    if (routines.isEmpty) return RoutineApplication(book: book);
+    var updated = book;
+    final added = <Task>[];
+    for (final routine in routines) {
+      final task = routine.nextStep.toTask(routineId: routine.id);
+      if (areas != null) task.areaId = areas.forNewCommitment(task.areaId).id;
+      added.add(task);
+      updated = updated.upsert(routine.add(plan.date));
     }
-    final matches = book.routines.where(
-      (routine) => routine.id == suggestion.routineId,
-    );
-    if (matches.isEmpty) return RoutineResolution(book: book, changed: false);
-    final routine = matches.single;
-    if (routine.decisions.containsKey(routineDateKey(planDate)) ||
-        routine.revision != suggestion.revision ||
-        routine.nextStep.id != suggestion.step.id) {
-      return RoutineResolution(book: book, changed: false);
-    }
-    final task = action == RoutineAction.accept
-        ? routine.nextStep.toTask()
-        : null;
-    if (task != null && areas != null) {
-      task.areaId = areas.forNewCommitment(task.areaId).id;
-    }
-    return RoutineResolution(
-      book: book.upsert(routine.decide(planDate, action)),
-      changed: true,
-      task: task,
-    );
+    return RoutineApplication(book: updated, added: added);
   }
 }

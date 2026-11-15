@@ -278,21 +278,21 @@ void main() {
       await LocalStorage().save(state(areas: areas, routines: routines));
       final saved = (await LocalStorage().load())!;
       const service = RoutineService();
-      final result = service.resolve(
+      DailyPlan draft(DateTime d) => DailyPlan(date: d, tasks: []);
+      final result = service.apply(
         saved.routines,
-        service.suggestions(saved.routines, date).single,
-        RoutineAction.accept,
-        date,
+        draft(date),
         areas: saved.areas,
       );
-      expect(result.task!.areaId, custom.id);
-      final history = HistoricalTask.capture(result.task!, date);
-      result.task!.areaId = Area.defaultId;
+      final task = result.added.single;
+      expect(task.areaId, custom.id);
+      final history = HistoricalTask.capture(task, date);
+      task.areaId = Area.defaultId;
       expect(saved.routines.routines.single.steps.single.areaId, custom.id);
       expect(history.areaId, custom.id);
       final next = date.add(const Duration(days: 1));
       expect(
-        service.suggestions(result.book, next).single.step.areaId,
+        service.apply(result.book, draft(next)).added.single.areaId,
         custom.id,
       );
       final changed = result.book.upsert(
@@ -309,14 +309,14 @@ void main() {
         ),
       );
       expect(
-        service.suggestions(changed, next).single.step.areaId,
+        service.apply(changed, draft(next)).added.single.areaId,
         Area.defaultId,
       );
       expect(history.areaId, custom.id);
     },
   );
 
-  test('Archived routine assignment falls back for acceptance, restore resumes inheritance', () {
+  test('Archived routine assignment falls back when added, restore resumes inheritance', () {
     final custom = health();
     final areas = AreaBook.initial().upsert(custom).archive(custom.id, true);
     final routines = RoutineBook([
@@ -334,48 +334,20 @@ void main() {
       ),
     ]);
     const service = RoutineService();
-    final suggestion = service.suggestions(routines, date).single;
+    final plan = DailyPlan(date: date, tasks: []);
     expect(
-      service
-          .resolve(
-            routines,
-            suggestion,
-            RoutineAction.accept,
-            date,
-            areas: areas,
-          )
-          .task!
-          .areaId,
+      service.apply(routines, plan, areas: areas).added.single.areaId,
       Area.defaultId,
     );
     expect(
       service
-          .resolve(
-            routines,
-            suggestion,
-            RoutineAction.accept,
-            date,
-            areas: areas.archive(custom.id, false),
-          )
-          .task!
+          .apply(routines, plan, areas: areas.archive(custom.id, false))
+          .added
+          .single
           .areaId,
       custom.id,
     );
     expect(routines.routines.single.steps.single.areaId, custom.id);
-    for (final action in [RoutineAction.skip, RoutineAction.dismiss]) {
-      final result = service.resolve(
-        routines,
-        suggestion,
-        action,
-        date,
-        areas: areas,
-      );
-      expect(result.task, isNull);
-      expect(
-        result.book.routines.single.decisions.values.single.action,
-        action,
-      );
-    }
   });
 
   test('Area assignments do not alter Freedom eligibility', () {

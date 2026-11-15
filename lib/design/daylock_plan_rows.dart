@@ -12,12 +12,16 @@ class DaylockPlanTaskRow extends StatelessWidget {
   final Area? area;
   final Widget? areaAction;
   final bool showIcon;
+
+  /// Set for commitments a routine added, e.g. "Mon, Wed, Fri".
+  final String? repeatLabel;
   const DaylockPlanTaskRow({
     super.key,
     required this.task,
     this.area,
     this.areaAction,
     this.showIcon = true,
+    this.repeatLabel,
   });
 
   @override
@@ -66,6 +70,30 @@ class DaylockPlanTaskRow extends StatelessWidget {
                     ],
                   ),
                   ?areaAction,
+                  if (repeatLabel != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.repeat_rounded,
+                            size: 15,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              repeatLabel!,
+                              semanticsLabel: 'Repeats $repeatLabel',
+                              style: theme.textTheme.bodySmall!.copyWith(
+                                fontSize: 13,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   if (task.focusTarget != null)
                     Text(
                       task.focusTarget!,

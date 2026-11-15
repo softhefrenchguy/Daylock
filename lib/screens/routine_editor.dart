@@ -6,11 +6,15 @@ import '../models/task.dart';
 import '../models/area.dart';
 import '../design/daylock_areas.dart';
 import 'commitment_editor.dart';
+import 'repeat_picker.dart';
 
 class RoutineEditor extends StatefulWidget {
   final Routine? routine;
   final AreaBook? areas;
-  const RoutineEditor({super.key, this.routine, this.areas});
+
+  /// The first plan date a new or changed schedule counts from.
+  final DateTime? planningDate;
+  const RoutineEditor({super.key, this.routine, this.areas, this.planningDate});
   @override
   State<RoutineEditor> createState() => _RoutineEditorState();
 }
@@ -20,11 +24,34 @@ class _RoutineEditorState extends State<RoutineEditor> {
   late final List<RoutineStep> _steps;
   bool _submitted = false;
   bool _openingStep = false;
+  late RoutineSchedule _schedule;
+  DateTime get _from {
+    if (widget.planningDate != null) return widget.planningDate!;
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day + 1);
+  }
+
   @override
   void initState() {
     super.initState();
     _name = TextEditingController(text: widget.routine?.name);
     _steps = List.of(widget.routine?.steps ?? []);
+    _schedule = widget.routine?.schedule ?? RoutineSchedule.daily(from: _from);
+  }
+
+  Future<void> _chooseSchedule() async {
+    if (_openingStep || _submitted) return;
+    _openingStep = true;
+    final choice = await showRepeatPicker(
+      context,
+      initial: _schedule,
+      from: _from,
+      allowNever: false,
+    );
+    _openingStep = false;
+    if (mounted && choice?.schedule != null) {
+      setState(() => _schedule = choice!.schedule!);
+    }
   }
 
   @override
@@ -80,8 +107,13 @@ class _RoutineEditorState extends State<RoutineEditor> {
     _submitted = true;
     final old = widget.routine;
     final routine = old == null
-        ? Routine(id: newRoutineId(), name: _name.text, steps: _steps)
-        : old.edit(name: _name.text, steps: _steps);
+        ? Routine(
+            id: newRoutineId(),
+            name: _name.text,
+            steps: _steps,
+            schedule: _schedule,
+          )
+        : old.edit(name: _name.text, steps: _steps, schedule: _schedule);
     Navigator.pop(context, routine);
   }
 
@@ -100,9 +132,39 @@ class _RoutineEditorState extends State<RoutineEditor> {
             onChanged: (_) => setState(() {}),
             decoration: const InputDecoration(labelText: 'Routine name'),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Steps repeat in this order. No commitment is added until you accept its suggestion in Plan.',
+          const SizedBox(height: 8),
+          ListTile(
+            key: const ValueKey('routine-schedule'),
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(
+              Icons.repeat_rounded,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            title: const Text('Repeat'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _schedule.label,
+                  key: const ValueKey('routine-schedule-label'),
+                  style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  'Next: ${_schedule.upcoming(_from).map(repeatDateLabel).join(' · ')}',
+                ),
+              ],
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: _chooseSchedule,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _steps.length > 1
+                ? 'A rotation: each due day adds the next step, in this order. A step you remove comes back next time.'
+                : 'Each due day adds this to tomorrow’s plan automatically. Add more steps to make a rotation.',
           ),
           const SizedBox(height: 16),
           for (var index = 0; index < _steps.length; index++)
@@ -150,7 +212,9 @@ class _RoutineEditorState extends State<RoutineEditor> {
             key: const ValueKey('add-routine-step'),
             onPressed: () => _addStep(),
             icon: const Icon(Icons.add),
-            label: const Text('Add commitment step'),
+            label: Text(
+              _steps.isEmpty ? 'Add commitment' : 'Add rotation step',
+            ),
           ),
           const SizedBox(height: 16),
           FilledButton(

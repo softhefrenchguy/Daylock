@@ -5,11 +5,16 @@ import 'package:daylock/models/task.dart';
 import 'package:daylock/services/routine_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+// A Wednesday.
 final date = DateTime(2026, 10, 14);
 const service = RoutineService();
-Routine cycle({String id = 'workout'}) => Routine(
+DateTime day(int offset) => DateTime(date.year, date.month, date.day + offset);
+DailyPlan draft(DateTime date, [List<Task>? tasks]) =>
+    DailyPlan(date: date, tasks: tasks ?? []);
+Routine cycle({String id = 'workout', RoutineSchedule? schedule}) => Routine(
   id: id,
   name: 'Training',
+  schedule: schedule,
   steps: [
     for (final name in ['Push', 'Pull', 'Legs', 'Conditioning'])
       RoutineStep(id: name, name: name, type: TaskType.goal),
@@ -17,33 +22,124 @@ Routine cycle({String id = 'workout'}) => Routine(
 );
 
 void main() {
-  test(
-    'Accept advances the ordered cycle and wraps, never adds automatically',
-    () {
-      var book = RoutineBook([cycle()]);
-      for (var offset = 0; offset < 5; offset++) {
-        final day = DateTime(date.year, date.month, date.day + offset);
-        final suggestion = service.suggestions(book, day).single;
-        expect(
-          suggestion.step.name,
-          ['Push', 'Pull', 'Legs', 'Conditioning'][offset % 4],
-        );
-        final result = service.resolve(
-          book,
-          suggestion,
-          RoutineAction.accept,
-          day,
-        );
-        expect(result.changed, isTrue);
-        expect(result.task!.name, suggestion.step.name);
-        expect(result.task!.outcome, TaskOutcome.incomplete);
-        expect(service.suggestions(result.book, day), isEmpty);
-        expect(book.routines.single.decisions, hasLength(offset));
-        book = result.book;
+  group('RoutineSchedule', () {
+    test('Every N days is fixed to the calendar from its start', () {
+      final every2 = RoutineSchedule.everyDays(2, from: date);
+      expect(
+        [for (var i = 0; i < 7; i++) every2.isDue(day(i))],
+        [true, false, true, false, true, false, true],
+      );
+      expect(every2.isDue(day(-2)), isFalse, reason: 'never before its start');
+      expect(every2.upcoming(day(1)), [day(2), day(4), day(6)]);
+      expect(every2.label, 'Every 2 days');
+    });
+
+    test('Intervals count calendar days across DST and month/year ends', () {
+      // Europe and US DST changes, a leap day and New Year.
+      final every3 = RoutineSchedule.everyDays(3, from: DateTime(2026, 3, 27));
+      expect(every3.isDue(DateTime(2026, 3, 30)), isTrue);
+      expect(every3.isDue(DateTime(2026, 4, 2)), isTrue);
+      final every7 = RoutineSchedule.everyDays(7, from: DateTime(2027, 12, 29));
+      expect(every7.isDue(DateTime(2028, 1, 5)), isTrue);
+      expect(every7.isDue(DateTime(2028, 3, 1)), isTrue);
+      expect(
+        calendarDaysBetween(DateTime(2028, 2, 28), DateTime(2028, 3, 1)),
+        2,
+      );
+    });
+
+    test('Weekdays match chosen days and read naturally', () {
+      final mwf = RoutineSchedule.onWeekdays({5, 1, 3});
+      expect(mwf.isDue(date), isTrue); // Wednesday
+      expect(mwf.isDue(day(1)), isFalse);
+      expect(mwf.upcoming(day(1)), [day(2), day(5), day(7)]);
+      expect(mwf.label, 'Mon, Wed, Fri');
+      expect(RoutineSchedule.onWeekdays({1, 2, 3, 4, 5}).label, 'Weekdays');
+      expect(RoutineSchedule.onWeekdays({6, 7}).label, 'Weekends');
+      expect(RoutineSchedule.onWeekdays({1, 2, 3, 4, 5, 6, 7}).label, 'Daily');
+      expect(RoutineSchedule.daily().label, 'Daily');
+    });
+
+    test('Round trips and rejects invalid rules', () {
+      for (final schedule in [
+        RoutineSchedule.everyDays(5, from: date),
+        RoutineSchedule.onWeekdays({2, 4}),
+      ]) {
+        final restored = RoutineSchedule.fromJson(schedule.toJson());
+        expect(restored.toJson(), schedule.toJson());
+        expect(restored.sameRule(schedule), isTrue);
       }
-      expect(book.routines.single.nextStep.name, 'Pull');
-    },
-  );
+      expect(
+        () => RoutineSchedule.everyDays(0, from: date),
+        throwsFormatException,
+      );
+      expect(
+        () => RoutineSchedule.everyDays(31, from: date),
+        throwsFormatException,
+      );
+      expect(() => RoutineSchedule.onWeekdays({}), throwsFormatException);
+      expect(() => RoutineSchedule.onWeekdays({8}), throwsFormatException);
+      expect(
+        () => RoutineSchedule.fromJson({'kind': 'monthly'}),
+        throwsFormatException,
+      );
+    });
+  });
+
+  test('Due routines are added once to the draft and rotations wrap', () {
+    var book = RoutineBook([cycle()]);
+    for (var offset = 0; offset < 5; offset++) {
+      final plan = draft(day(offset));
+      final applied = service.apply(book, plan);
+      expect(
+        applied.added.single.name,
+        ['Push', 'Pull', 'Legs', 'Conditioning'][offset % 4],
+      );
+      expect(applied.added.single.routineId, 'workout');
+      expect(applied.added.single.outcome, TaskOutcome.incomplete);
+      plan.tasks.addAll(applied.added);
+      expect(service.apply(applied.book, plan).changed, isFalse);
+      // Even if the task is later removed, a decided date is not re-added.
+      expect(service.apply(applied.book, draft(day(offset))).changed, isFalse);
+      book = applied.book;
+    }
+    expect(book.routines.single.nextStep.name, 'Pull');
+  });
+
+  test('Only due dates get the routine and committed plans are untouched', () {
+    final book = RoutineBook([
+      cycle(schedule: RoutineSchedule.everyDays(2, from: date)),
+    ]);
+    expect(service.apply(book, draft(day(1))).changed, isFalse);
+    expect(service.apply(book, draft(day(2))).added.single.name, 'Push');
+    final locked = DailyPlan(date: date, tasks: [], isCommitted: true);
+    expect(service.apply(book, locked).changed, isFalse);
+    expect(locked.tasks, isEmpty);
+  });
+
+  test('Removing a rotation step brings the same step back next time', () {
+    final book = RoutineBook([
+      cycle(schedule: RoutineSchedule.onWeekdays({1, 3, 5})),
+    ]);
+    final wed = service.apply(book, draft(date));
+    expect(wed.added.single.name, 'Push');
+    final removed = wed.book.routines.single.remove(date);
+    expect(
+      removed.decisions[routineDateKey(date)]!.action,
+      RoutineAction.removed,
+    );
+    expect(removed.nextStep.name, 'Push');
+    final fri = service.apply(RoutineBook([removed]), draft(day(2)));
+    expect(fri.added.single.name, 'Push');
+    // Undo puts it back and moves the rotation on again.
+    final restored = removed.restore(date);
+    expect(restored.nextStep.name, 'Pull');
+    expect(
+      restored.decisions[routineDateKey(date)]!.action,
+      RoutineAction.added,
+    );
+    expect(restored.remove(day(9)), same(restored), reason: 'no decision');
+  });
 
   test(
     'Focus definition retains minimum and target but copies no execution state',
@@ -59,177 +155,98 @@ void main() {
       final book = RoutineBook([
         Routine(id: 'study', name: 'Study', steps: [step]),
       ]);
-      final accepted = service
-          .resolve(
-            book,
-            service.suggestions(book, date).single,
-            RoutineAction.accept,
-            date,
-          )
-          .task!;
-      expect(accepted.type, TaskType.focus);
-      expect(accepted.minimumFocusMinutes, 45);
-      expect(accepted.focusTarget, 'Finish Chapter 7');
-      expect(accepted.accumulatedFocusMilliseconds, 0);
-      expect(accepted.isFocusRunning, isFalse);
-      expect(accepted.isCompleted, isFalse);
-      expect(identical(original, accepted), isFalse);
-      accepted.name = 'Changed accepted task';
+      final added = service.apply(book, draft(date)).added.single;
+      expect(added.type, TaskType.focus);
+      expect(added.minimumFocusMinutes, 45);
+      expect(added.focusTarget, 'Finish Chapter 7');
+      expect(added.accumulatedFocusMilliseconds, 0);
+      expect(added.isFocusRunning, isFalse);
+      expect(identical(original, added), isFalse);
+      added.name = 'One-day rename';
       expect(step.name, 'Read');
     },
   );
 
-  test('Skip advances one step without creating any commitment', () {
-    final book = RoutineBook([cycle()]);
-    final result = service.resolve(
-      book,
-      service.suggestions(book, date).single,
-      RoutineAction.skip,
-      date,
-    );
-    expect(result.changed, isTrue);
-    expect(result.task, isNull);
-    expect(result.book.routines.single.nextStep.name, 'Pull');
-    expect(
-      result.book.routines.single.decisions[routineDateKey(date)]!.action,
-      RoutineAction.skip,
-    );
-    expect(service.suggestions(result.book, date), isEmpty);
+  test('A task already linked to the routine is never duplicated', () {
+    final routine = cycle();
+    final plan = draft(date, [routine.nextStep.toTask(routineId: routine.id)]);
+    expect(service.apply(RoutineBook([routine]), plan).changed, isFalse);
   });
 
-  test(
-    'Dismiss hides this planning date and offers the same step on the next',
-    () {
-      final book = RoutineBook([cycle()]);
-      final result = service.resolve(
-        book,
-        service.suggestions(book, date).single,
-        RoutineAction.dismiss,
-        date,
-      );
-      expect(result.changed, isTrue);
-      expect(result.task, isNull);
-      expect(result.book.routines.single.nextStep.name, 'Push');
-      expect(service.suggestions(result.book, date), isEmpty);
-      expect(
-        service
-            .suggestions(result.book, DateTime(2026, 10, 15))
-            .single
-            .step
-            .name,
-        'Push',
-      );
-    },
-  );
-
-  test('Unanswered suggestions and missed dates never advance a cycle', () {
-    final book = RoutineBook([cycle()]);
-    for (final offset in [0, 1, 20, 365]) {
-      expect(
-        service
-            .suggestions(book, DateTime(2026, 10, 14 + offset))
-            .single
-            .step
-            .name,
-        'Push',
-      );
-    }
-    expect(book.routines.single.decisions, isEmpty);
-    expect(book.routines.single.nextStepIndex, 0);
-  });
-
-  for (final action in RoutineAction.values) {
-    test(
-      'Repeated ${action.name} and accept cannot duplicate or advance twice',
-      () {
-        final book = RoutineBook([cycle()]);
-        final suggestion = service.suggestions(book, date).single;
-        final first = service.resolve(book, suggestion, action, date);
-        final restored = RoutineBook.fromJson(first.book.toJson());
-        for (final repeated in RoutineAction.values) {
-          final result = service.resolve(restored, suggestion, repeated, date);
-          expect(result.changed, isFalse);
-          expect(result.task, isNull);
-          expect(result.book, same(restored));
-        }
-        expect(restored.routines.single.decisions, hasLength(1));
-      },
-    );
-  }
-
-  test(
-    'Old date, edited definition and deleted routine reject stale actions',
-    () {
-      final book = RoutineBook([cycle()]);
-      final suggestion = service.suggestions(book, date).single;
-      final edited = book.upsert(
-        book.routines.single.edit(
-          name: 'Updated',
-          steps: book.routines.single.steps,
-        ),
-      );
-      for (final pair in [
-        (book, DateTime(2026, 10, 15)),
-        (edited, date),
-        (book.remove('workout'), date),
-      ]) {
-        final result = service.resolve(
-          pair.$1,
-          suggestion,
-          RoutineAction.accept,
-          pair.$2,
-        );
-        expect(result.changed, isFalse);
-        expect(result.task, isNull);
-      }
-    },
-  );
-
-  test('Independent routines can each be accepted once on a date', () {
-    final book = RoutineBook([cycle(), cycle(id: 'second')]);
-    final choices = service.suggestions(book, date);
-    final first = service.resolve(
-      book,
-      choices.first,
-      RoutineAction.accept,
-      date,
-    );
-    final second = service.resolve(
-      first.book,
-      choices.last,
-      RoutineAction.skip,
-      date,
-    );
-    expect(first.task, isNotNull);
-    expect(second.task, isNull);
-    expect(service.suggestions(second.book, date), isEmpty);
-    expect(second.book.routines.map((routine) => routine.nextStepIndex), [
-      1,
-      1,
+  test('Independent routines are each added on their own date', () {
+    final book = RoutineBook([
+      cycle(),
+      cycle(id: 'second', schedule: RoutineSchedule.onWeekdays({4})),
     ]);
+    expect(service.apply(book, draft(date)).added, hasLength(1));
+    expect(service.apply(book, draft(day(1))).added, hasLength(2));
   });
 
   test('Editing/reordering preserves next-step identity and dated choices', () {
-    final routine = cycle().decide(date, RoutineAction.accept);
+    final routine = cycle().add(date);
     final edit = routine.edit(
       name: 'Renamed',
       steps: routine.steps.reversed.toList(),
+      schedule: RoutineSchedule.onWeekdays({2}),
     );
     expect(edit.nextStep.name, 'Pull');
     expect(edit.revision, 1);
     expect(edit.decisions, routine.decisions);
+    expect(edit.schedule.label, 'Tue');
     final removed = edit.edit(
       name: edit.name,
       steps: edit.steps.where((step) => step.name != 'Pull').toList(),
     );
     expect(removed.nextStepIndex, 0);
     expect(removed.nextStep.name, 'Conditioning');
+    expect(removed.schedule.label, 'Tue', reason: 'kept when not changed');
+  });
+
+  test('Old decisions are pruned so saved data stays small', () {
+    var routine = cycle();
+    for (var i = 0; i < 90; i++) {
+      routine = routine.add(day(i));
+    }
+    expect(
+      routine.decisions.length,
+      lessThanOrEqualTo(Routine.decisionRetentionDays + 1),
+    );
+  });
+
+  test('Routines saved before schedules load as daily with old choices', () {
+    final legacy = {
+      'id': 'old',
+      'name': 'Old',
+      'steps': [
+        {'id': 'a', 'name': 'A', 'type': 'goal'},
+      ],
+      'nextStepIndex': 0,
+      'revision': 3,
+      'decisions': {
+        '2026-10-13': {'action': 'accept', 'stepId': 'a'},
+        '2026-10-14': {'action': 'skip', 'stepId': 'a'},
+        '2026-10-15': {'action': 'dismiss', 'stepId': 'a'},
+      },
+    };
+    final routine = Routine.fromJson(legacy);
+    expect(routine.schedule.isDaily, isTrue);
+    expect(routine.decisions.values.map((d) => d.action), [
+      RoutineAction.added,
+      RoutineAction.removed,
+      RoutineAction.removed,
+    ]);
+    // A date the old flow already handled is not filled in again.
+    final book = RoutineBook([routine]);
+    expect(service.apply(book, draft(date)).changed, isFalse);
+    expect(service.apply(book, draft(DateTime(2026, 10, 16))).changed, isTrue);
   });
 
   test(
     'Definitions, progress and choices round trip with immutable collections',
     () {
-      final book = RoutineBook([cycle().decide(date, RoutineAction.skip)]);
+      final book = RoutineBook([
+        cycle(schedule: RoutineSchedule.everyDays(3, from: date)).add(date),
+      ]);
       final restored = RoutineBook.fromJson(book.toJson());
       expect(restored.toJson(), book.toJson());
       expect(() => restored.routines.clear(), throwsUnsupportedError);
@@ -239,10 +256,6 @@ void main() {
       );
       expect(
         () => restored.routines.single.decisions.clear(),
-        throwsUnsupportedError,
-      );
-      expect(
-        () => service.suggestions(restored, DateTime(2026, 10, 15)).clear(),
         throwsUnsupportedError,
       );
     },
@@ -259,20 +272,7 @@ void main() {
       throwsFormatException,
     );
     expect(
-      () => RoutineStep(id: 'focus', name: 'Focus', type: TaskType.focus),
-      throwsFormatException,
-    );
-    expect(
       () => RoutineStep(id: 'goal', name: ' ', type: TaskType.goal),
-      throwsFormatException,
-    );
-    expect(
-      () => RoutineStep(
-        id: 'goal',
-        name: 'Goal',
-        type: TaskType.goal,
-        minimumFocusMinutes: 1,
-      ),
       throwsFormatException,
     );
     expect(
@@ -304,7 +304,7 @@ void main() {
         steps: cycle().steps,
         decisions: {
           '2026-02-30': const RoutineDecision(
-            action: RoutineAction.accept,
+            action: RoutineAction.added,
             stepId: 'Push',
           ),
         },
@@ -313,11 +313,14 @@ void main() {
     );
   });
 
-  test('Rollover and multiple missed days preserve progress without inventing decisions', () {
-    final book = RoutineBook([cycle().decide(date, RoutineAction.accept)]);
+  test('Rollover keeps progress and the next draft gets the next step', () {
+    final book = RoutineBook([cycle().add(date)]);
     final state = DaylockState(
       todayPlan: DailyPlan(date: DateTime(2026, 10, 13), tasks: []),
-      tomorrowPlan: DailyPlan(date: date, tasks: [cycle().nextStep.toTask()]),
+      tomorrowPlan: DailyPlan(
+        date: date,
+        tasks: [cycle().nextStep.toTask(routineId: 'workout')],
+      ),
       routines: book,
     );
     for (final next in [
@@ -327,13 +330,8 @@ void main() {
     ]) {
       final rolled = state.rollOver(next);
       expect(rolled.routines, same(book));
-      expect(rolled.routines.routines.single.decisions, hasLength(1));
       expect(
-        service
-            .suggestions(rolled.routines, rolled.tomorrowPlan.date)
-            .single
-            .step
-            .name,
+        service.apply(rolled.routines, rolled.tomorrowPlan).added.single.name,
         'Pull',
       );
     }

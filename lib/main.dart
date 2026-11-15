@@ -322,7 +322,27 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       tomorrowPlan = current.tomorrowPlan;
       history = current.history;
     });
+    if (!_applyRoutines()) unawaited(_saveState());
+  }
+
+  /// Puts every routine due tomorrow into tomorrow's draft. Returns whether
+  /// anything was added (and saved). Committed plans are never touched, and a
+  /// routine the user removed for a date is not added back.
+  bool _applyRoutines() {
+    if (_isLoading || _loadFailed) return false;
+    final applied = const RoutineService().apply(
+      routines,
+      tomorrowPlan,
+      areas: areas,
+    );
+    if (!applied.changed) return false;
+    setState(() {
+      routines = applied.book;
+      tomorrowPlan.tasks.addAll(applied.added);
+    });
+    _planningChanges.value++;
     unawaited(_saveState());
+    return true;
   }
 
   void _changeTaskOutcome(
@@ -386,6 +406,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       });
       // Also catch a date change while the initial read/write was pending.
       _refreshClock();
+      _applyRoutines();
       _publishNotifications();
       if (showTutorial) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -694,6 +715,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         builder: (context, revision, _) => RoutinesScreen(
           book: routines,
           areas: areas,
+          planningDate: tomorrowPlan.date,
           onSaved: _saveRoutine,
           onDeleted: (id) {
             setState(() => routines = routines.remove(id));
@@ -715,36 +737,137 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     }
     final updated = matches.isEmpty
         ? saved
-        : matches.single.edit(name: saved.name, steps: saved.steps);
+        : matches.single.edit(
+            name: saved.name,
+            steps: saved.steps,
+            schedule: saved.schedule,
+          );
     setState(() => routines = routines.upsert(updated));
+    _planningChanges.value++;
+    if (!_applyRoutines()) unawaited(_saveState());
+  }
+
+  /// Repeat was set or cleared from the commitment editor. A single-step
+  /// routine lives behind the task; rotations are only managed in Routines.
+  void _changeRepeat(Task task, RoutineSchedule? schedule, DailyPlan source) {
+    _refreshClock();
+    if (!identical(source, tomorrowPlan) ||
+        tomorrowPlan.isCommitted ||
+        !tomorrowPlan.tasks.contains(task)) {
+      return;
+    }
+    final date = tomorrowPlan.date;
+    final existing = routines.byId(task.routineId);
+    if (existing != null && existing.isRotation) return;
+    setState(() {
+      if (schedule == null) {
+        if (existing != null) routines = routines.remove(existing.id);
+        task.routineId = null;
+      } else if (existing != null) {
+        var updated = existing.withSchedule(schedule);
+        if (schedule.isDue(date) &&
+            !updated.decisions.containsKey(routineDateKey(date))) {
+          updated = updated.recordExisting(date, updated.steps.single.id);
+        }
+        routines = routines.upsert(updated);
+      } else {
+        final step = RoutineStep.fromTask(task);
+        var routine = Routine(
+          id: newRoutineId(),
+          name: task.name,
+          steps: [step],
+          schedule: schedule,
+        );
+        // The task being edited is this date's occurrence, so it is never
+        // added twice. If the repeat isn't due that day, it stays a one-off.
+        if (schedule.isDue(date)) {
+          routine = routine.recordExisting(date, step.id);
+        }
+        routines = routines.upsert(routine);
+        task.routineId = routine.id;
+      }
+    });
     _planningChanges.value++;
     unawaited(_saveState());
   }
 
-  void _resolveRoutine(
-    RoutineSuggestion suggestion,
-    RoutineAction action,
-    DailyPlan sourcePlan,
-  ) {
+  void _removeTask(Task task, DailyPlan source) {
     _refreshClock();
-    if (!identical(sourcePlan, tomorrowPlan) || tomorrowPlan.isCommitted) {
+    if (!identical(source, tomorrowPlan) ||
+        tomorrowPlan.isCommitted ||
+        !tomorrowPlan.tasks.contains(task)) {
       return;
     }
-    final resolution = const RoutineService().resolve(
-      routines,
-      suggestion,
-      action,
-      tomorrowPlan.date,
-      areas: areas,
-    );
-    if (!resolution.changed) return;
+    final index = tomorrowPlan.tasks.indexOf(task);
+    final routine = routines.byId(task.routineId);
+    final date = tomorrowPlan.date;
     setState(() {
-      routines = resolution.book;
-      if (resolution.task != null) tomorrowPlan.tasks.add(resolution.task!);
+      tomorrowPlan.tasks.remove(task);
+      if (routine != null) routines = routines.upsert(routine.remove(date));
     });
     _planningChanges.value++;
-    // Decisions, cycle progress and accepted tasks are saved together.
     unawaited(_saveState());
+    if (routine == null) return;
+    final messenger = _messengerKey.currentState;
+    messenger?.hideCurrentSnackBar();
+    messenger?.showSnackBar(
+      SnackBar(
+        key: const ValueKey('routine-removed-snackbar'),
+        duration: const Duration(seconds: 6),
+        content: Row(
+          children: [
+            Expanded(child: Text('Removed for ${daylockWeekday(date)}.')),
+            TextButton(
+              key: const ValueKey('routine-removed-undo'),
+              onPressed: () {
+                messenger.hideCurrentSnackBar();
+                _undoRemoval(task, index, routine.id, source);
+              },
+              child: const Text('Undo'),
+            ),
+            TextButton(
+              key: const ValueKey('routine-removed-stop'),
+              onPressed: () {
+                messenger.hideCurrentSnackBar();
+                _stopRepeating(routine.id);
+              },
+              child: const Text('Stop repeating'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _undoRemoval(Task task, int index, String routineId, DailyPlan source) {
+    _refreshClock();
+    if (!identical(source, tomorrowPlan) ||
+        tomorrowPlan.isCommitted ||
+        tomorrowPlan.tasks.contains(task)) {
+      return;
+    }
+    final routine = routines.byId(routineId);
+    setState(() {
+      tomorrowPlan.tasks.insert(
+        index.clamp(0, tomorrowPlan.tasks.length),
+        task,
+      );
+      if (routine != null) {
+        routines = routines.upsert(routine.restore(tomorrowPlan.date));
+      }
+    });
+    _planningChanges.value++;
+    unawaited(_saveState());
+  }
+
+  void _stopRepeating(String routineId) {
+    if (routines.byId(routineId) == null) return;
+    setState(() => routines = routines.remove(routineId));
+    _planningChanges.value++;
+    unawaited(_saveState());
+    _messengerKey.currentState?.showSnackBar(
+      const SnackBar(content: Text('Stopped repeating.')),
+    );
   }
 
   JourneyData _journeyData() {
@@ -1150,22 +1273,10 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           });
           unawaited(_saveState());
         },
-        onTaskRemoved: (task) {
-          _refreshClock();
-          if (!identical(planForTomorrow, tomorrowPlan) ||
-              tomorrowPlan.isCommitted ||
-              !tomorrowPlan.tasks.contains(task)) {
-            return;
-          }
-          setState(() => tomorrowPlan.tasks.remove(task));
-          unawaited(_saveState());
-        },
-        routineSuggestions: const RoutineService().suggestions(
-          routines,
-          planForTomorrow.date,
-        ),
-        onRoutineAction: (suggestion, action) =>
-            _resolveRoutine(suggestion, action, planForTomorrow),
+        onTaskRemoved: (task) => _removeTask(task, planForTomorrow),
+        routines: routines,
+        onRepeatChanged: (task, schedule) =>
+            _changeRepeat(task, schedule, planForTomorrow),
         events: Event.forDate(displayedEvents, planForTomorrow.date),
         calendarCache: calendarCache,
         onTaskCreated: (task) {

@@ -4,6 +4,8 @@ import '../design/daylock_theme.dart';
 import '../models/task.dart';
 import '../models/area.dart';
 import '../design/daylock_areas.dart';
+import '../models/routine.dart';
+import 'repeat_picker.dart';
 
 // The sheet returns a validated Task. MainApp still owns and persists the plan.
 class CommitmentEditor extends StatefulWidget {
@@ -11,6 +13,18 @@ class CommitmentEditor extends StatefulWidget {
   final Task? initialTask;
   final AreaBook? areas;
   final String heading, submitLabel;
+
+  /// Shows the Repeat row when set: the plan date a new repeat starts from.
+  final DateTime? repeatFrom;
+  final RoutineSchedule? initialRepeat;
+
+  /// Set when the task belongs to a multi-step rotation, which is managed in
+  /// Routines rather than from a single commitment.
+  final String? rotationName;
+
+  /// Called just before the sheet closes, only if Repeat was changed.
+  /// A null schedule means the user chose Never.
+  final ValueChanged<RoutineSchedule?>? onRepeatChanged;
   const CommitmentEditor({
     super.key,
     required this.canCreate,
@@ -18,6 +32,10 @@ class CommitmentEditor extends StatefulWidget {
     this.areas,
     this.heading = 'New commitment',
     this.submitLabel = 'Add commitment',
+    this.repeatFrom,
+    this.initialRepeat,
+    this.rotationName,
+    this.onRepeatChanged,
   });
 
   @override
@@ -29,6 +47,8 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
   bool _submitted = false;
   late final AreaBook _areas;
   late String _areaId;
+  RoutineSchedule? _repeat;
+  bool _pickingRepeat = false;
   bool get _valid => _name.text.trim().isNotEmpty;
 
   @override
@@ -37,6 +57,7 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
     final task = widget.initialTask;
     _areas = widget.areas ?? AreaBook.initial();
     _areaId = _areas.resolve(task?.areaId).id;
+    _repeat = widget.initialRepeat;
     if (task != null) {
       _name.text = task.name;
     }
@@ -59,8 +80,57 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
             'name': _name.text.trim(),
             'areaId': _areaId,
           });
+    if (!identical(_repeat, widget.initialRepeat)) {
+      widget.onRepeatChanged?.call(_repeat);
+    }
     FocusScope.of(context).unfocus();
     Navigator.of(context).pop(task);
+  }
+
+  Future<void> _chooseRepeat() async {
+    final from = widget.repeatFrom;
+    if (from == null || _pickingRepeat || _submitted) return;
+    _pickingRepeat = true;
+    final choice = await showRepeatPicker(
+      context,
+      initial: _repeat,
+      from: from,
+    );
+    _pickingRepeat = false;
+    if (mounted && choice != null) setState(() => _repeat = choice.schedule);
+  }
+
+  Widget _repeatRow(BuildContext context) {
+    final theme = Theme.of(context);
+    final rotation = widget.rotationName;
+    final label = rotation != null
+        ? '$rotation · ${widget.initialRepeat?.label ?? 'Daily'}'
+        : _repeat?.label ?? 'Never';
+    return ListTile(
+      key: const ValueKey('commitment-repeat'),
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(Icons.repeat_rounded, color: theme.colorScheme.primary),
+      title: const Text('Repeat'),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            key: const ValueKey('commitment-repeat-label'),
+            style: theme.textTheme.bodyLarge!.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (rotation != null)
+            const Text('Part of a rotation. Change it in Routines.'),
+        ],
+      ),
+      trailing: rotation == null
+          ? const Icon(Icons.chevron_right_rounded)
+          : null,
+      onTap: rotation == null ? _chooseRepeat : null,
+    );
   }
 
   InputDecoration _field(String label, {String? error}) => InputDecoration(
@@ -121,6 +191,10 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
               selectedId: _areaId,
               onChanged: (id) => setState(() => _areaId = id),
             ),
+            if (widget.repeatFrom != null) ...[
+              const SizedBox(height: DaylockSpace.sm),
+              _repeatRow(context),
+            ],
             const SizedBox(height: DaylockSpace.lg),
             FilledButton.icon(
               key: const ValueKey('save-commitment'),

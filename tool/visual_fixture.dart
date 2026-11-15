@@ -7,14 +7,12 @@ import 'package:daylock/models/daily_plan.dart';
 import 'package:daylock/models/freedom_settings.dart';
 import 'package:daylock/models/highlight.dart';
 import 'package:daylock/models/plan_history.dart';
-import 'package:daylock/models/routine.dart';
 import 'package:daylock/models/task.dart';
 import 'package:daylock/screens/today_screen.dart';
 import 'package:daylock/screens/plan_screen.dart';
 import 'package:daylock/screens/journey_screen.dart';
 import 'package:daylock/services/freedom_service.dart';
 import 'package:daylock/services/journey_service.dart';
-import 'package:daylock/services/routine_service.dart';
 
 void main() => runApp(const VisualFixture());
 
@@ -146,20 +144,6 @@ class _VisualFixtureState extends State<VisualFixture> {
                   onTaskEdited: (_, _) {},
                   onTaskRemoved: (_) {},
                   onTaskAreaChanged: (_, _) {},
-                  onRoutineAction: (_, _) {},
-                  routineSuggestions: [
-                    RoutineSuggestion(
-                      routineId: 'fixture',
-                      routineName: 'Morning',
-                      date: tomorrow.date,
-                      revision: 1,
-                      step: RoutineStep(
-                        id: 'step',
-                        name: 'Stretch',
-                        type: TaskType.goal,
-                      ),
-                    ),
-                  ],
                 )
               : JourneyScreen(
                   areas: fixtureAreas,

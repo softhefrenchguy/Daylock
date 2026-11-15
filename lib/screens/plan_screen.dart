@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../design/area_tones.dart';
 import '../design/daylock_scene.dart';
 import '../design/daylock_surfaces.dart';
-import '../design/journey_surface.dart';
 import '../design/daylock_plan_rows.dart';
 import '../design/daylock_theme.dart';
 import '../design/daylock_widgets.dart';
@@ -16,8 +15,6 @@ import '../design/daylock_areas.dart';
 import 'commitment_editor.dart';
 import 'today_screen.dart' show daylockDateLabel, daylockWeekday;
 import '../models/routine.dart';
-import '../services/routine_service.dart';
-import '../design/daylock_routine_suggestions.dart';
 
 class PlanScreen extends StatefulWidget {
   final DailyPlan plan;
@@ -29,8 +26,11 @@ class PlanScreen extends StatefulWidget {
   final CalendarCache? calendarCache;
   final ValueChanged<Task> onTaskCreated;
   final VoidCallback onCommitTomorrow;
-  final List<RoutineSuggestion> routineSuggestions;
-  final void Function(RoutineSuggestion, RoutineAction)? onRoutineAction;
+  final RoutineBook routines;
+
+  /// Repeat was changed in the editor for [Task]; a null schedule is Never.
+  /// Called after [onTaskCreated] / [onTaskEdited] for the same task.
+  final void Function(Task, RoutineSchedule?)? onRepeatChanged;
   const PlanScreen({
     super.key,
     required this.plan,
@@ -42,8 +42,8 @@ class PlanScreen extends StatefulWidget {
     this.calendarCache,
     required this.onTaskCreated,
     required this.onCommitTomorrow,
-    this.routineSuggestions = const [],
-    this.onRoutineAction,
+    this.routines = RoutineBook.empty,
+    this.onRepeatChanged,
   });
 
   @override
@@ -88,6 +88,8 @@ class _PlanScreenState extends State<PlanScreen> {
     final plan = widget.plan;
     if (!_editable(plan) || _openingModal) return;
     _openingModal = true;
+    var repeatChanged = false;
+    RoutineSchedule? repeat;
     final task = await showModalBottomSheet<Task>(
       context: context,
       isScrollControlled: true,
@@ -101,6 +103,11 @@ class _PlanScreenState extends State<PlanScreen> {
           child: CommitmentEditor(
             canCreate: () => _editable(plan),
             areas: widget.areas,
+            repeatFrom: widget.onRepeatChanged == null ? null : plan.date,
+            onRepeatChanged: (schedule) {
+              repeatChanged = true;
+              repeat = schedule;
+            },
           ),
         );
       },
@@ -109,12 +116,18 @@ class _PlanScreenState extends State<PlanScreen> {
     _openingModal = false;
     if (task == null || !_editable(plan)) return;
     widget.onTaskCreated(task);
+    if (repeatChanged && plan.tasks.contains(task)) {
+      widget.onRepeatChanged?.call(task, repeat);
+    }
   }
 
   Future<void> _editCommitment(Task task) async {
     final plan = widget.plan;
     if (!_editable(plan) || _openingModal || !plan.tasks.contains(task)) return;
     _openingModal = true;
+    final routine = widget.routines.byId(task.routineId);
+    var repeatChanged = false;
+    RoutineSchedule? repeat;
     final edited = await showModalBottomSheet<Task>(
       context: context,
       isScrollControlled: true,
@@ -130,6 +143,15 @@ class _PlanScreenState extends State<PlanScreen> {
             heading: 'Edit commitment',
             submitLabel: 'Save changes',
             canCreate: () => _editable(plan) && plan.tasks.contains(task),
+            repeatFrom: widget.onRepeatChanged == null ? null : plan.date,
+            initialRepeat: routine?.schedule,
+            rotationName: routine != null && routine.isRotation
+                ? routine.name
+                : null,
+            onRepeatChanged: (schedule) {
+              repeatChanged = true;
+              repeat = schedule;
+            },
           ),
         );
       },
@@ -138,6 +160,9 @@ class _PlanScreenState extends State<PlanScreen> {
     _openingModal = false;
     if (edited != null && _editable(plan) && plan.tasks.contains(task)) {
       widget.onTaskEdited?.call(task, edited);
+      if (repeatChanged && plan.tasks.contains(edited)) {
+        widget.onRepeatChanged?.call(edited, repeat);
+      }
     }
   }
 
@@ -334,28 +359,6 @@ class _PlanScreenState extends State<PlanScreen> {
                       ),
                     ),
                   ),
-                  if (editable &&
-                      widget.routineSuggestions.isNotEmpty &&
-                      widget.onRoutineAction != null)
-                    boxed(
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8, bottom: 8),
-                        child: JourneySurface(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            child: DaylockRoutineSuggestions(
-                              areas: widget.areas,
-                              suggestions: widget.routineSuggestions,
-                              onAction: (suggestion, action) {
-                                if (_editable(plan)) {
-                                  widget.onRoutineAction!(suggestion, action);
-                                }
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                   boxed(
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
@@ -607,6 +610,7 @@ class _PlanScreenState extends State<PlanScreen> {
               task: task,
               area: selectedArea,
               showIcon: false,
+              repeatLabel: widget.routines.byId(task.routineId)?.schedule.label,
               areaAction: areaName == null
                   ? null
                   : !plan.isCommitted && widget.onTaskAreaChanged != null

@@ -14,7 +14,6 @@ import 'package:daylock/screens/routines_screen.dart';
 import 'package:daylock/screens/settings_screen.dart';
 import 'package:daylock/services/freedom_service.dart';
 import 'package:daylock/services/local_storage.dart';
-import 'package:daylock/services/routine_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -301,116 +300,196 @@ void main() {
   );
 
   testWidgets(
-    'Accept creates tomorrow only, rejects duplicates and next date advances the cycle',
+    'Due routine fills tomorrow automatically, once, and rotates the next day',
     (tester) async {
       var now = _date;
       await _seed(tester, _state(tomorrowCommitted: false, routines: true));
       await tester.pumpWidget(MainApp(now: () => now));
-      await tester.pumpAndSettle();
-      await _page(tester, 'Plan');
-      expect(find.text('Push'), findsNothing);
-      await _tap(tester, find.text('Routine suggestions'));
-      expect(find.text('Push'), findsOneWidget);
-      final oldScreen = tester.widget<PlanScreen>(find.byType(PlanScreen));
-      final suggestion = oldScreen.routineSuggestions.single;
-      await _tap(tester, _key('routine-accept-training'));
-      oldScreen.onRoutineAction!(suggestion, RoutineAction.accept);
       await tester.pumpAndSettle();
       final saved = await _saved(tester);
       expect(saved.tomorrowPlan.tasks.map((task) => task.name), [
         'Tomorrow goal',
         'Push',
       ]);
+      expect(saved.tomorrowPlan.tasks.last.routineId, 'training');
       expect(saved.todayPlan.tasks.single.name, 'Today goal');
       expect(saved.tomorrowPlan.isCommitted, isFalse);
       expect(saved.routines.routines.single.nextStep.name, 'Pull');
-      expect(find.byKey(const ValueKey('routine-suggestions')), findsNothing);
+      await _page(tester, 'Plan');
+      expect(find.text('Push'), findsOneWidget);
+      expect(find.text('Daily'), findsOneWidget);
+      // Restarting never adds a second copy.
       await tester.pumpWidget(const SizedBox());
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      await _page(tester, 'Plan');
-      expect(_key('routine-suggestions'), findsNothing);
+      expect((await _saved(tester)).tomorrowPlan.tasks, hasLength(2));
       now = DateTime(2026, 10, 14, 18);
       _resume(tester);
       await tester.pumpAndSettle();
-      await _tap(tester, find.text('Routine suggestions'));
-      expect(find.text('Pull'), findsOneWidget);
-      expect(find.textContaining('35 min'), findsNothing);
-      expect(find.text('Technique practice'), findsOneWidget);
-      await _tap(tester, _key('routine-accept-training'));
       final next = await _saved(tester);
-      expect(next.tomorrowPlan.tasks.single.type, TaskType.focus);
-      expect(next.tomorrowPlan.tasks.single.minimumFocusMinutes, 35);
-      expect(next.tomorrowPlan.tasks.single.focusTarget, 'Technique practice');
-      expect(next.tomorrowPlan.tasks.single.accumulatedFocusMilliseconds, 0);
+      final pull = next.tomorrowPlan.tasks.single;
+      expect(pull.name, 'Pull');
+      expect(pull.type, TaskType.focus);
+      expect(pull.minimumFocusMinutes, 35);
+      expect(pull.focusTarget, 'Technique practice');
+      expect(pull.accumulatedFocusMilliseconds, 0);
     },
   );
 
-  for (final action in [RoutineAction.skip, RoutineAction.dismiss]) {
-    testWidgets(
-      '${action.name} hides only this date and never creates a commitment',
-      (tester) async {
-        var now = _date;
-        await _seed(tester, _state(tomorrowCommitted: false, routines: true));
-        await tester.pumpWidget(MainApp(now: () => now));
-        await tester.pumpAndSettle();
-        await _page(tester, 'Plan');
-        await _tap(tester, find.text('Routine suggestions'));
-        await _tap(tester, _key('routine-${action.name}-training'));
-        final saved = await _saved(tester);
-        expect(saved.tomorrowPlan.tasks.map((task) => task.name), [
-          'Tomorrow goal',
-        ]);
-        expect(saved.tomorrowPlan.isCommitted, isFalse);
-        now = DateTime(2026, 10, 14, 18);
-        _resume(tester);
-        await tester.pumpAndSettle();
-        await _tap(tester, find.text('Routine suggestions'));
-        expect(
-          find.text(action == RoutineAction.skip ? 'Pull' : 'Push'),
-          findsOneWidget,
-        );
-      },
-    );
-  }
+  testWidgets(
+    'Removing a routine commitment skips only that day; Undo and Stop repeating work',
+    (tester) async {
+      var now = _date;
+      await _seed(tester, _state(tomorrowCommitted: false, routines: true));
+      await tester.pumpWidget(MainApp(now: () => now));
+      await tester.pumpAndSettle();
+      await _page(tester, 'Plan');
+      Future<void> remove() async {
+        await _tap(tester, _key('plan-task-actions-1'));
+        await _tap(tester, find.text('Remove commitment'));
+        await _tap(tester, _key('confirm-remove-commitment'));
+      }
+
+      await remove();
+      expect(find.text('Removed for Wednesday.'), findsOneWidget);
+      var saved = await _saved(tester);
+      expect(saved.tomorrowPlan.tasks.map((t) => t.name), ['Tomorrow goal']);
+      expect(saved.routines.routines.single.nextStep.name, 'Push');
+      await _tap(tester, _key('routine-removed-undo'));
+      saved = await _saved(tester);
+      expect(saved.tomorrowPlan.tasks.map((t) => t.name), [
+        'Tomorrow goal',
+        'Push',
+      ]);
+      expect(saved.routines.routines.single.nextStep.name, 'Pull');
+      await remove();
+      // Removed stays removed: nothing is added back for this date.
+      _resume(tester);
+      await tester.pumpAndSettle();
+      expect((await _saved(tester)).tomorrowPlan.tasks, hasLength(1));
+      // A rotation repeats the removed step on the next due day.
+      now = DateTime(2026, 10, 14, 18);
+      _resume(tester);
+      await tester.pumpAndSettle();
+      expect((await _saved(tester)).tomorrowPlan.tasks.single.name, 'Push');
+      await _page(tester, 'Plan');
+      Future<void> removeOnly() async {
+        await _tap(tester, _key('plan-task-actions-0'));
+        await _tap(tester, find.text('Remove commitment'));
+        await _tap(tester, _key('confirm-remove-commitment'));
+      }
+
+      await removeOnly();
+      await _tap(tester, _key('routine-removed-stop'));
+      expect((await _saved(tester)).routines.routines, isEmpty);
+      expect(find.text('Stopped repeating.'), findsOneWidget);
+    },
+  );
+
+  testWidgets('A committed tomorrow is never filled by a routine', (
+    tester,
+  ) async {
+    await _seed(tester, _state(tomorrowCommitted: true, routines: true));
+    await tester.pumpWidget(MainApp(now: () => _date));
+    await tester.pumpAndSettle();
+    final saved = await _saved(tester);
+    expect(saved.tomorrowPlan.tasks.map((t) => t.name), ['Tomorrow goal']);
+    expect(saved.routines.routines.single.decisions, isEmpty);
+    expect(saved.routines.routines.single.nextStep.name, 'Push');
+  });
 
   testWidgets(
-    'Committed plan hides routine actions and rejects a retained accept callback',
+    'Repeat in the commitment editor makes a repeating task without duplicates',
     (tester) async {
-      await _seed(tester, _state(tomorrowCommitted: false, routines: true));
+      var now = _date;
+      await _seed(tester, _state(tomorrowCommitted: false));
+      await tester.pumpWidget(MainApp(now: () => now));
+      await tester.pumpAndSettle();
+      await _page(tester, 'Plan');
+      await enterPlanText(tester, _key('commitment-name'), 'Water plants');
+      expect(find.text('Never'), findsOneWidget);
+      await _tap(tester, _key('commitment-repeat'));
+      await _tap(tester, _key('repeat-preset-everyOther'));
+      expect(
+        find.text('Next: Wed 14 Oct · Fri 16 Oct · Sun 18 Oct'),
+        findsOneWidget,
+      );
+      await _tap(tester, _key('repeat-done'));
+      expect(find.text('Every 2 days'), findsOneWidget);
+      await _tap(tester, _key('save-commitment'));
+      var saved = await _saved(tester);
+      final routine = saved.routines.routines.single;
+      expect(routine.name, 'Water plants');
+      expect(routine.schedule.label, 'Every 2 days');
+      expect(saved.tomorrowPlan.tasks.map((t) => t.name), [
+        'Tomorrow goal',
+        'Water plants',
+      ]);
+      expect(saved.tomorrowPlan.tasks.last.routineId, routine.id);
+      expect(find.text('Every 2 days'), findsOneWidget);
+      // Rename is a one-day edit and keeps the repeat.
+      await _tap(tester, _key('plan-task-actions-1'));
+      await _tap(tester, find.text('Edit commitment'));
+      await tester.enterText(_key('commitment-name'), 'Water plants + ferns');
+      await _tap(tester, _key('save-commitment'));
+      saved = await _saved(tester);
+      expect(saved.tomorrowPlan.tasks.last.name, 'Water plants + ferns');
+      expect(saved.tomorrowPlan.tasks.last.routineId, routine.id);
+      expect(saved.routines.routines.single.steps.single.name, 'Water plants');
+      _resume(tester);
+      await tester.pumpAndSettle();
+      expect((await _saved(tester)).tomorrowPlan.tasks, hasLength(2));
+      now = DateTime(2026, 10, 14, 18);
+      _resume(tester);
+      await tester.pumpAndSettle();
+      expect((await _saved(tester)).tomorrowPlan.tasks, isEmpty);
+      now = DateTime(2026, 10, 15, 18);
+      _resume(tester);
+      await tester.pumpAndSettle();
+      expect(
+        (await _saved(tester)).tomorrowPlan.tasks.single.name,
+        'Water plants',
+      );
+    },
+  );
+
+  testWidgets(
+    'A repeat not due tomorrow keeps the task as a one-off; Never stops it',
+    (tester) async {
+      await _seed(tester, _state(tomorrowCommitted: false));
       await tester.pumpWidget(MainApp(now: () => _date));
       await tester.pumpAndSettle();
       await _page(tester, 'Plan');
-      final old = tester.widget<PlanScreen>(find.byType(PlanScreen));
-      await _tap(tester, _key('commit-tomorrow'));
-      await confirmPlanCommit(tester);
-      old.onRoutineAction!(old.routineSuggestions.single, RoutineAction.accept);
-      await tester.pumpAndSettle();
-      expect(_key('routine-suggestions'), findsNothing);
-      final saved = await _saved(tester);
-      expect(saved.tomorrowPlan.tasks, hasLength(1));
-      expect(saved.routines.routines.single.nextStep.name, 'Push');
-      expect(saved.routines.routines.single.decisions, isEmpty);
+      await enterPlanText(tester, _key('commitment-name'), 'Long run');
+      await _tap(tester, _key('commitment-repeat'));
+      await _tap(tester, _key('repeat-preset-custom'));
+      // Tomorrow (Wednesday) is preselected; switch it to Monday only.
+      await _tap(tester, _key('repeat-day-3'));
+      expect(find.text('Pick at least one day.'), findsOneWidget);
+      expect(
+        tester.widget<FilledButton>(_key('repeat-done')).onPressed,
+        isNull,
+      );
+      await _tap(tester, _key('repeat-day-1'));
+      await _tap(tester, _key('repeat-done'));
+      await _tap(tester, _key('save-commitment'));
+      var saved = await _saved(tester);
+      final routine = saved.routines.routines.single;
+      expect(routine.schedule.label, 'Mon');
+      expect(routine.decisions, isEmpty);
+      expect(saved.tomorrowPlan.tasks.last.name, 'Long run');
+      await _tap(tester, _key('plan-task-actions-1'));
+      await _tap(tester, find.text('Edit commitment'));
+      await _tap(tester, _key('commitment-repeat'));
+      await _tap(tester, _key('repeat-preset-never'));
+      await _tap(tester, _key('repeat-done'));
+      await _tap(tester, _key('save-commitment'));
+      saved = await _saved(tester);
+      expect(saved.routines.routines, isEmpty);
+      expect(saved.tomorrowPlan.tasks.last.routineId, isNull);
+      expect(saved.tomorrowPlan.tasks.last.name, 'Long run');
     },
   );
-
-  testWidgets('Rollover rejects a retained suggestion for yesterday’s draft', (
-    tester,
-  ) async {
-    var now = _date;
-    await _seed(tester, _state(tomorrowCommitted: false, routines: true));
-    await tester.pumpWidget(MainApp(now: () => now));
-    await tester.pumpAndSettle();
-    await _page(tester, 'Plan');
-    final old = tester.widget<PlanScreen>(find.byType(PlanScreen));
-    now = DateTime(2026, 10, 14);
-    old.onRoutineAction!(old.routineSuggestions.single, RoutineAction.accept);
-    await tester.pumpAndSettle();
-    final saved = await _saved(tester);
-    expect(saved.tomorrowPlan.tasks, isEmpty);
-    expect(saved.routines.routines.single.nextStep.name, 'Push');
-    expect(saved.routines.routines.single.decisions, isEmpty);
-  });
 
   testWidgets(
     'Settings creates ordered Goal/Focus routine, edits, reorders and confirms deletion',
@@ -436,7 +515,14 @@ void main() {
       await _tap(tester, find.byTooltip('Move step 2 up'));
       await _tap(tester, _key('save-routine'));
       expect(find.byType(RoutinesScreen), findsOneWidget);
+      expect(find.textContaining('Daily · next: tomorrow'), findsOneWidget);
       final routine = (await _saved(tester)).routines.routines.single;
+      expect(routine.schedule.isDaily, isTrue);
+      // A new daily rotation is due tomorrow, so its first step is added now.
+      expect((await _saved(tester)).tomorrowPlan.tasks.map((t) => t.name), [
+        'Tomorrow goal',
+        'Read book',
+      ]);
       expect(routine.steps.map((step) => step.name), [
         'Read book',
         'Visit library',
@@ -470,21 +556,17 @@ void main() {
         ),
       );
       expect((await _saved(tester)).routines.routines, isEmpty);
-      expect((await _saved(tester)).tomorrowPlan.tasks, hasLength(1));
+      expect((await _saved(tester)).tomorrowPlan.tasks, hasLength(2));
     },
   );
 
   testWidgets(
-    'Deleting a routine keeps its accepted commitment and later history',
+    'Deleting a routine keeps its added commitment and later history',
     (tester) async {
       var now = _date;
       await _seed(tester, _state(tomorrowCommitted: false, routines: true));
       await tester.pumpWidget(MainApp(now: () => now));
       await tester.pumpAndSettle();
-      await _page(tester, 'Plan');
-      await _tap(tester, find.text('Routine suggestions'));
-      await _tap(tester, _key('routine-accept-training'));
-      await _page(tester, 'Today');
       await _tap(tester, find.byTooltip('Settings'));
       await _tap(tester, _key('settings-planning'));
       await _tap(tester, _key('manage-routines'));
@@ -519,16 +601,13 @@ void main() {
   );
 
   testWidgets(
-    'Failed routine save leaves the prior save intact and Retry saves the choice once',
+    'Failed routine save leaves the prior save intact and Retry saves it once',
     (tester) async {
       final initial = _state(tomorrowCommitted: false, routines: true);
       await _seed(tester, initial);
       final storage = _FailingStorage();
       await tester.pumpWidget(MainApp(storage: storage, now: () => _date));
       await tester.pumpAndSettle();
-      await _page(tester, 'Plan');
-      await _tap(tester, find.text('Routine suggestions'));
-      await _tap(tester, _key('routine-accept-training'));
       expect(find.text('Could not save your changes.'), findsOneWidget);
       expect((await _saved(tester)).toJson(), initial.toJson());
       storage.fail = false;
@@ -581,7 +660,7 @@ void main() {
   for (final colour in ColourTheme.values) {
     for (final brightness in Brightness.values) {
       testWidgets(
-        '$colour $brightness Freedom and routine suggestions fit narrow large-text screens',
+        '$colour $brightness Freedom and repeating commitments fit narrow large-text screens',
         (tester) async {
           await tester.binding.setSurfaceSize(const Size(320, 740));
           addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -624,12 +703,17 @@ void main() {
               ),
               home: Scaffold(
                 body: PlanScreen(
-                  plan: state.tomorrowPlan,
-                  routineSuggestions: const RoutineService().suggestions(
-                    state.routines,
-                    state.tomorrowPlan.date,
+                  plan: DailyPlan(
+                    date: state.tomorrowPlan.date,
+                    tasks: [
+                      state.routines.routines.single.nextStep.toTask(
+                        routineId: 'training',
+                      ),
+                    ],
                   ),
-                  onRoutineAction: (_, _) {},
+                  routines: state.routines,
+                  onRepeatChanged: (_, _) {},
+                  onTaskEdited: (_, _) {},
                   onTaskCreated: (_) {},
                   onCommitTomorrow: () {},
                 ),
@@ -637,8 +721,12 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
-          await _tap(tester, find.text('Routine suggestions'));
-          await _tap(tester, _key('routine-accept-training'));
+          await _tap(tester, _key('open-commitment-editor'));
+          await _tap(tester, _key('commitment-repeat'));
+          await _tap(tester, _key('repeat-preset-custom'));
+          await _tap(tester, find.text('Every N days'));
+          await _tap(tester, _key('repeat-every-more'));
+          expect(tester.widget<Text>(_key('repeat-every-value')).data, '4');
           expect(tester.takeException(), isNull);
         },
       );

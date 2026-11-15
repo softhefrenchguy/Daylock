@@ -64,32 +64,53 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   String? _message;
   String _exampleArea = 'Life';
   Routine _exampleRoutine = _newExampleRoutine();
-  int _exampleDay = 1;
+  // A Monday, so the Mon/Wed/Fri example reads naturally.
+  DateTime _exampleCursor = DateTime(2026, 1, 5);
+  DateTime? _exampleAdded;
   String? _routineFeedback;
+  static const _exampleDays = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
   static Routine _newExampleRoutine() => Routine(
     id: 'tutorial-example',
-    name: 'Workout cycle',
+    name: 'Workout rotation',
+    schedule: RoutineSchedule.onWeekdays(const {1, 3, 5}),
     steps: [
       RoutineStep(id: 'a', name: 'Upper body', type: TaskType.goal),
       RoutineStep(id: 'b', name: 'Lower body', type: TaskType.goal),
     ],
   );
-  void _tryRoutine(RoutineAction action) {
+  DateTime get _exampleNext =>
+      _exampleRoutine.schedule.nextDue(_exampleCursor)!;
+  String _dayName(DateTime date) => _exampleDays[date.weekday - 1];
+
+  // Exercise the actual routine model in memory; never save preview data.
+  void _tryRoutinePlan() {
+    final date = _exampleNext;
     final step = _exampleRoutine.nextStep.name;
     setState(() {
-      // Exercise the actual routine model in memory; never save preview data.
-      _exampleRoutine = _exampleRoutine.decide(
-        DateTime(2000, 1, _exampleDay++),
-        action,
-      );
-      _routineFeedback = switch (action) {
-        RoutineAction.accept =>
-          'Accept would add “$step” to tomorrow’s plan and advance the cycle.',
-        RoutineAction.skip =>
-          'Skip advances the cycle without adding a commitment.',
-        RoutineAction.dismiss =>
-          'Dismiss keeps “$step” as the next step for another day.',
-      };
+      _exampleRoutine = _exampleRoutine.add(date);
+      _exampleAdded = date;
+      _exampleCursor = DateTime(date.year, date.month, date.day + 1);
+      _routineFeedback =
+          '“$step” was added to ${_dayName(date)}’s plan automatically.';
+    });
+  }
+
+  void _tryRoutineRemove() {
+    final date = _exampleAdded;
+    if (date == null) return;
+    setState(() {
+      _exampleRoutine = _exampleRoutine.remove(date);
+      _exampleAdded = null;
+      _routineFeedback =
+          'Removed for ${_dayName(date)} only. “${_exampleRoutine.nextStep.name}” comes back on ${_dayName(_exampleNext)}.';
     });
   }
 
@@ -525,7 +546,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           _card(
             Icons.edit_note,
             'Plan: prepare tomorrow',
-            'Add and edit tomorrow’s commitments, assign an Area, and review routine suggestions. '
+            'Add and edit tomorrow’s commitments, assign an Area, and set them to repeat. '
                 'Commit the plan when you are ready. Once committed, its commitments are locked against editing. '
                 'They become your Today plan when the date changes.',
           ),
@@ -601,20 +622,20 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         return [
           _card(
             Icons.repeat_rounded,
-            'A cycle you can keep returning to',
-            'Create a routine with ordered steps, such as Upper body → Lower body. '
-                'Plan offers one suggestion per routine for each planning date. '
-                'Accept adds that step as a real commitment; Skip advances without adding it; Dismiss saves that step for another day.',
+            'Set it once, and it shows up',
+            'Turn on Repeat when you add a commitment: daily, weekdays, every few days, or the days you pick. '
+                'It adds itself to tomorrow’s plan on those days, and you can still remove it. '
+                'Want to alternate, like Upper body → Lower body? Make a rotation in Routines.',
           ),
           _card(
             Icons.touch_app_outlined,
-            'Try the cycle · example only',
-            'Each tap previews a decision on another planning day. Nothing is added to your real plan.',
+            'Try a rotation · example only',
+            'Mon, Wed, Fri. Nothing is added to your real plan.',
             action: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Next suggestion: ${_exampleRoutine.nextStep.name}',
+                  'Up next: ${_exampleRoutine.nextStep.name} · ${_dayName(_exampleNext)}',
                   key: const ValueKey('tutorial-routine-preview'),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
@@ -623,16 +644,18 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    for (final action in RoutineAction.values)
-                      OutlinedButton(
-                        key: ValueKey('tutorial-routine-${action.name}'),
-                        onPressed: () => _tryRoutine(action),
-                        child: Text(switch (action) {
-                          RoutineAction.accept => 'Try Accept',
-                          RoutineAction.skip => 'Try Skip',
-                          RoutineAction.dismiss => 'Try Dismiss',
-                        }),
-                      ),
+                    OutlinedButton(
+                      key: const ValueKey('tutorial-routine-plan'),
+                      onPressed: _tryRoutinePlan,
+                      child: const Text('Plan the next day'),
+                    ),
+                    OutlinedButton(
+                      key: const ValueKey('tutorial-routine-remove'),
+                      onPressed: _exampleAdded == null
+                          ? null
+                          : _tryRoutineRemove,
+                      child: const Text('Try removing it'),
+                    ),
                   ],
                 ),
                 if (_routineFeedback != null) ...[
@@ -643,7 +666,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             ),
           ),
           const Text(
-            'Routine suggestions still need your review in an editable Plan. They never complete a commitment automatically.',
+            'Repeats only fill in a plan you haven’t locked yet. They never complete a commitment for you.',
           ),
           if (widget.onRoutinesRequested != null)
             Padding(

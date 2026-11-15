@@ -148,7 +148,7 @@ void main() {
   }
 
   testWidgets(
-    'Routine editor remembers Area for accepted suggestions; Plan edits only the instance',
+    'Routine editor remembers Area for added commitments; Plan edits only the instance',
     (tester) async {
       await LocalStorage().save(
         DaylockState(
@@ -185,8 +185,10 @@ void main() {
       await tester.pageBack();
       await tester.pumpAndSettle();
       await page(tester);
-      await tap(tester, find.byKey(const ValueKey('routine-suggestions')));
-      await tap(tester, find.byKey(ValueKey('routine-accept-${routine.id}')));
+      expect(
+        (await LocalStorage().load())!.tomorrowPlan.tasks.single.routineId,
+        routine.id,
+      );
       expect(
         (await LocalStorage().load())!.tomorrowPlan.tasks.single.areaId,
         health.id,

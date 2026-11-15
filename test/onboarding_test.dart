@@ -196,7 +196,7 @@ void main() {
   }
 
   testWidgets(
-    'Feature tour previews Areas and routine decisions, opens real screens, and preserves data',
+    'Feature tour previews Areas and a routine rotation, opens real screens, and preserves data',
     (tester) async {
       final storage = LocalStorage();
       final date = DateTime(2026, 11, 5);
@@ -245,12 +245,14 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      await decision('Try Skip');
-      expect(find.text('Next suggestion: Lower body'), findsOneWidget);
-      await decision('Try Dismiss');
-      expect(find.text('Next suggestion: Lower body'), findsOneWidget);
-      await decision('Try Accept');
-      expect(find.text('Next suggestion: Upper body'), findsOneWidget);
+      expect(find.text('Up next: Upper body · Monday'), findsOneWidget);
+      await decision('Plan the next day');
+      expect(find.text('Up next: Lower body · Wednesday'), findsOneWidget);
+      await decision('Try removing it');
+      // Removing a rotation step brings the same step back next time.
+      expect(find.text('Up next: Upper body · Wednesday'), findsOneWidget);
+      await decision('Plan the next day');
+      expect(find.text('Up next: Lower body · Friday'), findsOneWidget);
       await decision('Open Routines');
       expect(find.byType(RoutinesScreen), findsOneWidget);
       await tester.pageBack();

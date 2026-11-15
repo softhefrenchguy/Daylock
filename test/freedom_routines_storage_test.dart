@@ -225,19 +225,11 @@ void main() {
     );
   }
 
-  test('Accepted task and decision restore together, prevent duplicate and survive rollovers', () async {
+  test('Added task and decision restore together, prevent duplicate and survive rollovers', () async {
     final state = fixture();
     const service = RoutineService();
-    final suggestion = service
-        .suggestions(state.routines, state.tomorrowPlan.date)
-        .single;
-    final result = service.resolve(
-      state.routines,
-      suggestion,
-      RoutineAction.accept,
-      state.tomorrowPlan.date,
-    );
-    state.tomorrowPlan.tasks.add(result.task!);
+    final result = service.apply(state.routines, state.tomorrowPlan);
+    state.tomorrowPlan.tasks.addAll(result.added);
     final accepted = DaylockState(
       todayPlan: state.todayPlan,
       tomorrowPlan: state.tomorrowPlan,
@@ -251,15 +243,9 @@ void main() {
     final restarted = (await LocalStorage().load())!;
     expect(restarted.tomorrowPlan.tasks, hasLength(2));
     expect(restarted.tomorrowPlan.tasks.last.minimumFocusMinutes, 45);
+    expect(restarted.tomorrowPlan.tasks.last.routineId, 'routine');
     expect(
-      service
-          .resolve(
-            restarted.routines,
-            suggestion,
-            RoutineAction.accept,
-            restarted.tomorrowPlan.date,
-          )
-          .changed,
+      service.apply(restarted.routines, restarted.tomorrowPlan).changed,
       isFalse,
     );
     final next = restarted.rollOver(DateTime(2026, 10, 14));
@@ -267,11 +253,7 @@ void main() {
     final again = (await LocalStorage().load())!;
     expect(again.todayPlan.tasks.last.name, 'Read');
     expect(
-      service
-          .suggestions(again.routines, again.tomorrowPlan.date)
-          .single
-          .step
-          .name,
+      service.apply(again.routines, again.tomorrowPlan).added.single.name,
       'Review',
     );
     expect(again.freedomSettings.timeLabel, '20:15');
