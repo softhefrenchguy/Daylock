@@ -4,12 +4,14 @@ import 'package:daylock/models/daylock_state.dart';
 import 'package:daylock/models/task.dart';
 import 'package:daylock/models/onboarding_steps.dart';
 import 'package:daylock/screens/onboarding_screen.dart';
-import 'package:daylock/screens/areas_screen.dart';
-import 'package:daylock/screens/routines_screen.dart';
 import 'package:daylock/screens/journey_screen.dart';
 import 'package:daylock/services/instagram_detection_bridge.dart';
 import 'package:daylock/services/local_storage.dart';
 import 'package:daylock/services/notifications/notification_service.dart';
+import 'package:daylock/screens/app_tour.dart';
+import 'package:daylock/screens/plan_screen.dart';
+import 'package:daylock/screens/today_screen.dart';
+import 'package:daylock/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -196,7 +198,7 @@ void main() {
   }
 
   testWidgets(
-    'Feature tour previews Areas and a routine rotation, opens real screens, and preserves data',
+    'Ready offers the tour, which walks the real Today, Plan and Journey and preserves data',
     (tester) async {
       final storage = LocalStorage();
       final date = DateTime(2026, 11, 5);
@@ -214,101 +216,162 @@ void main() {
         ),
       );
       final original = (await storage.load())!.toJson();
-      await storage.saveOnboardingStep(OnboardingSteps.overview);
+      await storage.saveOnboardingStep(OnboardingSteps.ready);
       await tester.pumpWidget(
         MainApp(storage: storage, now: () => date, onboardingEnabled: true),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Your Daily Rhythm'), findsOneWidget);
-      expect(find.text('Today: keep your word'), findsOneWidget);
-      expect(find.text('Calendar & Daily History'), findsOneWidget);
-      await tester.tap(find.text('Continue'));
+      expect(find.text('Take a quick tour'), findsOneWidget);
+      await tester.tap(find.text('Take the tour'));
       await tester.pumpAndSettle();
-      expect(find.text('Give Your Commitments a Home'), findsOneWidget);
-      await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Study'));
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Study'));
-      await tester.pumpAndSettle();
-      expect(find.text('Read ten pages → Study'), findsOneWidget);
-      await tester.ensureVisible(find.text('Open Areas'));
-      await tester.tap(find.text('Open Areas'));
-      await tester.pumpAndSettle();
-      expect(find.byType(AreasScreen), findsOneWidget);
-      await tester.pageBack();
-      await tester.pumpAndSettle();
-      expect(find.text('Give Your Commitments a Home'), findsOneWidget);
-      await tester.tap(find.text('Continue'));
-      await tester.pumpAndSettle();
-      expect(find.text('Build Your Routines'), findsOneWidget);
-      Future<void> decision(String label) async {
-        await tester.ensureVisible(find.text(label));
-        await tester.tap(find.text(label));
+      expect(find.byType(OnboardingScreen), findsNothing);
+      expect(await storage.loadOnboardingStep(), OnboardingSteps.complete);
+
+      final bubble = find.byKey(const ValueKey('app-tour'));
+      Future<void> next() async {
+        await tester.tap(find.byKey(const ValueKey('tour-next')));
         await tester.pumpAndSettle();
       }
 
-      expect(find.text('Up next: Upper body · Monday'), findsOneWidget);
-      await decision('Plan the next day');
-      expect(find.text('Up next: Lower body · Wednesday'), findsOneWidget);
-      await decision('Try removing it');
-      // Removing a rotation step brings the same step back next time.
-      expect(find.text('Up next: Upper body · Wednesday'), findsOneWidget);
-      await decision('Plan the next day');
-      expect(find.text('Up next: Lower body · Friday'), findsOneWidget);
-      await decision('Open Routines');
-      expect(find.byType(RoutinesScreen), findsOneWidget);
-      await tester.pageBack();
+      expect(find.text('This is your day'), findsOneWidget);
+      expect(find.text('1 of ${daylockTour.length}'), findsOneWidget);
+      expect(find.byType(TodayScreen), findsOneWidget);
+      // Back is hidden on the first stop; the app behind can't be tapped.
+      expect(find.byKey(const ValueKey('tour-back')), findsNothing);
+      await tester.tap(find.text('Keep today'), warnIfMissed: false);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Continue'));
+      expect(find.text('This is your day'), findsOneWidget);
+      await next();
+      expect(find.text('Today’s commitments'), findsOneWidget);
+      await next();
+      await next();
+      expect(find.text('Plan tomorrow'), findsOneWidget);
+      expect(find.byType(PlanScreen), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('tour-back')));
       await tester.pumpAndSettle();
-      expect(find.text('See Your Journey Grow'), findsOneWidget);
-      expect(find.text('Achievements: keep the moments'), findsOneWidget);
-      expect(find.text('Daily History & Past Chapters'), findsOneWidget);
-      await decision('Explore Journey');
+      expect(find.text('Freedom'), findsWidgets);
+      expect(find.byType(TodayScreen), findsOneWidget);
+      for (var i = 2; i < 6; i++) {
+        await next();
+      }
+      expect(find.text('Your Journey'), findsOneWidget);
       expect(find.byType(JourneyScreen), findsOneWidget);
-      await tester.pageBack();
-      await tester.pumpAndSettle();
-      expect(find.text('See Your Journey Grow'), findsOneWidget);
+      await next();
+      await next();
+      expect(find.text('Settings'), findsWidgets);
+      expect(find.text('Done'), findsOneWidget);
+      await next();
+      expect(bubble, findsNothing);
+      expect(find.byType(TodayScreen), findsOneWidget);
       expect((await tester.runAsync(() => storage.load()))!.toJson(), original);
-      expect(await storage.loadOnboardingStep(), OnboardingSteps.journey);
       await tester.pumpWidget(const SizedBox());
     },
   );
 
-  for (final step in [
-    OnboardingSteps.overview,
-    OnboardingSteps.areas,
-    OnboardingSteps.routines,
-    OnboardingSteps.journey,
-  ]) {
-    testWidgets(
-      'Feature step $step supports 320px with large accessibility text',
-      (tester) async {
-        tester.view.physicalSize = const Size(320, 720);
-        tester.view.devicePixelRatio = 1;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
-        final bridge = TutorialBridge();
-        await tester.pumpWidget(
-          MaterialApp(
-            builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(context)
-                  .copyWith(textScaler: const TextScaler.linear(2)),
-              child: child!,
-            ),
-            home: OnboardingScreen(
-              bridge: bridge,
-              notifications: NotificationService(),
-              initialStep: step,
-              saveStep: (_) async {},
-              createGoal: (_) async => true,
-              hasGoal: () => true,
-              enableFreedom: () async {},
-              onExit: () {},
+  testWidgets('Skip the tour finishes setup; Settings can start it later', (
+    tester,
+  ) async {
+    final storage = LocalStorage();
+    await storage.save(
+      DaylockState(
+        todayPlan: DailyPlan(
+          date: DateTime(2026, 11, 5),
+          tasks: [],
+          isCommitted: true,
+        ),
+        tomorrowPlan: DailyPlan(
+          date: DateTime(2026, 11, 6),
+          tasks: [Task(name: 'First step')],
+        ),
+      ),
+    );
+    await storage.saveOnboardingStep(OnboardingSteps.ready);
+    await tester.pumpWidget(
+      MainApp(
+        storage: storage,
+        now: () => DateTime(2026, 11, 5),
+        onboardingEnabled: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('setup-skip-tour')));
+    await tester.tap(find.byKey(const ValueKey('setup-skip-tour')));
+    await tester.pumpAndSettle();
+    expect(find.byType(OnboardingScreen), findsNothing);
+    expect(find.byKey(const ValueKey('app-tour')), findsNothing);
+    expect(await storage.loadOnboardingStep(), OnboardingSteps.complete);
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    final tour = find.byKey(const ValueKey('settings-tour'));
+    await tester.scrollUntilVisible(tour, 200);
+    await tester.tap(tour);
+    await tester.pumpAndSettle();
+    expect(find.byType(SettingsScreen), findsNothing);
+    expect(find.text('This is your day'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('tour-skip')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('app-tour')), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Tour bubble stays usable at 320px with large text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => Stack(
+              children: [
+                const Align(
+                  alignment: Alignment.topLeft,
+                  child: SizedBox(
+                    key: ValueKey('today-sky'),
+                    width: 320,
+                    height: 200,
+                  ),
+                ),
+                Positioned.fill(
+                  child: AppTourOverlay(
+                    index: 0,
+                    searchRoot: () => context,
+                    onNext: () {},
+                    onBack: () {},
+                    onClose: () {},
+                  ),
+                ),
+              ],
             ),
           ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Next').hitTestable(), findsOneWidget);
+    expect(find.text('Skip tour').hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final blocking in [true, false]) {
+    testWidgets(
+      'Progress saved on a retired tour page resumes at the next real page (blocking: $blocking)',
+      (tester) async {
+        final bridge = TutorialBridge()
+          ..status.value = ready(enabled: blocking);
+        await mount(tester, bridge, OnboardingSteps.routines, []);
+        expect(
+          find.text(blocking ? "You're Almost Ready!" : "You're All Set!"),
+          findsOneWidget,
         );
-        await tester.pumpAndSettle();
-        expect(find.text('Continue').hitTestable(), findsOneWidget);
-        expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());
       },
     );
@@ -483,12 +546,13 @@ void main() {
     },
   );
 
-  testWidgets('Without blocking, the tour skips the test and can finish', (
+  testWidgets('Without blocking, setup skips the test and can finish', (
     tester,
   ) async {
     final bridge = TutorialBridge()..status.value = ready(enabled: false);
     final saved = <int>[];
-    await mount(tester, bridge, OnboardingSteps.journey, saved);
+    await mount(tester, bridge, 3, saved);
+    expect(find.text('Step 3 of 4'), findsOneWidget);
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     expect(saved, [OnboardingSteps.ready]);

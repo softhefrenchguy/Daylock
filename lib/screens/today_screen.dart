@@ -305,6 +305,7 @@ class TodayScreenState extends State<TodayScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               DaylockSkyHeader(
+                key: const ValueKey('today-sky'),
                 mood: mood,
                 progress: empty ? 0 : fraction,
                 height: earned ? 400 : 262,
@@ -361,6 +362,7 @@ class TodayScreenState extends State<TodayScreen> {
               if (empty)
                 section(
                   _EmptyToday(
+                    key: const ValueKey('today-empty'),
                     tomorrow: tomorrowLocked ? tomorrow : null,
                     areas: widget.areas,
                     onPlanRequested: onPlanRequested,
@@ -384,6 +386,7 @@ class TodayScreenState extends State<TodayScreen> {
               if (!empty)
                 section(
                   Column(
+                    key: const ValueKey('today-commitments'),
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       DaylockSectionHeader(
@@ -838,7 +841,12 @@ class _EmptyToday extends StatelessWidget {
   final DailyPlan? tomorrow;
   final AreaBook? areas;
   final VoidCallback? onPlanRequested;
-  const _EmptyToday({this.tomorrow, this.areas, this.onPlanRequested});
+  const _EmptyToday({
+    super.key,
+    this.tomorrow,
+    this.areas,
+    this.onPlanRequested,
+  });
 
   @override
   Widget build(BuildContext context) {

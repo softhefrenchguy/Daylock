@@ -330,6 +330,7 @@ class _PlanScreenState extends State<PlanScreen> {
                 slivers: [
                   SliverToBoxAdapter(
                     child: DaylockSkyHeader(
+                      key: const ValueKey('plan-sky'),
                       mood: SceneMood.night,
                       height: 196,
                       horizontalPadding: padding,

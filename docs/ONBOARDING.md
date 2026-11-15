@@ -1,6 +1,6 @@
 # First-launch setup
 
-The Android `main()` entry point enables ten setup screens. Planner embeds and
+The Android `main()` entry point enables the setup screens. Planner embeds and
 visual fixtures can continue to instantiate `MainApp` directly. Other platforms
 can replay the tutorial in Settings; blocking and installed-app selection are
 explicitly unavailable there.
@@ -17,7 +17,8 @@ Replay resets only this progress key. Leaving setup keeps its last saved step.
 Storage failures show a retry message and never mark completion.
 
 The sequence is Welcome, Permissions, Restricted apps, First commitment,
-Today & Plan, Areas, Routines, Journey, Blocking test, and Ready.
+Blocking test, and Ready. Steps show as "Step N of M" counting only the pages
+this person will see, and the sunrise header rises with that position.
 
 App blocking is optional. On the Permissions step, "Continue without blocking"
 moves on without Accessibility; setup then skips Restricted apps and the
@@ -25,17 +26,26 @@ Blocking test, and Ready notes that blocking is off and can be turned on later
 in Settings. Connecting Accessibility switches the button back to Continue and
 restores the full path. The Xiaomi power confirmation is required only once
 Accessibility is connected. The Blocking test can be skipped ("Skip test for
-now"); "Finish Setup" appears only after a verified lock screen. The four new
-walkthrough pages also introduce stopwatches, task outcomes/excuses, Freedom
-conditions, scheduled events, Calendar/Daily History, Highlights, Past Chapters,
-notification preferences and appearance settings.
+now"); "Finish Setup" appears only after a verified lock screen.
 
-Existing v2 progress before the feature tour retains its step. Old test, ready
-and completed markers move to the start of the new tour (step 4), so those users
-see the added features automatically without redoing permission setup. The
-existing Xiaomi power-review confirmation is preserved. `OnboardingSteps`
+## Guided tour
+
+Ready offers "Take the tour" (or "Skip the tour"). Both save completion first;
+the tour then runs over the real app instead of separate pages. `AppTourOverlay`
+(`lib/screens/app_tour.dart`) dims the screen, cuts a spotlight around a real
+widget found by its key, and shows a speech bubble with a small rising sun,
+"N of M", Skip tour, Back and Next/Done. It switches tabs itself: Today (sky,
+commitments, Freedom), Plan (header, Add, Lock in), Journey (streak, Manage Areas),
+then Settings. Nothing behind the overlay can be tapped, so the tour never makes
+anyone add, keep or lock anything; system Back closes it. A stop whose target is
+missing shows the bubble without a spotlight. Settings → "Take the App Tour"
+replays it. Tour progress is not saved.
+
+Steps 4–7 were feature-tour pages and are no longer shown. Progress saved on one
+of them resumes at the Blocking test when blocking is set up, otherwise at Ready.
+The existing Xiaomi power-review confirmation is preserved. `OnboardingSteps`
 defines the shared step numbers; old completion marker 6 is never interpreted as
-completion of the expanded walkthrough.
+completion.
 
 ## Existing integrations
 
@@ -59,12 +69,10 @@ completion of the expanded walkthrough.
   existing planner save path. Today's committed plan stays locked. The callback
   rechecks plan identity and commitment after the editor returns. Existing goals
   satisfy this step without inserting duplicates.
-- Features: Area chips and an interactive routine cycle are clearly marked as
-  examples. Routine decisions use the actual `Routine.decide` model in memory;
-  neither preview writes to planner data. Optional buttons open the existing
-  Areas, Routines, Calendar, Settings and shared Journey screen. Back returns to
-  the same tutorial step. Actions users deliberately take in those real screens
-  use their existing validation and persistence paths.
+- Tour targets: `today-sky`, `today-commitments` / `today-empty`,
+  `freedom-indicator`, `plan-sky`, `open-commitment-editor`, `plan-commit-bar`,
+  `journey-streak`, `journey-manage-areas` and `open-settings`. Renaming one of
+  these keys removes that stop's spotlight.
 - Test: a user tap requests `testRestrictedApp` on the existing channel. Native
   code validates the selected installed app, enabled/bound service, and existing
   Freedom BLOCK decision, clears historical presentation evidence, and opens the
@@ -113,11 +121,11 @@ permissions, battery exemptions, packages or release-signing changes are added.
 5. Create a commitment: verify it appears in tomorrow's actual Plan. Replaying
    must not duplicate it. A committed tomorrow plan must reject another insert
    and retain its existing commitments.
-   Continue through Today & Plan, Areas, Routines and Journey. Try the Area chips
-   and Accept/Skip/Dismiss examples. Confirm examples do not insert anything into
-   real plans. Open the real feature pages and return with Back; tutorial progress
-   should remain unchanged. Check Calendar and Appearance/notification settings
-   links as well.
+   On Ready, take the tour. Each stop should spotlight the right part of the
+   real Today, Plan and Journey screens, and switch tabs on its own. Taps
+   outside the bubble do nothing; Back, Skip tour and system Back work. Nothing
+   is added to real plans. Replay it from Settings; try 2.0x text and a small
+   phone.
 6. With Freedom not earned, test the selected app. Check the real branded lock
    screen, return to the tutorial, and confirm verification. Try a failed launch
    or disconnected service: Finish Setup must remain disabled; retry should work.

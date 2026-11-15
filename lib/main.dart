@@ -41,6 +41,7 @@ import 'design/daylock_journey.dart';
 import 'services/freedom_service.dart';
 import 'services/routine_service.dart';
 import 'screens/routines_screen.dart';
+import 'screens/app_tour.dart';
 import 'screens/blocking_health_notice.dart';
 import 'services/instagram_detection_bridge.dart';
 import 'models/notification_preferences.dart';
@@ -131,6 +132,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   int _onboardingStep = 0;
   bool _onboardingPowerReviewed = false;
   bool _tutorialOpen = false;
+
+  /// Index into [daylockTour] while the guided tour is showing.
+  int? _tourStep;
   bool get _onboardingEnabled => widget.onboardingEnabled;
 
   @override
@@ -492,6 +496,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
                 notificationPreferences: notificationPreferences,
                 onNotificationsChanged: _changeNotifications,
                 onSetupRequested: () => _openTutorial(restart: true),
+                onTourRequested: _startTour,
                 initialDestination: destination,
               ),
             ),
@@ -515,21 +520,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             bridge: _detectionBridge,
             notifications: _notifications,
             initialStep: _onboardingStep,
-            onAreasRequested: _openAreas,
-            onRoutinesRequested: _openRoutines,
-            onCalendarRequested: () => _openCalendar(),
-            onSettingsRequested: () => _openSettings(),
-            onJourneyRequested: () => _navigatorKey.currentState!.push(
-              MaterialPageRoute<void>(
-                builder: (_) => Scaffold(
-                  appBar: AppBar(title: const Text('Explore Journey')),
-                  body: ValueListenableBuilder<int>(
-                    valueListenable: _journeyChanges,
-                    builder: (_, _, _) => _buildJourneyScreen(),
-                  ),
-                ),
-              ),
-            ),
+            onTourRequested: _startTour,
             initialPowerReviewed: _onboardingPowerReviewed,
             savePowerReviewed: (reviewed) async {
               await _storage.saveOnboardingPowerReviewed(reviewed);
@@ -576,6 +567,30 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     } finally {
       _tutorialOpen = false;
     }
+  }
+
+  /// Walks through the real Today, Plan and Journey screens with spotlights.
+  void _startTour() {
+    if (_isLoading || _loadFailed) return;
+    _navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    _goToTourStop(0);
+  }
+
+  void _goToTourStop(int index) {
+    if (index < 0) return;
+    if (index >= daylockTour.length) return _endTour();
+    setState(() {
+      _tourStep = index;
+      selectedPage = daylockTour[index].page;
+    });
+  }
+
+  void _endTour() {
+    if (_tourStep == null) return;
+    setState(() {
+      _tourStep = null;
+      selectedPage = 0;
+    });
   }
 
   Future<bool> _createOnboardingGoal(BuildContext context) async {
@@ -1161,6 +1176,23 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
               ? Duration.zero
               : const Duration(milliseconds: 220),
           home: _buildHome(),
+          // The tour sits above every route; the app stays mounted below it.
+          builder: (context, child) => Stack(
+            children: [
+              child!,
+              if (_tourStep != null)
+                Positioned.fill(
+                  child: AppTourOverlay(
+                    key: const ValueKey('app-tour'),
+                    index: _tourStep!,
+                    searchRoot: () => _navigatorKey.currentContext,
+                    onNext: () => _goToTourStop(_tourStep! + 1),
+                    onBack: () => _goToTourStop(_tourStep! - 1),
+                    onClose: _endTour,
+                  ),
+                ),
+            ],
+          ),
         ),
       );
 
@@ -1308,32 +1340,39 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       _buildJourneyScreen(),
     ];
 
-    return Scaffold(
-      body: pages[selectedPage],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: selectedPage,
-        onDestinationSelected: (index) {
-          setState(() {
-            selectedPage = index;
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.wb_sunny_outlined),
-            selectedIcon: Icon(Icons.wb_sunny_rounded),
-            label: 'Today',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.bedtime_outlined),
-            selectedIcon: Icon(Icons.bedtime_rounded),
-            label: 'Plan',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.landscape_outlined),
-            selectedIcon: Icon(Icons.landscape_rounded),
-            label: 'Journey',
-          ),
-        ],
+    return PopScope(
+      // System Back during the tour closes the tour, not the app.
+      canPop: _tourStep == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _endTour();
+      },
+      child: Scaffold(
+        body: pages[selectedPage],
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: selectedPage,
+          onDestinationSelected: (index) {
+            setState(() {
+              selectedPage = index;
+            });
+          },
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.wb_sunny_outlined),
+              selectedIcon: Icon(Icons.wb_sunny_rounded),
+              label: 'Today',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.bedtime_outlined),
+              selectedIcon: Icon(Icons.bedtime_rounded),
+              label: 'Plan',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.landscape_outlined),
+              selectedIcon: Icon(Icons.landscape_rounded),
+              label: 'Journey',
+            ),
+          ],
+        ),
       ),
     );
   }

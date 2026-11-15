@@ -33,6 +33,7 @@ class SettingsScreen extends StatefulWidget {
   final ValueChanged<NotificationPreferences>? onNotificationsChanged;
   final NotificationService? notificationService;
   final VoidCallback? onSetupRequested;
+  final VoidCallback? onTourRequested;
   final SettingsDestination? initialDestination;
   const SettingsScreen({
     super.key,
@@ -50,6 +51,7 @@ class SettingsScreen extends StatefulWidget {
     this.onNotificationsChanged,
     this.notificationService,
     this.onSetupRequested,
+    this.onTourRequested,
     this.initialDestination,
   });
 
@@ -357,6 +359,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               subtitle: 'Permissions, distractions and your first commitment',
               onTap: widget.onSetupRequested,
             ),
+            if (widget.onTourRequested != null)
+              SettingsNavigationCard(
+                grouped: true,
+                id: 'settings-tour',
+                icon: Icons.tour_outlined,
+                tint: DaylockHues.amber,
+                title: 'Take the App Tour',
+                subtitle: 'A guided look at Today, Plan and Journey',
+                onTap: widget.onTourRequested,
+              ),
             SettingsNavigationCard(
               grouped: true,
               id: 'settings-about',
