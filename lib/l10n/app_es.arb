@@ -685,5 +685,9 @@
   "channelFocus": "Cronómetro en marcha",
   "selectionLoadFailed": "No se pudieron cargar ni guardar las apps restringidas. Las restricciones están en pausa. Actualiza para reintentarlo.",
   "selectionSaveFailed": "No se pudo guardar la selección de apps. Las restricciones están en pausa. Actualiza para reintentarlo.",
-  "totalAchievements": "{count, plural, =1{logro} other{logros}}"
+  "totalAchievements": "{count, plural, =1{logro} other{logros}}",
+  "breaksTitle": "Descansos",
+  "breaksIntro": "Tomados desde la pantalla de bloqueo en los últimos 30 días, con tus motivos.",
+  "breakEntryTitle": "{app} · {when}",
+  "diagRestrictionSkippedBreakActive": "Restricción omitida: hay un descanso de 15 minutos en curso."
 }

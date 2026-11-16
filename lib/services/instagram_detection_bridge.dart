@@ -1,3 +1,4 @@
+import '../models/break_entry.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -59,6 +60,10 @@ class InstagramDetectionStatus {
   final String? lastRestriction, lastHomeAction, lastLockLaunch;
   final bool blockingSaveFailed;
   final int revision;
+
+  /// Breaks taken from the lock screen (latest 30), and time left on one.
+  final List<BreakEntry> breaks;
+  final Duration breakRemaining;
   const InstagramDetectionStatus({
     this.selectedPackages = const {},
     this.selectionRevision = 0,
@@ -81,6 +86,8 @@ class InstagramDetectionStatus {
     this.lastLockLaunch,
     this.blockingSaveFailed = false,
     this.revision = 0,
+    this.breaks = const [],
+    this.breakRemaining = Duration.zero,
   });
   factory InstagramDetectionStatus.fromMap(Map<dynamic, dynamic> map) {
     final latest = map['lastDetection'] as Map?;
@@ -111,6 +118,13 @@ class InstagramDetectionStatus {
       lastLockLaunch: map['lastLockLaunch'] as String?,
       blockingSaveFailed: map['blockingSaveFailed'] == true,
       revision: map['revision'] as int? ?? 0,
+      breaks: List.unmodifiable([
+        for (final value in map['breaks'] as List? ?? const [])
+          ?BreakEntry.fromMap(value),
+      ]),
+      breakRemaining: Duration(
+        milliseconds: map['breakRemainingMs'] as int? ?? 0,
+      ),
     );
   }
   static String freedomLabel(String state) => switch (state) {

@@ -57,6 +57,16 @@
     <string name="reminder_freedom_finish">Terminez vos engagements restants pour gagner la Liberté.</string>
     <string name="reminder_freedom_commit">Engagez le plan de demain pour gagner la Liberté.</string>
     <string name="reminder_stopwatch_title">Toujours en train de chronométrer %1$s ?</string>
+    <string name="break_take">Prendre une pause de 15 minutes</string>
+    <string name="break_used">La pause du jour est utilisée. Vous pourrez en reprendre une demain.</string>
+    <string name="break_wait_title">Respirez d’abord.</string>
+    <string name="break_wait_body">Votre pause s’ouvre dans %1$d s. Quitter cet écran relance l’attente.</string>
+    <string name="break_reason_prompt">Pourquoi avez-vous besoin de %1$s maintenant ?</string>
+    <string name="break_reason_hint">Quelques mots, gardés dans votre Parcours</string>
+    <string name="break_start">Commencer la pause de 15 minutes</string>
+    <string name="break_cancel">Finalement non</string>
+    <string name="break_note">Une pause par jour. Elle est gardée dans votre Parcours avec votre motif.</string>
+    <string name="break_started">%1$s est ouvert pendant 15 minutes.</string>
     <plurals name="reminder_commitments_body">
         <item quantity="one">Il vous reste %1$d engagement à tenir aujourd’hui.</item>
         <item quantity="other">Il vous reste %1$d engagements à tenir aujourd’hui.</item>

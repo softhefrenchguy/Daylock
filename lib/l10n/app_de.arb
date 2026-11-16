@@ -685,5 +685,9 @@
   "channelFocus": "Laufende Stoppuhr",
   "selectionLoadFailed": "Eingeschränkte Apps konnten nicht geladen oder gespeichert werden. Die Einschränkungen sind pausiert. Aktualisiere, um es erneut zu versuchen.",
   "selectionSaveFailed": "Die App-Auswahl konnte nicht gespeichert werden. Die Einschränkungen sind pausiert. Aktualisiere, um es erneut zu versuchen.",
-  "totalAchievements": "{count, plural, =1{Erfolg} other{Erfolge}}"
+  "totalAchievements": "{count, plural, =1{Erfolg} other{Erfolge}}",
+  "breaksTitle": "Pausen",
+  "breaksIntro": "In den letzten 30 Tagen über den Sperrbildschirm genommen, mit deinen Gründen.",
+  "breakEntryTitle": "{app} · {when}",
+  "diagRestrictionSkippedBreakActive": "Einschränkung übersprungen: Eine 15-Minuten-Pause läuft."
 }

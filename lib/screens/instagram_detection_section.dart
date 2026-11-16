@@ -48,7 +48,8 @@ String _restrictionDiagnostic(AppLocalizations l, String? value) =>
       'skipped_state_changed' => l.diagRestrictionSkippedStateChanged,
       'skipped_freedom_earned' => l.diagRestrictionSkippedFreedomEarned,
       'skipped_freedom_disabled' => l.diagRestrictionSkippedFreedomDisabled,
-      'skipped_launch_throttled' => l.diagRestrictionSkippedLaunchThrottled,
+      'skipped_break_active' => l.diagRestrictionSkippedBreakActive,
+  'skipped_launch_throttled' => l.diagRestrictionSkippedLaunchThrottled,
       _ => l.diagRestrictionOther,
     };
 

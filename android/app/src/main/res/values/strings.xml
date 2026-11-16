@@ -57,6 +57,16 @@
     <string name="reminder_freedom_finish">Finish your remaining commitments to earn Freedom.</string>
     <string name="reminder_freedom_commit">Commit tomorrow’s plan to earn Freedom.</string>
     <string name="reminder_stopwatch_title">Still timing %1$s?</string>
+    <string name="break_take">Take a 15-minute break</string>
+    <string name="break_used">Today’s break is used. You can take another tomorrow.</string>
+    <string name="break_wait_title">Take a breath first.</string>
+    <string name="break_wait_body">Your break opens in %1$d s. Leaving this screen starts the wait again.</string>
+    <string name="break_reason_prompt">Why do you need %1$s right now?</string>
+    <string name="break_reason_hint">A few words, saved in your Journey</string>
+    <string name="break_start">Start 15-minute break</string>
+    <string name="break_cancel">Never mind</string>
+    <string name="break_note">One break a day. It’s saved in your Journey with your reason.</string>
+    <string name="break_started">%1$s is open for 15 minutes.</string>
     <plurals name="reminder_commitments_body">
         <item quantity="one">You have %1$d commitment left to complete today.</item>
         <item quantity="other">You have %1$d commitments left to complete today.</item>

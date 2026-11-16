@@ -2551,4 +2551,20 @@ class AppLocalizationsDe extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get breaksTitle => 'Pausen';
+
+  @override
+  String get breaksIntro =>
+      'In den letzten 30 Tagen über den Sperrbildschirm genommen, mit deinen Gründen.';
+
+  @override
+  String breakEntryTitle(String app, String when) {
+    return '$app · $when';
+  }
+
+  @override
+  String get diagRestrictionSkippedBreakActive =>
+      'Einschränkung übersprungen: Eine 15-Minuten-Pause läuft.';
 }

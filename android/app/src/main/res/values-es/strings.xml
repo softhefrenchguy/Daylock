@@ -57,6 +57,16 @@
     <string name="reminder_freedom_finish">Termina tus compromisos pendientes para ganar la Libertad.</string>
     <string name="reminder_freedom_commit">Compromete el plan de mañana para ganar la Libertad.</string>
     <string name="reminder_stopwatch_title">¿Sigues cronometrando %1$s?</string>
+    <string name="break_take">Tomar un descanso de 15 minutos</string>
+    <string name="break_used">Ya usaste el descanso de hoy. Podrás tomar otro mañana.</string>
+    <string name="break_wait_title">Primero, respira.</string>
+    <string name="break_wait_body">Tu descanso se abre en %1$d s. Salir de esta pantalla reinicia la espera.</string>
+    <string name="break_reason_prompt">¿Por qué necesitas %1$s ahora?</string>
+    <string name="break_reason_hint">Unas palabras, guardadas en tu Camino</string>
+    <string name="break_start">Empezar descanso de 15 minutos</string>
+    <string name="break_cancel">Mejor no</string>
+    <string name="break_note">Un descanso al día. Se guarda en tu Camino con tu motivo.</string>
+    <string name="break_started">%1$s está abierta durante 15 minutos.</string>
     <plurals name="reminder_commitments_body">
         <item quantity="one">Te queda %1$d compromiso por completar hoy.</item>
         <item quantity="other">Te quedan %1$d compromisos por completar hoy.</item>

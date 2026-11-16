@@ -57,6 +57,16 @@
     <string name="reminder_freedom_finish">Erledige deine restlichen Vorsätze, um dir Freiheit zu verdienen.</string>
     <string name="reminder_freedom_commit">Lege den Plan für morgen fest, um dir Freiheit zu verdienen.</string>
     <string name="reminder_stopwatch_title">Läuft %1$s noch?</string>
+    <string name="break_take">15 Minuten Pause nehmen</string>
+    <string name="break_used">Die Pause für heute ist aufgebraucht. Morgen kannst du wieder eine nehmen.</string>
+    <string name="break_wait_title">Erst einmal durchatmen.</string>
+    <string name="break_wait_body">Deine Pause beginnt in %1$d Sek. Wenn du diesen Bildschirm verlässt, beginnt die Wartezeit neu.</string>
+    <string name="break_reason_prompt">Warum brauchst du %1$s gerade jetzt?</string>
+    <string name="break_reason_hint">Ein paar Worte, gespeichert in deinem Weg</string>
+    <string name="break_start">15 Minuten Pause starten</string>
+    <string name="break_cancel">Doch nicht</string>
+    <string name="break_note">Eine Pause pro Tag. Sie wird mit deinem Grund in deinem Weg gespeichert.</string>
+    <string name="break_started">%1$s ist für 15 Minuten offen.</string>
     <plurals name="reminder_commitments_body">
         <item quantity="one">Du hast heute noch %1$d Vorsatz zu erledigen.</item>
         <item quantity="other">Du hast heute noch %1$d Vorsätze zu erledigen.</item>

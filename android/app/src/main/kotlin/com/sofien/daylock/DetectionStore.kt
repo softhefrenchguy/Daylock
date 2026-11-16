@@ -37,6 +37,31 @@ class DetectionStore(private val context: Context) {
         NativeFreedomCodec.fromInput(input), (input["expectedRevision"] as Number).toLong())
     fun invalidate(reason: String): Boolean = repository.invalidate(reason)
     fun eligibility(now: DetectionClock = clock()): NativeFreedomResult = repository.eligibility(now)
+
+    private fun boot(): Int = runCatching {
+        android.provider.Settings.Global.getInt(context.contentResolver, android.provider.Settings.Global.BOOT_COUNT, -1)
+    }.getOrDefault(-1)
+
+    fun breaks(): List<BreakRecord> = BreakPolicy.decode(preferences.getString("breaks.v1", null))
+
+    /** Time left on the current break, or 0. */
+    fun breakRemainingMs(): Long {
+        val now = clock()
+        return BreakPolicy.remainingMs(breaks().lastOrNull(), now.wallMs, now.elapsedMs, boot())
+    }
+
+    fun breakUsedToday(): Boolean = BreakPolicy.usedToday(breaks(), clock().date)
+
+    /** Starts today's break for [packageName]; false if used or invalid. */
+    fun startBreak(packageName: String, appName: String, reason: String): Boolean {
+        val now = clock()
+        val log = breaks()
+        if (!BreakPolicy.canStart(log, now.date, reason)) return false
+        val record = BreakRecord(now.date, now.wallMs, now.elapsedMs, boot(), packageName, appName, reason.trim())
+        return runCatching {
+            preferences.edit().putString("breaks.v1", BreakPolicy.encode(BreakPolicy.append(log, record))).commit()
+        }.getOrDefault(false)
+    }
     fun revision(): Long = repository.record().revision
     fun blockingEnabled(): Boolean = repository.record().blockingEnabled
     fun setBlockingEnabled(enabled: Boolean): Boolean = repository.setBlocking(enabled)

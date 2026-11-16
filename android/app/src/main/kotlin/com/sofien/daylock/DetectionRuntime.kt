@@ -91,6 +91,8 @@ object DetectionRuntime {
     @Volatile var foregroundRestrictedPackage: String? = null
     @Volatile var lockVisible = false
         private set
+    /** Set by the Accessibility service: schedules the re-lock when a break ends. */
+    @Volatile var onBreakStarted: ((Long) -> Unit)? = null
     @Volatile var visibleLockAttempt = 0L
         private set
     private val observers = mutableSetOf<() -> Unit>()
@@ -298,7 +300,10 @@ object DetectionRuntime {
             "selectionError" to selectionError, "removedAppCount" to selection.removedCount,
             "revision" to store.revision(), "detectionSaveFailed" to detectionSaveFailed, "blockingEnabled" to blockingEnabled,
             "lastRestriction" to store.lastRestriction(), "lastHomeAction" to store.lastHomeAction(),
-            "lastLockLaunch" to store.lastLockLaunch(), "blockingSaveFailed" to blockingSaveFailed)
+            "lastLockLaunch" to store.lastLockLaunch(), "blockingSaveFailed" to blockingSaveFailed,
+            "breakRemainingMs" to store.breakRemainingMs(),
+            "breaks" to store.breaks().takeLast(30).map { mapOf("date" to it.date, "at" to it.startWallMs,
+                "app" to it.appName, "package" to it.packageName, "reason" to it.reason) })
     }
 
     fun emit() {

@@ -2550,4 +2550,20 @@ class AppLocalizationsEs extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get breaksTitle => 'Descansos';
+
+  @override
+  String get breaksIntro =>
+      'Tomados desde la pantalla de bloqueo en los últimos 30 días, con tus motivos.';
+
+  @override
+  String breakEntryTitle(String app, String when) {
+    return '$app · $when';
+  }
+
+  @override
+  String get diagRestrictionSkippedBreakActive =>
+      'Restricción omitida: hay un descanso de 15 minutos en curso.';
 }

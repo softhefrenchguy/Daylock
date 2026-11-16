@@ -2554,4 +2554,19 @@ class AppLocalizationsAr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get breaksTitle => 'الاستراحات';
+
+  @override
+  String get breaksIntro => 'أُخذت من شاشة القفل خلال آخر 30 يومًا، مع أسبابك.';
+
+  @override
+  String breakEntryTitle(String app, String when) {
+    return '$app · $when';
+  }
+
+  @override
+  String get diagRestrictionSkippedBreakActive =>
+      'تم تخطي التقييد: استراحة 15 دقيقة نشطة.';
 }

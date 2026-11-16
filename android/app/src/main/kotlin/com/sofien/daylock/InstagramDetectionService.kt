@@ -34,6 +34,7 @@ class InstagramDetectionService : AccessibilityService() {
         super.onServiceConnected()
         serviceInfo = serviceInfo.apply { packageNames = null }
         serviceActive = true
+        DetectionRuntime.onBreakStarted = { remaining -> main.post { scheduleBreakEnd(remaining) } }
         InstagramLockLog.event("service_connected")
         DetectionRuntime.setConnected(true)
     }
@@ -154,6 +155,7 @@ class InstagramDetectionService : AccessibilityService() {
             val stateRevision = DetectionRuntime.stateRevision.get()
             // Load/validate on the worker. The UI-thread recheck uses the in-memory cache.
             val eligibility = DetectionRuntime.store.eligibility()
+            val breakLeft = DetectionRuntime.store.breakRemainingMs()
             DetectionRuntime.reportRestrictionOnWorker("eligibility_${eligibility.state}")
             DetectionRuntime.emit()
             main.post {
@@ -176,6 +178,12 @@ class InstagramDetectionService : AccessibilityService() {
                         DetectionRuntime.reportRestriction("retrying_state_changed")
                         evaluateAndEnforce(token, packageName, 1)
                     } else DetectionRuntime.reportRestriction("skipped_state_changed")
+                    return@post
+                }
+                if (breakLeft > 0) {
+                    // An earned break from the lock screen; lock again when it ends.
+                    DetectionRuntime.reportRestriction("skipped_break_active")
+                    scheduleBreakEnd(breakLeft)
                     return@post
                 }
                 val freedom = DetectionRuntime.store.eligibility()
@@ -267,6 +275,7 @@ class InstagramDetectionService : AccessibilityService() {
     private fun requestHome(token: Long, revision: Long, attempt: Long, packageName: String) {
         if (!serviceActive || !foreground.matches(token) || !unlockedAndInteractive() ||
             revision != DetectionRuntime.stateRevision.get() || !DetectionRuntime.isEnabled() || !DetectionRuntime.isSelected(packageName) ||
+            DetectionRuntime.store.breakRemainingMs() > 0 ||
             InstagramBlockingPolicy.decide(DetectionRuntime.blockingEnabled, true,
                 DetectionRuntime.store.eligibility()) == InstagramRestriction.ALLOW) {
             InstagramLockLog.event("home_skipped", attempt, "reason=foreground_screen_or_state_changed")
@@ -281,6 +290,21 @@ class InstagramDetectionService : AccessibilityService() {
         InstagramLockLog.event("home_result", attempt, "accepted=$accepted")
         DetectionRuntime.reportHomeAction(if (accepted) "accepted" else "rejected")
         DetectionRuntime.reportRestriction(if (accepted) "home_only" else "home_failed")
+    }
+
+    private val breakEnd = Runnable {
+        // Still in the app when the break ends: treat it as a fresh visit.
+        val target = foreground.targetPackage ?: return@Runnable
+        if (!serviceActive) return@Runnable
+        foreground.interrupt()
+        foreground.observe(target)
+        gate.reset()
+        evaluateAndEnforce(foreground.token(), target)
+    }
+
+    private fun scheduleBreakEnd(remainingMs: Long) {
+        main.removeCallbacks(breakEnd)
+        main.postDelayed(breakEnd, remainingMs + 500)
     }
 
     private fun unlockedAndInteractive(): Boolean = runCatching {

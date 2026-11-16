@@ -2522,4 +2522,20 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get breaksTitle => 'Breaks';
+
+  @override
+  String get breaksIntro =>
+      'Taken from the lock screen in the last 30 days, with your reasons.';
+
+  @override
+  String breakEntryTitle(String app, String when) {
+    return '$app · $when';
+  }
+
+  @override
+  String get diagRestrictionSkippedBreakActive =>
+      'Restriction skipped: a 15-minute break is active.';
 }

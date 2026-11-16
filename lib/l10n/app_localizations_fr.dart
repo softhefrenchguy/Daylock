@@ -2546,4 +2546,20 @@ class AppLocalizationsFr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get breaksTitle => 'Pauses';
+
+  @override
+  String get breaksIntro =>
+      'Prises depuis l’écran de verrouillage ces 30 derniers jours, avec vos motifs.';
+
+  @override
+  String breakEntryTitle(String app, String when) {
+    return '$app · $when';
+  }
+
+  @override
+  String get diagRestrictionSkippedBreakActive =>
+      'Restriction ignorée : une pause de 15 minutes est en cours.';
 }

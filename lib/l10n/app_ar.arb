@@ -685,5 +685,9 @@
   "channelFocus": "ساعة الإيقاف العاملة",
   "selectionLoadFailed": "تعذّر تحميل التطبيقات المقيّدة أو حفظها. التقييد متوقف مؤقتًا. حدّث لإعادة المحاولة.",
   "selectionSaveFailed": "تعذّر حفظ اختيار التطبيقات. التقييد متوقف مؤقتًا. حدّث لإعادة المحاولة.",
-  "totalAchievements": "{count, plural, =1{إنجاز} =2{إنجازان} few{إنجازات} other{إنجازًا}}"
+  "totalAchievements": "{count, plural, =1{إنجاز} =2{إنجازان} few{إنجازات} other{إنجازًا}}",
+  "breaksTitle": "الاستراحات",
+  "breaksIntro": "أُخذت من شاشة القفل خلال آخر 30 يومًا، مع أسبابك.",
+  "breakEntryTitle": "{app} · {when}",
+  "diagRestrictionSkippedBreakActive": "تم تخطي التقييد: استراحة 15 دقيقة نشطة."
 }

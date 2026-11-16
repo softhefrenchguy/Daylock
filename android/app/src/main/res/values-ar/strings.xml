@@ -57,6 +57,16 @@
     <string name="reminder_freedom_finish">أنجز التزاماتك المتبقية لتكسب الحرية.</string>
     <string name="reminder_freedom_commit">التزم بخطة الغد لتكسب الحرية.</string>
     <string name="reminder_stopwatch_title">هل ما زلت توقّت %1$s؟</string>
+    <string name="break_take">خذ استراحة 15 دقيقة</string>
+    <string name="break_used">استخدمت استراحة اليوم. يمكنك أخذ أخرى غدًا.</string>
+    <string name="break_wait_title">خذ نفسًا أولًا.</string>
+    <string name="break_wait_body">تبدأ استراحتك بعد %1$d ث. مغادرة هذه الشاشة تعيد الانتظار من البداية.</string>
+    <string name="break_reason_prompt">لماذا تحتاج %1$s الآن؟</string>
+    <string name="break_reason_hint">بضع كلمات تُحفظ في مسيرتك</string>
+    <string name="break_start">ابدأ استراحة 15 دقيقة</string>
+    <string name="break_cancel">لا داعي</string>
+    <string name="break_note">استراحة واحدة في اليوم، تُحفظ في مسيرتك مع السبب.</string>
+    <string name="break_started">%1$s مفتوح لمدة 15 دقيقة.</string>
     <plurals name="reminder_commitments_body">
         <item quantity="zero">لا التزامات متبقية اليوم.</item>
         <item quantity="one">بقي التزام واحد لتنجزه اليوم.</item>

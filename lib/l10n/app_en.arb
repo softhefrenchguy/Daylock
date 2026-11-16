@@ -1459,5 +1459,19 @@
         "type": "int"
       }
     }
-  }
+  },
+  "breaksTitle": "Breaks",
+  "breaksIntro": "Taken from the lock screen in the last 30 days, with your reasons.",
+  "breakEntryTitle": "{app} · {when}",
+  "@breakEntryTitle": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "diagRestrictionSkippedBreakActive": "Restriction skipped: a 15-minute break is active."
 }

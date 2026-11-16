@@ -1415,18 +1415,22 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildJourneyScreen() => JourneyScreen(
-    areas: areas,
-    highlights: highlights,
-    data: _journeyData(),
-    onAreaOpened: _openAreaJourney,
-    onHighlightOpened: _openHighlight,
-    onAddHighlight: () => _editHighlight(),
-    onHighlightEdited: (highlight) => _editHighlight(original: highlight),
-    onPastChapters: _openPastChapters,
-    onManageAreas: _openAreas,
-    onAllHighlights: _openHighlights,
-    onDailyHistory: () => _openCalendar(),
+  Widget _buildJourneyScreen() => ValueListenableBuilder(
+    valueListenable: _detectionBridge.status,
+    builder: (context, detection, _) => JourneyScreen(
+      breaks: detection.breaks,
+      areas: areas,
+      highlights: highlights,
+      data: _journeyData(),
+      onAreaOpened: _openAreaJourney,
+      onHighlightOpened: _openHighlight,
+      onAddHighlight: () => _editHighlight(),
+      onHighlightEdited: (highlight) => _editHighlight(original: highlight),
+      onPastChapters: _openPastChapters,
+      onManageAreas: _openAreas,
+      onAllHighlights: _openHighlights,
+      onDailyHistory: () => _openCalendar(),
+    ),
   );
 }
 

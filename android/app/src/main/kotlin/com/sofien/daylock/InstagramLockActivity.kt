@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import android.view.Gravity
 import android.view.View
@@ -32,6 +33,11 @@ class InstagramLockActivity : Activity() {
     private val clockBoundary = Runnable { refresh() }
     private var lastRender: String? = null
     private var actionsExpanded = false
+
+    /** When the break flow started (elapsed clock); null when not in it. */
+    private var breakFlowStart: Long? = null
+    private var breakReason = ""
+    private val breakTick = Runnable { refresh() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,6 +83,7 @@ class InstagramLockActivity : Activity() {
 
     override fun onPause() {
         resumed = false
+        main.removeCallbacks(breakTick)
         main.removeCallbacks(clockBoundary)
         DetectionRuntime.removeObserver(observer)
         DetectionRuntime.lockPaused(attempt)
@@ -96,10 +103,11 @@ class InstagramLockActivity : Activity() {
             val blocked = DetectionRuntime.canRestrict(target) && InstagramBlockingPolicy.decide(DetectionRuntime.blockingEnabled,
                 DetectionRuntime.isEnabled(), freedom) == InstagramRestriction.BLOCK
             val appearance = DetectionRuntime.store.lockAppearance()
+            val breakUsed = DetectionRuntime.store.breakUsedToday()
             main.post {
                 if (!resumed || isFinishing) return@post
-                val signature = "$blocked|${freedom.state}|${freedom.reason}|${freedom.conditions?.toMap()}|$appearance|$appName"
-                if (signature != lastRender) { lastRender = signature; render(blocked, freedom, appearance, appName) }
+                val signature = "$blocked|${freedom.state}|${freedom.reason}|${freedom.conditions?.toMap()}|$appearance|$appName|$breakUsed|${breakPhase()}"
+                if (signature != lastRender) { lastRender = signature; render(blocked, freedom, appearance, appName, breakUsed) }
                 // Only while this screen is visible. At most one update per minute;
                 // broadcasts/save/permission changes notify us immediately.
                 main.removeCallbacks(clockBoundary)
@@ -109,7 +117,15 @@ class InstagramLockActivity : Activity() {
         }
     }
 
-    private fun render(blocked: Boolean, freedom: NativeFreedomResult, appearance: JSONObject?, appName: String) {
+    /** "none", the seconds left to wait, or "reason" once the wait is over. */
+    private fun breakPhase(): String {
+        val start = breakFlowStart ?: return "none"
+        val left = (BreakPolicy.WAIT_MS - (SystemClock.elapsedRealtime() - start) + 999) / 1000
+        return if (left > 0) "$left" else "reason"
+    }
+
+    private fun render(blocked: Boolean, freedom: NativeFreedomResult, appearance: JSONObject?, appName: String,
+                       breakUsed: Boolean) {
         val useDark = when (appearance?.optString("mode", "system")) {
             "light" -> false
             "dark" -> true
@@ -200,6 +216,29 @@ class InstagramLockActivity : Activity() {
         val skyMuted = if (useDark) Color.parseColor("#DCD3F2") else muted
         text("DAYLOCK", 13f, skyMuted, displayBold, 2, headerText)
         text(getString(R.string.lock_app_locked, appName), 15f, skyInk, null, 0, headerText)
+        fun button(label: String, primary: Boolean, parent: LinearLayout = body, action: () -> Unit): Button {
+            val view = Button(this).apply {
+                this.text = label; textSize = 16f; isAllCaps = false
+                typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+                setTextColor(if (primary) onAccent else ink)
+                minimumHeight = dp(54); stateListAnimator = null
+                setPadding(dp(16), dp(12), dp(16), dp(12))
+                background = GradientDrawable().apply {
+                    cornerRadius = dp(28).toFloat()
+                    setColor(if (primary) accent else cardColor)
+                }
+                gravity = Gravity.CENTER; setOnClickListener { action() }
+            }
+            parent.addView(view, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(10) })
+            return view
+        }
+
+        if (blocked && breakFlowStart != null && !breakUsed) {
+            renderBreak(appName, ink, muted, cardColor, display, ::text, ::button, body)
+            finishRender(scroll, freedom)
+            return
+        }
+        breakFlowStart = null
 
         text(if (blocked) getString(R.string.lock_not_yet) else if (earned) getString(R.string.lock_freedom_earned) else if (freedom.state == "unknown") getString(R.string.lock_refresh_status) else getString(R.string.lock_paused),
             44f, ink, display, 4)
@@ -246,25 +285,17 @@ class InstagramLockActivity : Activity() {
         if (conditions?.eligibleCount == 0) text(getString(R.string.lock_empty_day), 13f, muted, parent = card)
         if (freedom.reason == "rollover_unplanned") text(getString(R.string.lock_new_day_unplanned), 13f, muted)
         if (freedom.reason == "rollover_reconciled") text(getString(R.string.lock_new_day), 13f, muted)
-        fun button(label: String, primary: Boolean, parent: LinearLayout = body, action: () -> Unit): Button {
-            val view = Button(this).apply {
-                this.text = label; textSize = 16f; isAllCaps = false
-                typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-                setTextColor(if (primary) onAccent else ink)
-                minimumHeight = dp(54); stateListAnimator = null
-                setPadding(dp(16), dp(12), dp(16), dp(12))
-                background = GradientDrawable().apply {
-                    cornerRadius = dp(28).toFloat()
-                    setColor(if (primary) accent else cardColor)
-                }
-                gravity = Gravity.CENTER; setOnClickListener { action() }
-            }
-            parent.addView(view, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(10) })
-            return view
-        }
         button(getString(R.string.lock_return_daylock), true) {
             startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
             finish()
+        }
+        if (blocked && restrictedPackage != null) {
+            if (breakUsed) text(getString(R.string.break_used), 13f, muted, spacing = 14)
+            else button(getString(R.string.break_take), false) {
+                breakFlowStart = SystemClock.elapsedRealtime()
+                breakReason = ""
+                refresh()
+            }
         }
         val secondary = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; visibility = if (actionsExpanded) View.VISIBLE else View.GONE }
         lateinit var expand: Button
@@ -289,6 +320,10 @@ class InstagramLockActivity : Activity() {
         }
         button(getString(R.string.lock_accessibility_settings), false, secondary) { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); finish() }
         text(getString(R.string.lock_in_control), 13f, muted, parent = secondary)
+        finishRender(scroll, freedom)
+    }
+
+    private fun finishRender(scroll: ScrollView, freedom: NativeFreedomResult) {
         setContentView(scroll)
         var acknowledged = false
         val drawnAttempt = attempt
@@ -299,6 +334,74 @@ class InstagramLockActivity : Activity() {
             }
         }
         scroll.requestApplyInsets()
+    }
+
+    /** Wait a minute, then say why; the app opens for 15 minutes. */
+    private fun renderBreak(
+        appName: String, ink: Int, muted: Int, cardColor: Int, display: Typeface,
+        text: (String, Float, Int, Typeface?, Int, LinearLayout) -> Unit,
+        button: (String, Boolean, LinearLayout, () -> Unit) -> Button,
+        body: LinearLayout,
+    ) {
+        val phase = breakPhase()
+        text(getString(R.string.break_wait_title), 36f, ink, display, 6, body)
+        if (phase != "reason") {
+            text(getString(R.string.break_wait_body, phase.toInt()), 17f, muted, null, 18, body)
+            main.removeCallbacks(breakTick)
+            main.postDelayed(breakTick, 1000)
+        } else {
+            text(getString(R.string.break_reason_prompt, appName), 17f, muted, null, 12, body)
+            lateinit var start: Button
+            val input = android.widget.EditText(this).apply {
+                hint = getString(R.string.break_reason_hint)
+                setText(breakReason); setSelection(breakReason.length)
+                setTextColor(ink); setHintTextColor(muted); textSize = 16f; maxLines = 3
+                filters = arrayOf(android.text.InputFilter.LengthFilter(BreakPolicy.MAX_REASON))
+                setPadding(dp(16), dp(14), dp(16), dp(14))
+                background = GradientDrawable().apply { cornerRadius = dp(16).toFloat(); setColor(cardColor) }
+                addTextChangedListener(object : android.text.TextWatcher {
+                    override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) = Unit
+                    override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) = Unit
+                    override fun afterTextChanged(value: android.text.Editable?) {
+                        breakReason = value?.toString().orEmpty()
+                        start.isEnabled = BreakPolicy.validReason(breakReason)
+                        start.alpha = if (start.isEnabled) 1f else .5f
+                    }
+                })
+            }
+            body.addView(input, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(16) })
+            start = button(getString(R.string.break_start), true, body) { startBreak(appName) }
+            start.isEnabled = BreakPolicy.validReason(breakReason)
+            start.alpha = if (start.isEnabled) 1f else .5f
+        }
+        button(getString(R.string.break_cancel), false, body) {
+            breakFlowStart = null
+            main.removeCallbacks(breakTick)
+            refresh()
+        }
+        text(getString(R.string.break_note), 13f, muted, null, 12, body)
+    }
+
+    private fun startBreak(appName: String) {
+        val target = restrictedPackage ?: return
+        val reason = breakReason
+        DetectionRuntime.worker.execute {
+            val started = DetectionRuntime.store.startBreak(target, appName, reason)
+            DetectionRuntime.emit()
+            main.post {
+                if (!started) {
+                    breakFlowStart = null
+                    refresh()
+                    return@post
+                }
+                DetectionRuntime.onBreakStarted?.invoke(BreakPolicy.DURATION_MS)
+                android.widget.Toast.makeText(this, getString(R.string.break_started, appName), android.widget.Toast.LENGTH_LONG).show()
+                packageManager.getLaunchIntentForPackage(target)?.let {
+                    runCatching { startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                }
+                finish()
+            }
+        }
     }
 
     private fun goHome() {

@@ -1,3 +1,4 @@
+import '../models/break_entry.dart';
 import '../l10n/l10n.dart';
 
 import 'package:flutter/material.dart';
@@ -33,6 +34,9 @@ class JourneyScreen extends StatelessWidget {
   final ValueChanged<Highlight>? onHighlightEdited;
   final VoidCallback onAddHighlight, onAllHighlights, onDailyHistory;
   final VoidCallback? onPastChapters, onManageAreas;
+
+  /// Breaks taken from the lock screen; shown when there are recent ones.
+  final List<BreakEntry> breaks;
   const JourneyScreen({
     super.key,
     required this.areas,
@@ -46,6 +50,7 @@ class JourneyScreen extends StatelessWidget {
     this.onHighlightEdited,
     this.onPastChapters,
     this.onManageAreas,
+    this.breaks = const [],
   });
 
   @override
@@ -264,6 +269,10 @@ class JourneyScreen extends StatelessWidget {
               ),
             ),
             boxed(_WeeksGrid(data: data)),
+            if (BreakEntry.recent(breaks, data.today).isNotEmpty) ...[
+              boxed(DaylockSectionHeader(title: context.l10n.breaksTitle)),
+              boxed(_BreaksList(breaks: BreakEntry.recent(breaks, data.today))),
+            ],
             boxed(
               DaylockSectionHeader(
                 title: context.l10n.yourAreas,
@@ -811,4 +820,43 @@ class AchievementBadge extends StatelessWidget {
       size: 26,
     ),
   );
+}
+
+/// Breaks from the lock screen: app, when, and the reason given.
+class _BreaksList extends StatelessWidget {
+  final List<BreakEntry> breaks;
+  const _BreaksList({required this.breaks});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final local = MaterialLocalizations.of(context);
+    return DaylockGroup(
+      key: const ValueKey('journey-breaks'),
+      children: [
+        Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 4),
+          child: Text(
+            context.l10n.breaksIntro,
+            style: theme.textTheme.bodySmall!.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        for (final entry in breaks)
+          ListTile(
+            leading: Icon(Icons.free_breakfast_outlined, color: scheme.primary),
+            title: Text(
+              context.l10n.breakEntryTitle(
+                entry.app,
+                '${achievementDateLabel(entry.at)}, '
+                '${local.formatTimeOfDay(TimeOfDay.fromDateTime(entry.at), alwaysUse24HourFormat: true)}',
+              ),
+            ),
+            subtitle: Text('“${entry.reason}”'),
+          ),
+      ],
+    );
+  }
 }

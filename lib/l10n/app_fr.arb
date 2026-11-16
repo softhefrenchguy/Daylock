@@ -685,5 +685,9 @@
   "channelFocus": "Chronomètre en cours",
   "selectionLoadFailed": "Impossible de charger ou d’enregistrer les applis restreintes. Les restrictions sont en pause. Actualisez pour réessayer.",
   "selectionSaveFailed": "La sélection d’applis n’a pas pu être enregistrée. Les restrictions sont en pause. Actualisez pour réessayer.",
-  "totalAchievements": "{count, plural, one{réussite} other{réussites}}"
+  "totalAchievements": "{count, plural, one{réussite} other{réussites}}",
+  "breaksTitle": "Pauses",
+  "breaksIntro": "Prises depuis l’écran de verrouillage ces 30 derniers jours, avec vos motifs.",
+  "breakEntryTitle": "{app} · {when}",
+  "diagRestrictionSkippedBreakActive": "Restriction ignorée : une pause de 15 minutes est en cours."
 }

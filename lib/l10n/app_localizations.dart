@@ -4219,6 +4219,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{achievement} other{achievements}}'**
   String totalAchievements(int count);
+
+  /// No description provided for @breaksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Breaks'**
+  String get breaksTitle;
+
+  /// No description provided for @breaksIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken from the lock screen in the last 30 days, with your reasons.'**
+  String get breaksIntro;
+
+  /// No description provided for @breakEntryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{app} · {when}'**
+  String breakEntryTitle(String app, String when);
+
+  /// No description provided for @diagRestrictionSkippedBreakActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Restriction skipped: a 15-minute break is active.'**
+  String get diagRestrictionSkippedBreakActive;
 }
 
 class _AppLocalizationsDelegate
