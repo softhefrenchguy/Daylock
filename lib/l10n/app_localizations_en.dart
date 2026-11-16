@@ -2602,4 +2602,104 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get backupAndroidOnly =>
       'Backup files are available in the Android app.';
+
+  @override
+  String get notifWeekly => 'Weekly Review';
+
+  @override
+  String get notifWeeklyHelp =>
+      'Sunday at 19:00: how your week went, and a nudge to plan the next one.';
+
+  @override
+  String get weekTitle => 'Your week';
+
+  @override
+  String weekRange(String from, String through) {
+    return '$from – $through';
+  }
+
+  @override
+  String get weekStrongTitle => 'A strong week.';
+
+  @override
+  String get weekStrongBody =>
+      'You kept almost everything you planned. Keep the same rhythm next week.';
+
+  @override
+  String get weekSolidTitle => 'A solid week.';
+
+  @override
+  String get weekSolidBody =>
+      'More kept than missed. Plan a little smaller where days slipped.';
+
+  @override
+  String get weekBuildTitle => 'A week to build on.';
+
+  @override
+  String get weekBuildBody =>
+      'Fewer, smaller commitments are easier to keep. Try one small step a day next week.';
+
+  @override
+  String get weekQuietTitle => 'A quiet week.';
+
+  @override
+  String get weekQuietBody =>
+      'Nothing was planned in the last seven days. Start with one commitment for tomorrow.';
+
+  @override
+  String weekDaysKept(int kept, int total) {
+    return '$kept of $total days';
+  }
+
+  @override
+  String get weekDaysKeptLabel => 'Days fully kept';
+
+  @override
+  String get weekCommitmentsLabel => 'Commitments';
+
+  @override
+  String get weekStreakLabel => 'Current streak';
+
+  @override
+  String get weekAreasLabel => 'AREAS';
+
+  @override
+  String weekTopArea(String area) {
+    return '$area grew the most';
+  }
+
+  @override
+  String weekTopAreaKept(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count commitments kept',
+      one: '1 commitment kept',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String weekQuietAreas(String areas) {
+    return 'Quiet this week: $areas';
+  }
+
+  @override
+  String get weekQuietAreasHint => 'Give one of them a small step next week.';
+
+  @override
+  String weekBreaks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count breaks taken from the lock screen.',
+      one: '1 break taken from the lock screen.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String weekCardSubtitle(int kept, int total) {
+    return '$kept of $total days fully kept this week';
+  }
 }

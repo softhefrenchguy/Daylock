@@ -8,7 +8,9 @@ import java.time.LocalTime
 import java.time.ZoneId
 
 data class ReminderPreferences(val plan: Boolean, val commitments: Boolean, val freedom: Boolean,
-    val focus: Boolean, val planMinute: Int, val commitmentMinute: Int) {
+    val focus: Boolean, val planMinute: Int, val commitmentMinute: Int,
+    /** Sunday-evening weekly review, sent on the Plan channel. */
+    val weekly: Boolean = false) {
     init { require(planMinute in 0..1439 && commitmentMinute in 0..1439) }
 }
 data class ReminderTask(val name: String, val outcome: String, val minimumMinutes: Int?, val deadlineMs: Long?,
@@ -75,7 +77,8 @@ object ReminderCodec {
                 })
         }
         return ReminderSnapshot(ReminderPreferences(p.getBoolean("planTomorrow"), p.getBoolean("commitments"),
-            p.getBoolean("freedom"), p.getBoolean("focus"), p.getInt("planMinute"), p.getInt("commitmentMinute")),
+            p.getBoolean("freedom"), p.getBoolean("focus"), p.getInt("planMinute"), p.getInt("commitmentMinute"),
+            p.optBoolean("weekly", false)),
             f.getBoolean("enabled"), f.getInt("hour"), f.getInt("minute"),
             plan(json.getJSONObject("today")), plan(json.getJSONObject("tomorrow")))
     }
@@ -87,16 +90,19 @@ object ReminderCodec {
         val p = value.preferences
         return JSONObject().put("version", 1)
             .put("preferences", JSONObject().put("planTomorrow", p.plan).put("commitments", p.commitments)
-                .put("freedom", p.freedom).put("focus", p.focus).put("planMinute", p.planMinute).put("commitmentMinute", p.commitmentMinute))
+                .put("freedom", p.freedom).put("focus", p.focus).put("planMinute", p.planMinute).put("commitmentMinute", p.commitmentMinute)
+                .put("weekly", p.weekly))
             .put("freedom", JSONObject().put("enabled", value.freedomEnabled).put("hour", value.freedomHour).put("minute", value.freedomMinute))
             .put("today", plan(value.today)).put("tomorrow", plan(value.tomorrow))
     }
 }
 
 data class ReminderMessage(val category: String, val title: String, val body: String,
-    val date: String, val taskIndex: Int? = null, val taskName: String? = null) {
+    val date: String, val taskIndex: Int? = null, val taskName: String? = null,
+    /** Where a tap opens; defaults to Plan for plan reminders, else Today. */
+    val screen: String? = null) {
     val id get() = when (category) { "plan" -> 7401; "commitments" -> 7402; "freedom" -> 7403; else -> 7404 }
-    fun payload(action: String? = null): String = JSONObject().put("screen", if (category == "plan") "plan" else "today")
+    fun payload(action: String? = null): String = JSONObject().put("screen", screen ?: if (category == "plan") "plan" else "today")
         .put("date", date).put("taskIndex", taskIndex ?: JSONObject.NULL).put("taskName", taskName ?: JSONObject.NULL)
         .put("action", action ?: JSONObject.NULL).toString()
 }
@@ -127,12 +133,17 @@ interface ReminderTexts {
     fun freedomFinishAndCommit(): String = "Finish your remaining commitments and commit tomorrow to earn Freedom."
     fun freedomFinish(): String = "Finish your remaining commitments to earn Freedom."
     fun freedomCommitTomorrow(): String = "Commit tomorrow's plan to earn Freedom."
+    fun weeklyTitle(): String = "Your week in Daylock"
+    fun weeklyBody(): String = "See how the week went, then plan the next one."
     fun stopwatchTitle(name: String): String = "Still timing $name?"
     fun stopwatchBody(hours: Int): String =
         "Your stopwatch has been running for $hours hours. Pause it if you've stopped."
 
     companion object { val English = object : ReminderTexts {} }
 }
+
+/** Sunday at 19:00. */
+const val WEEKLY_REVIEW_MINUTE = 19 * 60
 
 object NotificationPolicy {
     /** A running stopwatch gets a nudge each time it passes another interval. */
@@ -167,7 +178,8 @@ object NotificationPolicy {
             // "focus" now means the running-stopwatch notification and nudges.
             if (p.focus) add("focus")
         }.intersect(allowed)
-        if (enabled.isEmpty()) return ReminderEvaluation(emptyList(), null)
+        val weekly = p.weekly && "plan" in allowed
+        if (enabled.isEmpty() && !weekly) return ReminderEvaluation(emptyList(), null)
         val decisions = mutableListOf<ReminderDecision>()
         val upcoming = mutableListOf<Long>()
         fun at(minute: Int) = date.atTime(LocalTime.of(minute / 60, minute % 60)).atZone(zone).toInstant().toEpochMilli()
@@ -217,10 +229,19 @@ object NotificationPolicy {
             }
             upcoming.add(task.runningSinceMs!! + (passed + 1) * STOPWATCH_NUDGE_MS - task.elapsedMs)
         }
+        // Sunday evening: how the week went, and a nudge to plan the next.
+        if (weekly && local.dayOfWeek == java.time.DayOfWeek.SUNDAY) {
+            val key = "$day|weekly"
+            val time = at(WEEKLY_REVIEW_MINUTE)
+            if (now >= time && key !in seen) {
+                decisions.add(ReminderDecision(setOf(key), ReminderMessage("plan", texts.weeklyTitle(),
+                    texts.weeklyBody(), day, screen = "review")))
+            } else if (now < time) upcoming.add(time)
+        }
         // One wake at midnight reconciles dates even when Flutter never opens.
         // No repeating service, polling job or exact-alarm permission is used.
         // Stopwatch notifications alone only need it while one is running.
-        if (enabled.any { it != "focus" } || stopwatch != null) {
+        if (enabled.any { it != "focus" } || stopwatch != null || weekly) {
             upcoming.add(date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli())
         }
         return ReminderEvaluation(decisions, upcoming.filter { it > now }.minOrNull())

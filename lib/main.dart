@@ -1,3 +1,5 @@
+import 'services/weekly_review.dart';
+import 'screens/weekly_review_screen.dart';
 import 'services/backup_service.dart';
 import 'screens/backup_screen.dart';
 import 'l10n/l10n.dart';
@@ -512,6 +514,22 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         ),
       );
 
+  void _openWeeklyReview() => _navigatorKey.currentState!.push(
+    MaterialPageRoute<void>(
+      builder: (routeContext) => WeeklyReviewScreen(
+        review: WeeklyReview.of(
+          _journeyData(),
+          areas,
+          breaks: _detectionBridge.status.value.breaks,
+        ),
+        onPlanTomorrow: () {
+          Navigator.of(routeContext).pop();
+          setState(() => selectedPage = 1);
+        },
+      ),
+    ),
+  );
+
   void _openBackup() => _navigatorKey.currentState!.push(
     MaterialPageRoute<void>(
       builder: (_) => BackupScreen(
@@ -693,6 +711,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       _refreshClock();
       _navigatorKey.currentState?.popUntil((route) => route.isFirst);
       setState(() => selectedPage = target.screen == 'plan' ? 1 : 0);
+      if (target.screen == 'review') return _openWeeklyReview();
       if (target.pausesStopwatch) return _pauseFromNotification(target);
       if (target.keepsTask) return _keepFromWidget(target);
       if (target.screen != 'plan' &&
@@ -1486,6 +1505,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     valueListenable: _detectionBridge.status,
     builder: (context, detection, _) => JourneyScreen(
       breaks: detection.breaks,
+      onWeeklyReview: _openWeeklyReview,
       areas: areas,
       highlights: highlights,
       data: _journeyData(),

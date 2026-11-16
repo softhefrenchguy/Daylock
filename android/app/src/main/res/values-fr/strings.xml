@@ -77,6 +77,8 @@
     <string name="widget_more">+%1$d de plus dans Daylock</string>
     <string name="widget_keep_row">Tenir %1$s</string>
     <string name="widget_kept_row">Tenu : %1$s</string>
+    <string name="reminder_weekly_title">Votre semaine dans Daylock</string>
+    <string name="reminder_weekly_body">Voyez comment s’est passée la semaine, puis planifiez la suivante.</string>
     <plurals name="reminder_commitments_body">
         <item quantity="one">Il vous reste %1$d engagement à tenir aujourd’hui.</item>
         <item quantity="other">Il vous reste %1$d engagements à tenir aujourd’hui.</item>

@@ -50,7 +50,11 @@ class NotificationTarget {
   bool get keepsTask => action == 'keep';
   factory NotificationTarget.fromJson(Map<String, dynamic> json) =>
       NotificationTarget(
-        json['screen'] == 'plan' ? 'plan' : 'today',
+        switch (json['screen']) {
+          'plan' => 'plan',
+          'review' => 'review',
+          _ => 'today',
+        },
         date: json['date'] as String?,
         taskIndex: json['taskIndex'] as int?,
         taskName: json['taskName'] as String?,

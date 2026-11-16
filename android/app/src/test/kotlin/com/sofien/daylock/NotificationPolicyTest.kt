@@ -21,6 +21,37 @@ class NotificationPolicyTest {
     private fun messages(e: ReminderEvaluation) = e.decisions.mapNotNull { it.message }
     private fun consumed(e: ReminderEvaluation) = e.decisions.flatMap { it.keys }.toSet()
 
+    // 2026-10-18 is a Sunday.
+    private val weeklyPrefs = ReminderPreferences(false, false, false, false, 1200, 840, weekly = true)
+    @Test fun weeklyReviewOnSundayEveningOnlyOnce() {
+        val sunday = snapshot(prefs = weeklyPrefs, date = "2026-10-18")
+        val early = eval(sunday, "2026-10-18T18:59:00")
+        assertTrue(messages(early).isEmpty())
+        assertEquals(time("2026-10-18T19:00:00"), early.nextAlarmMs)
+        val due = messages(eval(sunday, "2026-10-18T19:05:00")).single()
+        assertEquals("plan", due.category)
+        assertEquals("Your week in Daylock", due.title)
+        assertEquals("review", org.json.JSONObject(due.payload()).getString("screen"))
+        assertTrue(messages(eval(sunday, "2026-10-18T21:00:00", seen = setOf("2026-10-18|weekly"))).isEmpty())
+    }
+    @Test fun weeklyReviewNeedsTheSettingAndThePlanChannelAndASunday() {
+        val sunday = snapshot(prefs = weeklyPrefs, date = "2026-10-18")
+        assertTrue(messages(eval(sunday, "2026-10-18T20:00:00", allowed = setOf("commitments"))).isEmpty())
+        val off = snapshot(prefs = weeklyPrefs.copy(weekly = false), date = "2026-10-18")
+        assertTrue(messages(eval(off, "2026-10-18T20:00:00")).isEmpty())
+        val wednesday = snapshot(prefs = weeklyPrefs)
+        val result = eval(wednesday, "2026-10-14T20:00:00")
+        assertTrue(messages(result).isEmpty())
+        // Still wakes at midnight so Sunday is reached without the app.
+        assertEquals(time("2026-10-15T00:00:00"), result.nextAlarmMs)
+    }
+    @Test fun weeklySettingRoundTripsAndDefaultsOffForOldSnapshots() {
+        val s = snapshot(prefs = weeklyPrefs)
+        assertTrue(ReminderCodec.snapshot(ReminderCodec.encode(s)).preferences.weekly)
+        val old = ReminderCodec.encode(snapshot())
+        old.getJSONObject("preferences").remove("weekly")
+        assertFalse(ReminderCodec.snapshot(old).preferences.weekly)
+    }
     @Test fun planOnlyWhenTomorrowIsNotCommitted() {
         assertTrue(messages(eval(snapshot())).any { it.category == "plan" })
         assertFalse(messages(eval(snapshot(committed = true))).any { it.category == "plan" })

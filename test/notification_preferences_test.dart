@@ -50,6 +50,7 @@ void main() {
         'commitments': true,
         'freedom': true,
         'focus': true,
+        'weekly': true,
         'planMinute': 1200,
         'commitmentMinute': 840,
       });

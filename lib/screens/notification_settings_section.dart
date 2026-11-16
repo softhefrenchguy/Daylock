@@ -181,6 +181,30 @@ class NotificationSettingsSection extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          JourneySurface(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                children: [
+                  // Sent on the Plan Tomorrow channel.
+                  SwitchListTile(
+                    key: const ValueKey('notification-weekly'),
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(context.l10n.notifWeekly),
+                    value: supported && preferences.weekly,
+                    subtitle: status.blockedChannels.contains('plan')
+                        ? Text(context.l10n.notifBlockedInSystem)
+                        : null,
+                    onChanged: supported
+                        ? (v) => onChanged(preferences.copyWith(weekly: v))
+                        : null,
+                  ),
+                  Text(context.l10n.notifWeeklyHelp),
+                ],
+              ),
+            ),
+          ),
         ],
       );
     },

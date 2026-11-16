@@ -1,3 +1,4 @@
+import '../services/weekly_review.dart';
 import '../models/break_entry.dart';
 import '../l10n/l10n.dart';
 
@@ -37,6 +38,9 @@ class JourneyScreen extends StatelessWidget {
 
   /// Breaks taken from the lock screen; shown when there are recent ones.
   final List<BreakEntry> breaks;
+
+  /// Opens the weekly review.
+  final VoidCallback? onWeeklyReview;
   const JourneyScreen({
     super.key,
     required this.areas,
@@ -51,6 +55,7 @@ class JourneyScreen extends StatelessWidget {
     this.onPastChapters,
     this.onManageAreas,
     this.breaks = const [],
+    this.onWeeklyReview,
   });
 
   @override
@@ -198,6 +203,34 @@ class JourneyScreen extends StatelessWidget {
                 ),
               ),
             ),
+            if (onWeeklyReview != null)
+              boxed(
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Builder(
+                    builder: (context) {
+                      final week = WeeklyReview.of(data, areas);
+                      return DaylockGroup(
+                        children: [
+                          ListTile(
+                            key: const ValueKey('journey-week'),
+                            onTap: onWeeklyReview,
+                            leading: const Icon(Icons.event_note_outlined),
+                            title: Text(context.l10n.weekTitle),
+                            subtitle: Text(
+                              context.l10n.weekCardSubtitle(
+                                week.daysKept,
+                                week.daysPlanned,
+                              ),
+                            ),
+                            trailing: const Icon(Icons.chevron_right_rounded),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
             boxed(
               DaylockSectionHeader(
                 title: context.l10n.achievements,

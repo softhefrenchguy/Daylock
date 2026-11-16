@@ -1492,5 +1492,86 @@
   "backupNewer": "This backup is from a newer version of Daylock. Update the app first.",
   "backupDamaged": "This backup is damaged and can’t be restored.",
   "backupFailed": "The file couldn’t be saved or opened. Try another location.",
-  "backupAndroidOnly": "Backup files are available in the Android app."
+  "backupAndroidOnly": "Backup files are available in the Android app.",
+  "notifWeekly": "Weekly Review",
+  "notifWeeklyHelp": "Sunday at 19:00: how your week went, and a nudge to plan the next one.",
+  "weekTitle": "Your week",
+  "weekRange": "{from} – {through}",
+  "@weekRange": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "through": {
+        "type": "String"
+      }
+    }
+  },
+  "weekStrongTitle": "A strong week.",
+  "weekStrongBody": "You kept almost everything you planned. Keep the same rhythm next week.",
+  "weekSolidTitle": "A solid week.",
+  "weekSolidBody": "More kept than missed. Plan a little smaller where days slipped.",
+  "weekBuildTitle": "A week to build on.",
+  "weekBuildBody": "Fewer, smaller commitments are easier to keep. Try one small step a day next week.",
+  "weekQuietTitle": "A quiet week.",
+  "weekQuietBody": "Nothing was planned in the last seven days. Start with one commitment for tomorrow.",
+  "weekDaysKept": "{kept} of {total} days",
+  "@weekDaysKept": {
+    "placeholders": {
+      "kept": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "weekDaysKeptLabel": "Days fully kept",
+  "weekCommitmentsLabel": "Commitments",
+  "weekStreakLabel": "Current streak",
+  "weekAreasLabel": "AREAS",
+  "weekTopArea": "{area} grew the most",
+  "@weekTopArea": {
+    "placeholders": {
+      "area": {
+        "type": "String"
+      }
+    }
+  },
+  "weekTopAreaKept": "{count, plural, =1{1 commitment kept} other{{count} commitments kept}}",
+  "@weekTopAreaKept": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "weekQuietAreas": "Quiet this week: {areas}",
+  "@weekQuietAreas": {
+    "placeholders": {
+      "areas": {
+        "type": "String"
+      }
+    }
+  },
+  "weekQuietAreasHint": "Give one of them a small step next week.",
+  "weekBreaks": "{count, plural, =1{1 break taken from the lock screen.} other{{count} breaks taken from the lock screen.}}",
+  "@weekBreaks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "weekCardSubtitle": "{kept} of {total} days fully kept this week",
+  "@weekCardSubtitle": {
+    "placeholders": {
+      "kept": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -2630,4 +2630,105 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get backupAndroidOnly =>
       'Los archivos de copia están disponibles en la app de Android.';
+
+  @override
+  String get notifWeekly => 'Resumen semanal';
+
+  @override
+  String get notifWeeklyHelp =>
+      'Los domingos a las 19:00: cómo fue tu semana y un aviso para planificar la siguiente.';
+
+  @override
+  String get weekTitle => 'Tu semana';
+
+  @override
+  String weekRange(String from, String through) {
+    return '$from – $through';
+  }
+
+  @override
+  String get weekStrongTitle => 'Una gran semana.';
+
+  @override
+  String get weekStrongBody =>
+      'Cumpliste casi todo lo que planeaste. Mantén el mismo ritmo la próxima semana.';
+
+  @override
+  String get weekSolidTitle => 'Una buena semana.';
+
+  @override
+  String get weekSolidBody =>
+      'Más cumplidos que fallados. Planifica un poco menos donde los días se escaparon.';
+
+  @override
+  String get weekBuildTitle => 'Una semana para crecer.';
+
+  @override
+  String get weekBuildBody =>
+      'Menos compromisos y más pequeños son más fáciles de cumplir. Prueba un pequeño paso al día la próxima semana.';
+
+  @override
+  String get weekQuietTitle => 'Una semana tranquila.';
+
+  @override
+  String get weekQuietBody =>
+      'No hubo nada planeado en los últimos siete días. Empieza con un compromiso para mañana.';
+
+  @override
+  String weekDaysKept(int kept, int total) {
+    return '$kept de $total días';
+  }
+
+  @override
+  String get weekDaysKeptLabel => 'Días cumplidos por completo';
+
+  @override
+  String get weekCommitmentsLabel => 'Compromisos';
+
+  @override
+  String get weekStreakLabel => 'Racha actual';
+
+  @override
+  String get weekAreasLabel => 'Áreas';
+
+  @override
+  String weekTopArea(String area) {
+    return '$area es la que más creció';
+  }
+
+  @override
+  String weekTopAreaKept(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count compromisos cumplidos',
+      one: '1 compromiso cumplido',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String weekQuietAreas(String areas) {
+    return 'Tranquilas esta semana: $areas';
+  }
+
+  @override
+  String get weekQuietAreasHint =>
+      'Dale un pequeño paso a una de ellas la próxima semana.';
+
+  @override
+  String weekBreaks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count descansos tomados desde la pantalla de bloqueo.',
+      one: '1 descanso tomado desde la pantalla de bloqueo.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String weekCardSubtitle(int kept, int total) {
+    return '$kept de $total días cumplidos esta semana';
+  }
 }

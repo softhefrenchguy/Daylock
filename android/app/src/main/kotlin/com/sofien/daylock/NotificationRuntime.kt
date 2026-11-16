@@ -233,6 +233,8 @@ class AndroidReminderTexts(private val context: Context) : ReminderTexts {
     override fun freedomFinishAndCommit() = s(R.string.reminder_freedom_finish_commit)
     override fun freedomFinish() = s(R.string.reminder_freedom_finish)
     override fun freedomCommitTomorrow() = s(R.string.reminder_freedom_commit)
+    override fun weeklyTitle() = s(R.string.reminder_weekly_title)
+    override fun weeklyBody() = s(R.string.reminder_weekly_body)
     override fun stopwatchTitle(name: String) = s(R.string.reminder_stopwatch_title, name)
     override fun stopwatchBody(hours: Int): String =
         context.resources.getQuantityString(R.plurals.reminder_stopwatch_body, hours, hours)

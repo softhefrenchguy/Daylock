@@ -4357,6 +4357,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Backup files are available in the Android app.'**
   String get backupAndroidOnly;
+
+  /// No description provided for @notifWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly Review'**
+  String get notifWeekly;
+
+  /// No description provided for @notifWeeklyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday at 19:00: how your week went, and a nudge to plan the next one.'**
+  String get notifWeeklyHelp;
+
+  /// No description provided for @weekTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your week'**
+  String get weekTitle;
+
+  /// No description provided for @weekRange.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} – {through}'**
+  String weekRange(String from, String through);
+
+  /// No description provided for @weekStrongTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A strong week.'**
+  String get weekStrongTitle;
+
+  /// No description provided for @weekStrongBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You kept almost everything you planned. Keep the same rhythm next week.'**
+  String get weekStrongBody;
+
+  /// No description provided for @weekSolidTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A solid week.'**
+  String get weekSolidTitle;
+
+  /// No description provided for @weekSolidBody.
+  ///
+  /// In en, this message translates to:
+  /// **'More kept than missed. Plan a little smaller where days slipped.'**
+  String get weekSolidBody;
+
+  /// No description provided for @weekBuildTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A week to build on.'**
+  String get weekBuildTitle;
+
+  /// No description provided for @weekBuildBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Fewer, smaller commitments are easier to keep. Try one small step a day next week.'**
+  String get weekBuildBody;
+
+  /// No description provided for @weekQuietTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A quiet week.'**
+  String get weekQuietTitle;
+
+  /// No description provided for @weekQuietBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was planned in the last seven days. Start with one commitment for tomorrow.'**
+  String get weekQuietBody;
+
+  /// No description provided for @weekDaysKept.
+  ///
+  /// In en, this message translates to:
+  /// **'{kept} of {total} days'**
+  String weekDaysKept(int kept, int total);
+
+  /// No description provided for @weekDaysKeptLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Days fully kept'**
+  String get weekDaysKeptLabel;
+
+  /// No description provided for @weekCommitmentsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Commitments'**
+  String get weekCommitmentsLabel;
+
+  /// No description provided for @weekStreakLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Current streak'**
+  String get weekStreakLabel;
+
+  /// No description provided for @weekAreasLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AREAS'**
+  String get weekAreasLabel;
+
+  /// No description provided for @weekTopArea.
+  ///
+  /// In en, this message translates to:
+  /// **'{area} grew the most'**
+  String weekTopArea(String area);
+
+  /// No description provided for @weekTopAreaKept.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 commitment kept} other{{count} commitments kept}}'**
+  String weekTopAreaKept(int count);
+
+  /// No description provided for @weekQuietAreas.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiet this week: {areas}'**
+  String weekQuietAreas(String areas);
+
+  /// No description provided for @weekQuietAreasHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Give one of them a small step next week.'**
+  String get weekQuietAreasHint;
+
+  /// No description provided for @weekBreaks.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 break taken from the lock screen.} other{{count} breaks taken from the lock screen.}}'**
+  String weekBreaks(int count);
+
+  /// No description provided for @weekCardSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{kept} of {total} days fully kept this week'**
+  String weekCardSubtitle(int kept, int total);
 }
 
 class _AppLocalizationsDelegate
