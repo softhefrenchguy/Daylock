@@ -1,7 +1,7 @@
 name: daylock
 description: "A local-first daily planning and commitments app."
 publish_to: 'none'
-version: 0.2.7+23
+version: 0.2.8+24
 
 environment:
   sdk: ^3.13.5
