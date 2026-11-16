@@ -53,6 +53,7 @@ import 'services/notifications/default_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  ensureDateFormatting();
   const resetLocalData = bool.fromEnvironment('DAYLOCK_RESET_LOCAL_DATA');
   if (kDebugMode && resetLocalData) {
     await SecureCalendarCredentialStore().clearDaylockCredentials();

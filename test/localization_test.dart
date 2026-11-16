@@ -6,6 +6,8 @@ import 'package:daylock/services/local_storage.dart';
 import 'package:daylock/services/notifications/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart' show Intl;
+import 'package:daylock/screens/today_screen.dart' show daylockDateLabel;
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
@@ -105,6 +107,12 @@ void main() {
         contains(l.weekdayShort(1)),
       );
     }
+    // Arabic dates use Western digits, like the rest of the app.
+    final ar = lookupAppLocalizations(const Locale('ar'));
+    expect(ar.focusDuration(65 * 60000), contains('1'));
+    Intl.withLocale('ar', () {
+      expect(daylockDateLabel(DateTime(2026, 11, 16)), contains('16'));
+    });
     final fr = lookupAppLocalizations(const Locale('fr'));
     expect(fr.weekdayLong(1), 'lundi');
     expect(fr.repeatEveryDays(3), 'Tous les 3 jours');

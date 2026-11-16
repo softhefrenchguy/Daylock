@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 
 import 'app_localizations.dart';
 
@@ -28,6 +29,8 @@ var _datesReady = false;
 void ensureDateFormatting() {
   if (_datesReady) return;
   initializeDateFormatting();
+  // Arabic uses Western digits (0-9) everywhere, matching the app's counts.
+  DateFormat.useNativeDigitsByDefaultFor('ar', false);
   _datesReady = true;
 }
 
