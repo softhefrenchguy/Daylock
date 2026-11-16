@@ -684,5 +684,6 @@
   "channelFreedom": "Liberté",
   "channelFocus": "Chronomètre en cours",
   "selectionLoadFailed": "Impossible de charger ou d’enregistrer les applis restreintes. Les restrictions sont en pause. Actualisez pour réessayer.",
-  "selectionSaveFailed": "La sélection d’applis n’a pas pu être enregistrée. Les restrictions sont en pause. Actualisez pour réessayer."
+  "selectionSaveFailed": "La sélection d’applis n’a pas pu être enregistrée. Les restrictions sont en pause. Actualisez pour réessayer.",
+  "totalAchievements": "{count, plural, one{réussite} other{réussites}}"
 }

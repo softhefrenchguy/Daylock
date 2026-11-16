@@ -71,12 +71,17 @@ class DaylockScene extends StatelessWidget {
                     ? Duration.zero
                     : const Duration(milliseconds: 900),
                 curve: Curves.easeOutCubic,
-                builder: (context, value, _) => CustomPaint(
-                  painter: _ScenePainter(
-                    mood: mood,
-                    progress: value,
-                    colors: palette,
-                    ground: ground ?? palette.background,
+                // Right-to-left mirrors the sky so the sun and moon sit
+                // opposite the title, which moves to the right.
+                builder: (context, value, _) => Transform.flip(
+                  flipX: Directionality.of(context) == TextDirection.rtl,
+                  child: CustomPaint(
+                    painter: _ScenePainter(
+                      mood: mood,
+                      progress: value,
+                      colors: palette,
+                      ground: ground ?? palette.background,
+                    ),
                   ),
                 ),
               ),

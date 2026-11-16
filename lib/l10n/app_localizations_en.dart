@@ -2511,4 +2511,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get selectionSaveFailed =>
       'App selection could not be saved. Restrictions are paused. Refresh to retry.';
+
+  @override
+  String totalAchievements(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'achievements',
+      one: 'achievement',
+    );
+    return '$_temp0';
+  }
 }

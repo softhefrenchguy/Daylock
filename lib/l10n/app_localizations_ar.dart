@@ -2541,4 +2541,17 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get selectionSaveFailed =>
       'تعذّر حفظ اختيار التطبيقات. التقييد متوقف مؤقتًا. حدّث لإعادة المحاولة.';
+
+  @override
+  String totalAchievements(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'إنجازًا',
+      few: 'إنجازات',
+      two: 'إنجازان',
+      one: 'إنجاز',
+    );
+    return '$_temp0';
+  }
 }

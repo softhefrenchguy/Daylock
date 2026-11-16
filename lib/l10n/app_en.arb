@@ -1451,5 +1451,13 @@
   "channelFreedom": "Freedom",
   "channelFocus": "Running stopwatch",
   "selectionLoadFailed": "Could not load or save restricted apps. Restrictions are paused. Refresh to retry.",
-  "selectionSaveFailed": "App selection could not be saved. Restrictions are paused. Refresh to retry."
+  "selectionSaveFailed": "App selection could not be saved. Restrictions are paused. Refresh to retry.",
+  "totalAchievements": "{count, plural, =1{achievement} other{achievements}}",
+  "@totalAchievements": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

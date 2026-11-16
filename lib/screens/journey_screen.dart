@@ -181,9 +181,9 @@ class JourneyScreen extends StatelessWidget {
                     ),
                     _Total(
                       value: '${highlights.highlights.length}',
-                      label: highlights.highlights.length == 1
-                          ? 'achievement'
-                          : 'achievements',
+                      label: context.l10n.totalAchievements(
+                        highlights.highlights.length,
+                      ),
                       valueKey: const ValueKey('journey-total-highlights'),
                       color: dark
                           ? const Color(0xFFFF9AD8)

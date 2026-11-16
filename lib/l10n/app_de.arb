@@ -248,8 +248,8 @@
   "streakLongest": "{count, plural, =1{Rekord: 1 Tag} other{Rekord: {count} Tage}}",
   "totalKept": "gehalten",
   "totalFocused": "gestoppt",
-  "shortMinutes": "{minutes} Min.",
-  "shortHours": "{hours} Std.",
+  "shortMinutes": "{minutes} min",
+  "shortHours": "{hours} h",
   "achievements": "Erfolge",
   "seeAll": "Alle {count} ansehen",
   "addAchievement": "Erfolg hinzufügen",
@@ -684,5 +684,6 @@
   "channelFreedom": "Freiheit",
   "channelFocus": "Laufende Stoppuhr",
   "selectionLoadFailed": "Eingeschränkte Apps konnten nicht geladen oder gespeichert werden. Die Einschränkungen sind pausiert. Aktualisiere, um es erneut zu versuchen.",
-  "selectionSaveFailed": "Die App-Auswahl konnte nicht gespeichert werden. Die Einschränkungen sind pausiert. Aktualisiere, um es erneut zu versuchen."
+  "selectionSaveFailed": "Die App-Auswahl konnte nicht gespeichert werden. Die Einschränkungen sind pausiert. Aktualisiere, um es erneut zu versuchen.",
+  "totalAchievements": "{count, plural, =1{Erfolg} other{Erfolge}}"
 }

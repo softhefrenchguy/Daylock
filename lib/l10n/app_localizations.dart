@@ -4213,6 +4213,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'App selection could not be saved. Restrictions are paused. Refresh to retry.'**
   String get selectionSaveFailed;
+
+  /// No description provided for @totalAchievements.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{achievement} other{achievements}}'**
+  String totalAchievements(int count);
 }
 
 class _AppLocalizationsDelegate

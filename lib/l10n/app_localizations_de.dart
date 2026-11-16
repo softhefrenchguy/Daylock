@@ -939,12 +939,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String shortMinutes(int minutes) {
-    return '$minutes Min.';
+    return '$minutes min';
   }
 
   @override
   String shortHours(int hours) {
-    return '$hours Std.';
+    return '$hours h';
   }
 
   @override
@@ -2540,4 +2540,15 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get selectionSaveFailed =>
       'Die App-Auswahl konnte nicht gespeichert werden. Die Einschränkungen sind pausiert. Aktualisiere, um es erneut zu versuchen.';
+
+  @override
+  String totalAchievements(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Erfolge',
+      one: 'Erfolg',
+    );
+    return '$_temp0';
+  }
 }

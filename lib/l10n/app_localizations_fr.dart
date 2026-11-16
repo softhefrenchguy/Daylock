@@ -2535,4 +2535,15 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get selectionSaveFailed =>
       'La sélection d’applis n’a pas pu être enregistrée. Les restrictions sont en pause. Actualisez pour réessayer.';
+
+  @override
+  String totalAchievements(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'réussites',
+      one: 'réussite',
+    );
+    return '$_temp0';
+  }
 }

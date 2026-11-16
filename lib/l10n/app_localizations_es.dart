@@ -2539,4 +2539,15 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get selectionSaveFailed =>
       'No se pudo guardar la selección de apps. Las restricciones están en pausa. Actualiza para reintentarlo.';
+
+  @override
+  String totalAchievements(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'logros',
+      one: 'logro',
+    );
+    return '$_temp0';
+  }
 }
