@@ -79,6 +79,15 @@
     <string name="widget_kept_row">Tenu : %1$s</string>
     <string name="reminder_weekly_title">Votre semaine dans Daylock</string>
     <string name="reminder_weekly_body">Voyez comment s’est passée la semaine, puis planifiez la suivante.</string>
+    <string name="widget_clear_day">Une journée libre.</string>
+    <string name="widget_clear_body">Rien de prévu aujourd’hui. Planifiez demain, et le soleil de demain ne dépendra que de vous.</string>
+    <string name="widget_freedom_earned">Liberté gagnée.</string>
+    <string name="widget_all_kept_body">Tout est tenu et demain est verrouillé.</string>
+    <string name="widget_day_complete">Journée accomplie</string>
+    <string name="widget_plan_tomorrow">Planifier demain</string>
+    <string name="widget_unlocked_since">Applis débloquées depuis %1$s</string>
+    <string name="widget_unlock_short">Applis à %1$s</string>
+    <string name="widget_up_next">Ensuite</string>
     <plurals name="reminder_commitments_body">
         <item quantity="one">Il vous reste %1$d engagement à tenir aujourd’hui.</item>
         <item quantity="other">Il vous reste %1$d engagements à tenir aujourd’hui.</item>
@@ -86,5 +95,9 @@
     <plurals name="reminder_stopwatch_body">
         <item quantity="one">Votre chronomètre tourne depuis %1$d heure. Mettez-le en pause si vous avez fini.</item>
         <item quantity="other">Votre chronomètre tourne depuis %1$d heures. Mettez-le en pause si vous avez fini.</item>
+    </plurals>
+    <plurals name="widget_more_to_sun">
+        <item quantity="one">Encore %1$d et le soleil est levé</item>
+        <item quantity="other">Encore %1$d et le soleil est levé</item>
     </plurals>
 </resources>

@@ -80,6 +80,9 @@ Map<String, dynamic> notificationSnapshot(DaylockState state, DateTime now) {
               ? task.focusStartedAt!.millisecondsSinceEpoch
               : null,
           'elapsedMs': allowTimers ? task.accumulatedFocusMilliseconds : 0,
+          // For the home screen widget's Area label.
+          'area': state.areas.resolve(task.areaId).name,
+          'areaColour': state.areas.resolve(task.areaId).colour,
         },
     ],
   };

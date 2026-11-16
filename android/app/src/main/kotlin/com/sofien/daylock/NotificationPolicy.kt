@@ -17,7 +17,10 @@ data class ReminderTask(val name: String, val outcome: String, val minimumMinute
     /** Wall time the running stopwatch segment started; null when not running. */
     val runningSinceMs: Long? = null,
     /** Time recorded before the running segment. */
-    val elapsedMs: Long = 0) {
+    val elapsedMs: Long = 0,
+    /** The commitment's Area, for the home screen widget. */
+    val areaName: String? = null,
+    val areaColour: Int? = null) {
     init {
         require(outcome in setOf("incomplete", "completed", "excused"))
         require(minimumMinutes == null || minimumMinutes > 0)
@@ -73,7 +76,9 @@ object ReminderCodec {
                         if (t.isNull("deadlineMs")) null else t.getLong("deadlineMs"),
                         // Absent in records saved before stopwatch notifications.
                         if (!t.has("runningSinceMs") || t.isNull("runningSinceMs")) null else t.getLong("runningSinceMs"),
-                        t.optLong("elapsedMs", 0))
+                        t.optLong("elapsedMs", 0),
+                        if (t.isNull("area") || !t.has("area")) null else t.getString("area"),
+                        if (t.isNull("areaColour") || !t.has("areaColour")) null else t.getLong("areaColour").toInt())
                 })
         }
         return ReminderSnapshot(ReminderPreferences(p.getBoolean("planTomorrow"), p.getBoolean("commitments"),
@@ -86,7 +91,8 @@ object ReminderCodec {
         fun plan(p: ReminderPlan) = JSONObject().put("date", p.date).put("committed", p.committed)
             .put("tasks", JSONArray(p.tasks.map { t -> JSONObject().put("name", t.name).put("outcome", t.outcome)
                 .put("minimumMinutes", t.minimumMinutes ?: JSONObject.NULL).put("deadlineMs", t.deadlineMs ?: JSONObject.NULL)
-                .put("runningSinceMs", t.runningSinceMs ?: JSONObject.NULL).put("elapsedMs", t.elapsedMs) }))
+                .put("runningSinceMs", t.runningSinceMs ?: JSONObject.NULL).put("elapsedMs", t.elapsedMs)
+                .put("area", t.areaName ?: JSONObject.NULL).put("areaColour", t.areaColour ?: JSONObject.NULL) }))
         val p = value.preferences
         return JSONObject().put("version", 1)
             .put("preferences", JSONObject().put("planTomorrow", p.plan).put("commitments", p.commitments)

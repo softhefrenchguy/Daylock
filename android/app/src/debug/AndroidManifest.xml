@@ -7,5 +7,10 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Daylock Dev"
-        tools:replace="android:label" />
+        tools:replace="android:label">
+        <!-- Visual review of the home screen widget; debug builds only. -->
+        <activity
+            android:name=".WidgetPreviewActivity"
+            android:exported="true" />
+    </application>
 </manifest>

@@ -79,6 +79,15 @@
     <string name="widget_kept_row">Gehalten: %1$s</string>
     <string name="reminder_weekly_title">Deine Woche in Daylock</string>
     <string name="reminder_weekly_body">Sieh dir an, wie die Woche lief, und plane die nächste.</string>
+    <string name="widget_clear_day">Ein freier Tag.</string>
+    <string name="widget_clear_body">Heute nichts geplant. Plane morgen – die Sonne von morgen liegt in deiner Hand.</string>
+    <string name="widget_freedom_earned">Freiheit verdient.</string>
+    <string name="widget_all_kept_body">Alles gehalten und morgen ist festgelegt.</string>
+    <string name="widget_day_complete">Tag geschafft</string>
+    <string name="widget_plan_tomorrow">Morgen planen</string>
+    <string name="widget_unlocked_since">Apps seit %1$s freigegeben</string>
+    <string name="widget_unlock_short">Apps ab %1$s</string>
+    <string name="widget_up_next">Als Nächstes</string>
     <plurals name="reminder_commitments_body">
         <item quantity="one">Du hast heute noch %1$d Vorsatz zu erledigen.</item>
         <item quantity="other">Du hast heute noch %1$d Vorsätze zu erledigen.</item>
@@ -86,5 +95,9 @@
     <plurals name="reminder_stopwatch_body">
         <item quantity="one">Deine Stoppuhr läuft seit %1$d Stunde. Pausiere sie, wenn du fertig bist.</item>
         <item quantity="other">Deine Stoppuhr läuft seit %1$d Stunden. Pausiere sie, wenn du fertig bist.</item>
+    </plurals>
+    <plurals name="widget_more_to_sun">
+        <item quantity="one">Noch %1$d, dann geht die Sonne auf</item>
+        <item quantity="other">Noch %1$d, dann geht die Sonne auf</item>
     </plurals>
 </resources>

@@ -79,6 +79,15 @@
     <string name="widget_kept_row">Kept: %1$s</string>
     <string name="reminder_weekly_title">Your week in Daylock</string>
     <string name="reminder_weekly_body">See how the week went, then plan the next one.</string>
+    <string name="widget_clear_day">A clear day.</string>
+    <string name="widget_clear_body">Nothing planned today. Plan tomorrow, and tomorrow’s sun is yours to raise.</string>
+    <string name="widget_freedom_earned">Freedom earned.</string>
+    <string name="widget_all_kept_body">Everything kept and tomorrow is locked in.</string>
+    <string name="widget_day_complete">Day complete</string>
+    <string name="widget_plan_tomorrow">Plan tomorrow</string>
+    <string name="widget_unlocked_since">Apps unlocked since %1$s</string>
+    <string name="widget_unlock_short">Apps unlock %1$s</string>
+    <string name="widget_up_next">Up next</string>
     <plurals name="reminder_commitments_body">
         <item quantity="one">You have %1$d commitment left to complete today.</item>
         <item quantity="other">You have %1$d commitments left to complete today.</item>
@@ -86,5 +95,9 @@
     <plurals name="reminder_stopwatch_body">
         <item quantity="one">Your stopwatch has been running for %1$d hour. Pause it if you’ve stopped.</item>
         <item quantity="other">Your stopwatch has been running for %1$d hours. Pause it if you’ve stopped.</item>
+    </plurals>
+    <plurals name="widget_more_to_sun">
+        <item quantity="one">%1$d more and the sun is up</item>
+        <item quantity="other">%1$d more and the sun is up</item>
     </plurals>
 </resources>

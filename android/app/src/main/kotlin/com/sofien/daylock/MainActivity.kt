@@ -77,7 +77,12 @@ class MainActivity : FlutterActivity() {
                                 "publishSnapshot" -> check(DetectionRuntime.store.publish(call.arguments as Map<*, *>))
                                 "invalidateSnapshot" -> check(DetectionRuntime.store.invalidate("planner_refresh_required"))
                                 "setBlockingEnabled" -> check(DetectionRuntime.changeBlocking((call.arguments as Map<*, *>)["enabled"] as Boolean))
-                                "publishAppearance" -> check(DetectionRuntime.store.publishAppearance(call.arguments as Map<*, *>))
+                                "publishAppearance" -> {
+                                    check(DetectionRuntime.store.publishAppearance(call.arguments as Map<*, *>))
+                                    // The widget follows the chosen colours too.
+                                    val app = applicationContext
+                                    NotificationRuntime.worker.execute { runCatching { DaylockWidget.updateAll(app) } }
+                                }
                             }
                             val status = DetectionRuntime.status()
                             main.post {

@@ -79,6 +79,15 @@
     <string name="widget_kept_row">تم: %1$s</string>
     <string name="reminder_weekly_title">أسبوعك في Daylock</string>
     <string name="reminder_weekly_body">شاهد كيف مضى الأسبوع، ثم خطّط للأسبوع القادم.</string>
+    <string name="widget_clear_day">يوم صافٍ.</string>
+    <string name="widget_clear_body">لا شيء مخطط اليوم. خطّط للغد، فشمس الغد بين يديك.</string>
+    <string name="widget_freedom_earned">تم كسب الحرية.</string>
+    <string name="widget_all_kept_body">أُنجز كل شيء والغد مثبّت.</string>
+    <string name="widget_day_complete">اكتمل اليوم</string>
+    <string name="widget_plan_tomorrow">خطّط للغد</string>
+    <string name="widget_unlocked_since">التطبيقات مفتوحة منذ %1$s</string>
+    <string name="widget_unlock_short">التطبيقات %1$s</string>
+    <string name="widget_up_next">التالي</string>
     <plurals name="reminder_commitments_body">
         <item quantity="zero">لا التزامات متبقية اليوم.</item>
         <item quantity="one">بقي التزام واحد لتنجزه اليوم.</item>
@@ -94,5 +103,13 @@
         <item quantity="few">ساعة الإيقاف تعمل منذ %1$d ساعات. أوقفها مؤقتًا إن انتهيت.</item>
         <item quantity="many">ساعة الإيقاف تعمل منذ %1$d ساعة. أوقفها مؤقتًا إن انتهيت.</item>
         <item quantity="other">ساعة الإيقاف تعمل منذ %1$d ساعة. أوقفها مؤقتًا إن انتهيت.</item>
+    </plurals>
+    <plurals name="widget_more_to_sun">
+        <item quantity="zero">لا شيء متبقٍ</item>
+        <item quantity="one">بقي واحد وتشرق الشمس</item>
+        <item quantity="two">بقي اثنان وتشرق الشمس</item>
+        <item quantity="few">بقي %1$d وتشرق الشمس</item>
+        <item quantity="many">بقي %1$d وتشرق الشمس</item>
+        <item quantity="other">بقي %1$d وتشرق الشمس</item>
     </plurals>
 </resources>

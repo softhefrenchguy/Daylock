@@ -79,6 +79,15 @@
     <string name="widget_kept_row">Cumplido: %1$s</string>
     <string name="reminder_weekly_title">Tu semana en Daylock</string>
     <string name="reminder_weekly_body">Mira cómo fue la semana y planifica la siguiente.</string>
+    <string name="widget_clear_day">Un día despejado.</string>
+    <string name="widget_clear_body">Nada planeado hoy. Planifica mañana: el sol de mañana depende de ti.</string>
+    <string name="widget_freedom_earned">Libertad ganada.</string>
+    <string name="widget_all_kept_body">Todo cumplido y mañana está fijado.</string>
+    <string name="widget_day_complete">Día completado</string>
+    <string name="widget_plan_tomorrow">Planificar mañana</string>
+    <string name="widget_unlocked_since">Apps desbloqueadas desde las %1$s</string>
+    <string name="widget_unlock_short">Apps a las %1$s</string>
+    <string name="widget_up_next">Siguiente</string>
     <plurals name="reminder_commitments_body">
         <item quantity="one">Te queda %1$d compromiso por completar hoy.</item>
         <item quantity="other">Te quedan %1$d compromisos por completar hoy.</item>
@@ -86,5 +95,9 @@
     <plurals name="reminder_stopwatch_body">
         <item quantity="one">Tu cronómetro lleva %1$d hora en marcha. Páusalo si ya terminaste.</item>
         <item quantity="other">Tu cronómetro lleva %1$d horas en marcha. Páusalo si ya terminaste.</item>
+    </plurals>
+    <plurals name="widget_more_to_sun">
+        <item quantity="one">%1$d más y sale el sol</item>
+        <item quantity="other">%1$d más y sale el sol</item>
     </plurals>
 </resources>
