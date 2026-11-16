@@ -33,7 +33,7 @@ class InstagramBlockingPolicyTest {
         val later = clock.copy(wallMs = clock.wallMs + 300_000, elapsedMs = clock.elapsedMs + 300_000)
         assertEquals(InstagramRestriction.BLOCK, decide(now = later))
     }
-    @Test fun localMidnightRecoversUntilRolloverSync() { assertEquals(InstagramRestriction.RECOVER, decide(now = clock.copy(date = "2026-10-14"))) }
+    @Test fun localMidnightWithoutAPlanStillBlocks() { assertEquals(InstagramRestriction.BLOCK, decide(now = clock.copy(date = "2026-10-14"))) }
     @Test fun timezoneChangeUsesCurrentLocalTime() { assertEquals(InstagramRestriction.BLOCK, decide(now = clock.copy(zoneId = "Europe/London", minuteOfDay = 17 * 60))) }
     @Test fun rebootRecoversButRetainsTheOptInChoice() { assertEquals(InstagramRestriction.BLOCK, decide(now = clock.copy(bootCount = 8))) }
     @Test fun uncommittedTomorrowBlocks() { assertEquals(InstagramRestriction.BLOCK, decide(snapshot.copy(completedCount = 3, tomorrowCommitted = false))) }
@@ -110,6 +110,28 @@ class InstagramBlockingPolicyTest {
         assertFalse(gate.accept(RestrictedAppsRepository.LEGACY_INSTAGRAM, 32, 1100, setOf("com.instagram.android")))
         gate.reset()
         assertTrue(gate.accept(RestrictedAppsRepository.LEGACY_INSTAGRAM, 32, 1200, setOf("com.instagram.android")))
+    }
+    @Test fun returningFromANonFullScreenHomeIsANewVisit() {
+        // HyperOS: Instagram -> lock -> Home (fullScreen=false) -> Instagram again.
+        val scope = InstagramForegroundGuard()
+        scope.observe("com.instagram.android")
+        val first = scope.token()
+        scope.interrupt()
+        assertTrue("an OEM window keeps the pending navigation", scope.matches(first))
+        scope.observe("com.instagram.android")
+        assertFalse(scope.matches(first))
+        val second = scope.token()
+        assertTrue(scope.matches(second))
+        repeat(10) { scope.observe("com.instagram.android") }
+        assertTrue("one interruption starts exactly one new visit", scope.matches(second))
+    }
+    @Test fun interruptWithoutATargetDoesNothing() {
+        val scope = InstagramForegroundGuard()
+        scope.interrupt()
+        scope.observe("com.instagram.android")
+        val token = scope.token()
+        scope.observe("com.instagram.android")
+        assertTrue(scope.matches(token))
     }
     @Test fun serviceRestartBeginsWithNoForegroundOrNavigationAuthority() {
         val scope = InstagramForegroundGuard()

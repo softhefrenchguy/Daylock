@@ -51,7 +51,7 @@ class NativeFreedomRepositoryTest {
         assertEquals(0, result.conditions.completedCount)
         assertFalse(result.conditions.tomorrowCommitted)
         assertEquals(previous, disk)
-        assertEquals("unknown", repository().eligibility(clock.copy(date = "2026-10-15")).state)
+        assertEquals("rollover_unplanned", repository().eligibility(clock.copy(date = "2026-10-15")).reason)
     }
     @Test fun missingAndCorruptRecordsNeverClaimEarnedAndAllowDisabling() {
         for (raw in listOf(null, "{broken", "{}", """{"version":99}""")) {

@@ -244,6 +244,7 @@ class InstagramLockActivity : Activity() {
             else "Eligible commitments completed · ${conditions.completedCount} / ${conditions.eligibleCount}", conditions?.commitmentsCompleted)
         condition("Tomorrow’s plan committed", conditions?.tomorrowCommitted)
         if (conditions?.eligibleCount == 0) text("Empty or all-excused days do not automatically earn Freedom.", 13f, muted, parent = card)
+        if (freedom.reason == "rollover_unplanned") text("A new day has started with no plan yet. Open Daylock to plan today.", 13f, muted)
         if (freedom.reason == "rollover_reconciled") text("A new local day has started. Open Daylock to archive history and prepare the following day.", 13f, muted)
         fun button(label: String, primary: Boolean, parent: LinearLayout = body, action: () -> Unit): Button {
             val view = Button(this).apply {

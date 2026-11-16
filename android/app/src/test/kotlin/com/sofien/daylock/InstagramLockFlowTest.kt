@@ -64,8 +64,8 @@ class InstagramLockFlowTest {
         assertTrue(flow.begin(1, 1000))
         repeat(100) { assertFalse(flow.begin(it + 2L, 1100)) }
         flow.settle(1)
-        assertFalse(flow.begin(2, 3999))
-        assertTrue(flow.begin(2, 4000))
+        assertFalse(flow.begin(2, 2499))
+        assertTrue(flow.begin(2, 2500))
     }
     @Test fun oldLifecycleAndTimeoutCannotConfirmOrSettleNewAttempt() {
         val flow = InstagramLockFlow()
@@ -81,7 +81,7 @@ class InstagramLockFlowTest {
         flow.begin(1, 1000); flow.disconnect()
         assertFalse(flow.isCurrent(1)); assertFalse(flow.needsHome(1)); assertFalse(flow.settle(1))
         assertFalse(flow.begin(2, 1100))
-        assertTrue(flow.begin(2, 4000))
+        assertTrue(flow.begin(2, 2500))
     }
     @Test fun newProcessHasNoAuthorityForAnOldRestoredActivity() {
         val flow = InstagramLockFlow()

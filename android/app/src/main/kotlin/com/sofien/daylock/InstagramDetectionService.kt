@@ -82,6 +82,9 @@ class InstagramDetectionService : AccessibilityService() {
             if (!DetectionRuntime.lockFlow.isPresenting(foreground.targetPackage)) {
                 foreground.observe(null)
                 gate.reset()
+            } else {
+                // The lock is on its way. Coming back to the app after it is a new visit.
+                foreground.interrupt()
             }
             return
         }
@@ -90,8 +93,12 @@ class InstagramDetectionService : AccessibilityService() {
             // target. A definite other full-screen Activity still cancels it.
             if (InstagramBlockingPolicy.isDefiniteOtherForegroundWindow(fullScreen, 0)) {
                 foreground.observe(null)
-                gate.reset()
+            } else {
+                // HyperOS reports Home and Recents as not full screen. Keep any
+                // pending navigation, but returning to the app is a new visit.
+                foreground.interrupt()
             }
+            gate.reset()
             return
         }
         if (foreground.targetPackage != target) gate.reset()
@@ -205,6 +212,12 @@ class InstagramDetectionService : AccessibilityService() {
         // One navigation attempt per observed selected-app foreground session.
         if (lastEnforcedToken == token) return
         lastEnforcedToken = token
+        // A lock for this app is already being shown; don't send Home over it.
+        if (DetectionRuntime.lockFlow.isPresenting(packageName)) {
+            InstagramLockLog.event("launch_already_pending")
+            DetectionRuntime.reportRestriction("skipped_lock_pending")
+            return
+        }
         val attempt = DetectionRuntime.nextLockAttempt()
         if (!DetectionRuntime.lockFlow.begin(attempt, SystemClock.elapsedRealtime(), packageName)) {
             InstagramLockLog.event("launch_throttled", attempt)

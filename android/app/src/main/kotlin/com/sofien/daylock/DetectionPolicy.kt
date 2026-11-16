@@ -103,7 +103,16 @@ object DetectionPolicy {
         // Never promote yesterday's completion or invent progress for missed days.
         if (snapshot.date != now.date) {
             val tomorrow = snapshot.tomorrowPlan
-            if (tomorrow == null || tomorrow.date != now.date) return NativeFreedomResult("unknown", "date_changed")
+            if (tomorrow == null || tomorrow.date != now.date) {
+                // Days passed with no saved plan for today: nothing can be kept
+                // yet, so Freedom is not earned. (Letting apps through here made
+                // blocking silently stop each new day until Daylock was opened.)
+                // Only a clock moving backwards is truly unknown.
+                if (now.date < snapshot.date) return NativeFreedomResult("unknown", "date_changed")
+                val empty = evaluate(NativeFreedomState(now.date, snapshot.enabled,
+                    snapshot.hour, snapshot.minute, 0, 0, false, false), now)
+                return empty.copy(reason = "rollover_unplanned")
+            }
             val reconciled = evaluate(NativeFreedomState(tomorrow.date, snapshot.enabled,
                 snapshot.hour, snapshot.minute, tomorrow.eligibleCount, tomorrow.completedCount,
                 false, false), now)
@@ -186,9 +195,23 @@ class InstagramForegroundGuard {
         private set
     val targetActive get() = targetPackage != null
     @Volatile private var revision = 0L
+    @Volatile private var interrupted = false
     fun observe(selectedPackage: String?) {
-        if (targetPackage != selectedPackage) { targetPackage = selectedPackage; revision++ }
+        // After another window, the selected app showing again is a new visit,
+        // even when it is the same app (Home on HyperOS is not "full screen").
+        if (targetPackage != selectedPackage || (selectedPackage != null && interrupted)) {
+            targetPackage = selectedPackage
+            revision++
+        }
+        interrupted = false
     }
+
+    /**
+     * Another window appeared without definitely replacing the target. A
+     * pending navigation stands, but the next selected-app window starts a new
+     * foreground session that can be restricted again.
+     */
+    fun interrupt() { if (targetPackage != null) interrupted = true }
     fun token(): Long = revision
     fun matches(token: Long): Boolean = targetActive && revision == token
 }

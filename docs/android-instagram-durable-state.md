@@ -65,8 +65,14 @@ At midnight, yesterday's counts cannot unlock Instagram:
 - Report rollover_reconciled with the actual current plan date. Do not mutate
   Flutter's persisted plans or history. Opening Daylock performs its normal
   archive/rollover/save and publishes the new Today and Tomorrow.
-- For multiple missed days or dates not represented by the two summaries, report
-  unknown/date_changed. Never invent commitments, completion or history.
+- For a later date with no saved plan (missed days, or no tomorrow summary),
+  report notEarned/rollover_unplanned for an empty current day: nothing has been
+  kept, so selected apps stay restricted until Daylock is opened and Freedom is
+  earned. Earlier this reported unknown, which only redirected once and then let
+  the app through for the rest of the day. Never invent commitments, completion
+  or history.
+- Only a date earlier than the saved Today (the clock moved back) reports
+  unknown/date_changed.
 
 Month, year and leap-day boundaries use calendar components rather than elapsed
 24-hour periods. Same-date timezone changes simply alter the current local minute;

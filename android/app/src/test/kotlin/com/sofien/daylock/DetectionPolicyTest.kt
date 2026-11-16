@@ -1,4 +1,4 @@
-﻿package com.sofien.daylock
+package com.sofien.daylock
 
 import org.junit.Assert.*
 import org.junit.Test
@@ -61,7 +61,10 @@ class DetectionPolicyTest {
         for (boot in listOf(8, -1)) assertEquals("earned", evaluate(now = clock.copy(bootCount = boot, elapsedMs = 0)).state)
     }
     @Test fun yesterdayCannotUnlockNewDateWithoutReconciliation() {
-        assertEquals("date_changed", evaluate(now = clock.copy(date = "2026-10-14", minuteOfDay = 0)).reason)
+        val result = evaluate(now = clock.copy(date = "2026-10-14", minuteOfDay = 0))
+        assertEquals("notEarned", result.state)
+        assertEquals("rollover_unplanned", result.reason)
+        assertEquals(0, result.conditions!!.eligibleCount)
     }
     @Test fun midnightUsesSavedTomorrowNotYesterdayAndRequiresNextDayCommitment() {
         val value = state.copy(tomorrowPlan = NativePlanSummary("2026-10-14", 2, 0))
@@ -81,11 +84,24 @@ class DetectionPolicyTest {
         assertEquals(0, result.conditions!!.eligibleCount)
         assertFalse(result.conditions.commitmentsCompleted)
     }
-    @Test fun missedDaysAndTimezoneMovingToUnrepresentedDateRequireRecovery() {
+    @Test fun missedDaysStayBlockedAsAnEmptyDay() {
+        // Not opening Daylock for days must not switch blocking off.
         val value = state.copy(tomorrowPlan = NativePlanSummary("2026-10-14", 2, 0))
-        for (date in listOf("2026-10-12", "2026-10-15", "2027-01-01")) {
-            assertEquals("unknown", evaluate(value, clock.copy(date = date)).state)
+        for (date in listOf("2026-10-15", "2027-01-01")) {
+            for (minute in listOf(0, 23 * 60 + 59)) {
+                val result = evaluate(value, clock.copy(date = date, minuteOfDay = minute))
+                assertEquals("notEarned", result.state)
+                assertEquals("rollover_unplanned", result.reason)
+                assertEquals(date, result.planDate)
+            }
         }
+    }
+    @Test fun clockMovingBackToAnUnrepresentedDateRequiresRecovery() {
+        val value = state.copy(tomorrowPlan = NativePlanSummary("2026-10-14", 2, 0))
+        assertEquals("unknown", evaluate(value, clock.copy(date = "2026-10-12")).state)
+    }
+    @Test fun blockingOffStillWinsAfterMissedDays() {
+        assertEquals("disabled", evaluate(state.copy(enabled = false), clock.copy(date = "2026-10-20")).state)
     }
     @Test fun monthYearLeapDayTransitionsAreCalendarBased() {
         for ((date, next) in listOf("2026-10-31" to "2026-11-01", "2026-12-31" to "2027-01-01",

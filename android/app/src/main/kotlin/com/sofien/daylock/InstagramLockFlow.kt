@@ -5,7 +5,7 @@ class InstagramLockFlow {
     companion object {
         const val HOME_GRACE_MS = 300L
         const val CONFIRM_MS = 1500L
-        const val LAUNCH_COOLDOWN_MS = 3000L
+        const val LAUNCH_COOLDOWN_MS = 1500L // Matches CONFIRM_MS: a later reopen is a real new visit.
     }
     @Volatile var attempt = 0L
         private set
