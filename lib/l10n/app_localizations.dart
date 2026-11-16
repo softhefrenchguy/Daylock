@@ -4243,6 +4243,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Restriction skipped: a 15-minute break is active.'**
   String get diagRestrictionSkippedBreakActive;
+
+  /// No description provided for @backupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup & restore'**
+  String get backupTitle;
+
+  /// No description provided for @backupSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep a copy of your plans and Journey'**
+  String get backupSubtitle;
+
+  /// No description provided for @backupAutoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic Android backup is on'**
+  String get backupAutoTitle;
+
+  /// No description provided for @backupAutoBody.
+  ///
+  /// In en, this message translates to:
+  /// **'When backup is turned on in your phone’s settings, Google keeps a copy of your Daylock plans and restores it on a new phone. Calendar sign-ins and blocking permissions aren’t included.'**
+  String get backupAutoBody;
+
+  /// No description provided for @backupFileLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'BACKUP FILE'**
+  String get backupFileLabel;
+
+  /// No description provided for @backupExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export backup file'**
+  String get backupExport;
+
+  /// No description provided for @backupExportBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Saves your plans, history, Areas, routines, achievements and settings to a file you choose: Drive, Downloads or anywhere else.'**
+  String get backupExportBody;
+
+  /// No description provided for @backupImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from a file'**
+  String get backupImport;
+
+  /// No description provided for @backupImportBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaces everything in Daylock with the contents of a backup file.'**
+  String get backupImportBody;
+
+  /// No description provided for @backupConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace your Daylock data?'**
+  String get backupConfirmTitle;
+
+  /// No description provided for @backupConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything in Daylock will be replaced with this backup. This can’t be undone.'**
+  String get backupConfirmBody;
+
+  /// No description provided for @backupReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get backupReplace;
+
+  /// No description provided for @backupSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup saved.'**
+  String get backupSaved;
+
+  /// No description provided for @backupRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup restored.'**
+  String get backupRestored;
+
+  /// No description provided for @backupNotDaylock.
+  ///
+  /// In en, this message translates to:
+  /// **'That file isn’t a Daylock backup.'**
+  String get backupNotDaylock;
+
+  /// No description provided for @backupNewer.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup is from a newer version of Daylock. Update the app first.'**
+  String get backupNewer;
+
+  /// No description provided for @backupDamaged.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup is damaged and can’t be restored.'**
+  String get backupDamaged;
+
+  /// No description provided for @backupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The file couldn’t be saved or opened. Try another location.'**
+  String get backupFailed;
+
+  /// No description provided for @backupAndroidOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup files are available in the Android app.'**
+  String get backupAndroidOnly;
 }
 
 class _AppLocalizationsDelegate

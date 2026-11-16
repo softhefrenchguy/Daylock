@@ -36,6 +36,7 @@ class SettingsScreen extends StatefulWidget {
   final NotificationService? notificationService;
   final VoidCallback? onSetupRequested;
   final VoidCallback? onTourRequested;
+  final VoidCallback? onBackupRequested;
   final SettingsDestination? initialDestination;
   const SettingsScreen({
     super.key,
@@ -54,6 +55,7 @@ class SettingsScreen extends StatefulWidget {
     this.notificationService,
     this.onSetupRequested,
     this.onTourRequested,
+    this.onBackupRequested,
     this.initialDestination,
   });
 
@@ -371,6 +373,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: context.l10n.settingsTakeTour,
                 subtitle: context.l10n.settingsTakeTourSubtitle,
                 onTap: widget.onTourRequested,
+              ),
+            if (widget.onBackupRequested != null)
+              SettingsNavigationCard(
+                grouped: true,
+                id: 'settings-backup',
+                icon: Icons.cloud_upload_outlined,
+                tint: DaylockHues.teal,
+                title: context.l10n.backupTitle,
+                subtitle: context.l10n.backupSubtitle,
+                onTap: widget.onBackupRequested,
               ),
             SettingsNavigationCard(
               grouped: true,

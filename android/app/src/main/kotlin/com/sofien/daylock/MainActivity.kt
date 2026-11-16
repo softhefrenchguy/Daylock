@@ -15,6 +15,7 @@ class MainActivity : FlutterActivity() {
     private var events: EventChannel? = null
     private var notifications: NotificationBridge? = null
     private var stopwatchClock: MethodChannel? = null
+    private var backup: BackupBridge? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -27,6 +28,7 @@ class MainActivity : FlutterActivity() {
             }
         }
         notifications = NotificationBridge(this, flutterEngine.dartExecutor.binaryMessenger)
+        backup = BackupBridge(this, flutterEngine.dartExecutor.binaryMessenger)
         DetectionRuntime.attach(this)
         methods = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "daylock/instagram_detection").apply {
             setMethodCallHandler { call, result ->
@@ -116,6 +118,13 @@ class MainActivity : FlutterActivity() {
         events?.setStreamHandler(null)
         DetectionRuntime.sink = null
         super.cleanUpFlutterEngine(flutterEngine)
+    }
+
+    @Deprecated("FlutterActivity still routes document results here")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (backup?.onActivityResult(requestCode, resultCode, data) == true) return
+        @Suppress("DEPRECATION")
+        super.onActivityResult(requestCode, resultCode, data)
     }
 
     override fun onNewIntent(intent: Intent) {

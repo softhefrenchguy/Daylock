@@ -2538,4 +2538,68 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get diagRestrictionSkippedBreakActive =>
       'Restriction skipped: a 15-minute break is active.';
+
+  @override
+  String get backupTitle => 'Backup & restore';
+
+  @override
+  String get backupSubtitle => 'Keep a copy of your plans and Journey';
+
+  @override
+  String get backupAutoTitle => 'Automatic Android backup is on';
+
+  @override
+  String get backupAutoBody =>
+      'When backup is turned on in your phone’s settings, Google keeps a copy of your Daylock plans and restores it on a new phone. Calendar sign-ins and blocking permissions aren’t included.';
+
+  @override
+  String get backupFileLabel => 'BACKUP FILE';
+
+  @override
+  String get backupExport => 'Export backup file';
+
+  @override
+  String get backupExportBody =>
+      'Saves your plans, history, Areas, routines, achievements and settings to a file you choose: Drive, Downloads or anywhere else.';
+
+  @override
+  String get backupImport => 'Restore from a file';
+
+  @override
+  String get backupImportBody =>
+      'Replaces everything in Daylock with the contents of a backup file.';
+
+  @override
+  String get backupConfirmTitle => 'Replace your Daylock data?';
+
+  @override
+  String get backupConfirmBody =>
+      'Everything in Daylock will be replaced with this backup. This can’t be undone.';
+
+  @override
+  String get backupReplace => 'Replace';
+
+  @override
+  String get backupSaved => 'Backup saved.';
+
+  @override
+  String get backupRestored => 'Backup restored.';
+
+  @override
+  String get backupNotDaylock => 'That file isn’t a Daylock backup.';
+
+  @override
+  String get backupNewer =>
+      'This backup is from a newer version of Daylock. Update the app first.';
+
+  @override
+  String get backupDamaged => 'This backup is damaged and can’t be restored.';
+
+  @override
+  String get backupFailed =>
+      'The file couldn’t be saved or opened. Try another location.';
+
+  @override
+  String get backupAndroidOnly =>
+      'Backup files are available in the Android app.';
 }

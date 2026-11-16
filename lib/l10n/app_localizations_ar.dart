@@ -2569,4 +2569,67 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get diagRestrictionSkippedBreakActive =>
       'تم تخطي التقييد: استراحة 15 دقيقة نشطة.';
+
+  @override
+  String get backupTitle => 'النسخ الاحتياطي والاستعادة';
+
+  @override
+  String get backupSubtitle => 'احتفظ بنسخة من خططك ومسيرتك';
+
+  @override
+  String get backupAutoTitle => 'النسخ الاحتياطي التلقائي في Android مفعّل';
+
+  @override
+  String get backupAutoBody =>
+      'عند تفعيل النسخ الاحتياطي في إعدادات هاتفك، تحتفظ Google بنسخة من خطط Daylock وتستعيدها على هاتف جديد. لا تُضمَّن تسجيلات دخول التقويم ولا أذونات الحظر.';
+
+  @override
+  String get backupFileLabel => 'ملف النسخ الاحتياطي';
+
+  @override
+  String get backupExport => 'تصدير ملف النسخ الاحتياطي';
+
+  @override
+  String get backupExportBody =>
+      'يحفظ خططك وسجلك ومجالاتك وروتينك وإنجازاتك وإعداداتك في ملف تختاره: Drive أو التنزيلات أو أي مكان آخر.';
+
+  @override
+  String get backupImport => 'الاستعادة من ملف';
+
+  @override
+  String get backupImportBody =>
+      'يستبدل كل ما في Daylock بمحتوى ملف النسخ الاحتياطي.';
+
+  @override
+  String get backupConfirmTitle => 'استبدال بيانات Daylock؟';
+
+  @override
+  String get backupConfirmBody =>
+      'سيُستبدل كل ما في Daylock بهذه النسخة. لا يمكن التراجع عن ذلك.';
+
+  @override
+  String get backupReplace => 'استبدال';
+
+  @override
+  String get backupSaved => 'تم حفظ النسخة الاحتياطية.';
+
+  @override
+  String get backupRestored => 'تمت استعادة النسخة الاحتياطية.';
+
+  @override
+  String get backupNotDaylock => 'هذا الملف ليس نسخة احتياطية من Daylock.';
+
+  @override
+  String get backupNewer =>
+      'هذه النسخة من إصدار أحدث من Daylock. حدّث التطبيق أولًا.';
+
+  @override
+  String get backupDamaged => 'هذه النسخة تالفة ولا يمكن استعادتها.';
+
+  @override
+  String get backupFailed => 'تعذّر حفظ الملف أو فتحه. جرّب موقعًا آخر.';
+
+  @override
+  String get backupAndroidOnly =>
+      'ملفات النسخ الاحتياطي متاحة في تطبيق Android.';
 }

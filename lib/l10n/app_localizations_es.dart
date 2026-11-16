@@ -2566,4 +2566,68 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get diagRestrictionSkippedBreakActive =>
       'Restricción omitida: hay un descanso de 15 minutos en curso.';
+
+  @override
+  String get backupTitle => 'Copia de seguridad';
+
+  @override
+  String get backupSubtitle => 'Guarda una copia de tus planes y tu camino';
+
+  @override
+  String get backupAutoTitle => 'La copia automática de Android está activada';
+
+  @override
+  String get backupAutoBody =>
+      'Si la copia de seguridad está activada en los ajustes del teléfono, Google guarda una copia de tus planes de Daylock y la restaura en un teléfono nuevo. No se incluyen los inicios de sesión de calendario ni los permisos de bloqueo.';
+
+  @override
+  String get backupFileLabel => 'Archivo de copia';
+
+  @override
+  String get backupExport => 'Exportar copia';
+
+  @override
+  String get backupExportBody =>
+      'Guarda tus planes, historial, áreas, rutinas, logros y ajustes en un archivo que elijas: Drive, Descargas o cualquier otro sitio.';
+
+  @override
+  String get backupImport => 'Restaurar desde un archivo';
+
+  @override
+  String get backupImportBody =>
+      'Sustituye todo lo que hay en Daylock por el contenido de un archivo de copia.';
+
+  @override
+  String get backupConfirmTitle => '¿Sustituir tus datos de Daylock?';
+
+  @override
+  String get backupConfirmBody =>
+      'Todo lo que hay en Daylock se sustituirá por esta copia. No se puede deshacer.';
+
+  @override
+  String get backupReplace => 'Sustituir';
+
+  @override
+  String get backupSaved => 'Copia guardada.';
+
+  @override
+  String get backupRestored => 'Copia restaurada.';
+
+  @override
+  String get backupNotDaylock => 'Ese archivo no es una copia de Daylock.';
+
+  @override
+  String get backupNewer =>
+      'Esta copia es de una versión más reciente de Daylock. Actualiza la app primero.';
+
+  @override
+  String get backupDamaged => 'Esta copia está dañada y no se puede restaurar.';
+
+  @override
+  String get backupFailed =>
+      'No se pudo guardar ni abrir el archivo. Prueba otra ubicación.';
+
+  @override
+  String get backupAndroidOnly =>
+      'Los archivos de copia están disponibles en la app de Android.';
 }

@@ -1473,5 +1473,24 @@
       }
     }
   },
-  "diagRestrictionSkippedBreakActive": "Restriction skipped: a 15-minute break is active."
+  "diagRestrictionSkippedBreakActive": "Restriction skipped: a 15-minute break is active.",
+  "backupTitle": "Backup & restore",
+  "backupSubtitle": "Keep a copy of your plans and Journey",
+  "backupAutoTitle": "Automatic Android backup is on",
+  "backupAutoBody": "When backup is turned on in your phone’s settings, Google keeps a copy of your Daylock plans and restores it on a new phone. Calendar sign-ins and blocking permissions aren’t included.",
+  "backupFileLabel": "BACKUP FILE",
+  "backupExport": "Export backup file",
+  "backupExportBody": "Saves your plans, history, Areas, routines, achievements and settings to a file you choose: Drive, Downloads or anywhere else.",
+  "backupImport": "Restore from a file",
+  "backupImportBody": "Replaces everything in Daylock with the contents of a backup file.",
+  "backupConfirmTitle": "Replace your Daylock data?",
+  "backupConfirmBody": "Everything in Daylock will be replaced with this backup. This can’t be undone.",
+  "backupReplace": "Replace",
+  "backupSaved": "Backup saved.",
+  "backupRestored": "Backup restored.",
+  "backupNotDaylock": "That file isn’t a Daylock backup.",
+  "backupNewer": "This backup is from a newer version of Daylock. Update the app first.",
+  "backupDamaged": "This backup is damaged and can’t be restored.",
+  "backupFailed": "The file couldn’t be saved or opened. Try another location.",
+  "backupAndroidOnly": "Backup files are available in the Android app."
 }

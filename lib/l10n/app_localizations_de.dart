@@ -2567,4 +2567,70 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get diagRestrictionSkippedBreakActive =>
       'Einschränkung übersprungen: Eine 15-Minuten-Pause läuft.';
+
+  @override
+  String get backupTitle => 'Sichern & wiederherstellen';
+
+  @override
+  String get backupSubtitle =>
+      'Bewahre eine Kopie deiner Pläne und deines Wegs auf';
+
+  @override
+  String get backupAutoTitle => 'Die automatische Android-Sicherung ist an';
+
+  @override
+  String get backupAutoBody =>
+      'Wenn die Sicherung in den Telefoneinstellungen an ist, bewahrt Google eine Kopie deiner Daylock-Pläne auf und stellt sie auf einem neuen Telefon wieder her. Kalenderanmeldungen und Sperrberechtigungen sind nicht enthalten.';
+
+  @override
+  String get backupFileLabel => 'Sicherungsdatei';
+
+  @override
+  String get backupExport => 'Sicherung exportieren';
+
+  @override
+  String get backupExportBody =>
+      'Speichert deine Pläne, deinen Verlauf, Bereiche, Routinen, Erfolge und Einstellungen in einer Datei deiner Wahl: Drive, Downloads oder anderswo.';
+
+  @override
+  String get backupImport => 'Aus Datei wiederherstellen';
+
+  @override
+  String get backupImportBody =>
+      'Ersetzt alles in Daylock durch den Inhalt einer Sicherungsdatei.';
+
+  @override
+  String get backupConfirmTitle => 'Deine Daylock-Daten ersetzen?';
+
+  @override
+  String get backupConfirmBody =>
+      'Alles in Daylock wird durch diese Sicherung ersetzt. Das lässt sich nicht rückgängig machen.';
+
+  @override
+  String get backupReplace => 'Ersetzen';
+
+  @override
+  String get backupSaved => 'Sicherung gespeichert.';
+
+  @override
+  String get backupRestored => 'Sicherung wiederhergestellt.';
+
+  @override
+  String get backupNotDaylock => 'Diese Datei ist keine Daylock-Sicherung.';
+
+  @override
+  String get backupNewer =>
+      'Diese Sicherung stammt aus einer neueren Daylock-Version. Aktualisiere zuerst die App.';
+
+  @override
+  String get backupDamaged =>
+      'Diese Sicherung ist beschädigt und kann nicht wiederhergestellt werden.';
+
+  @override
+  String get backupFailed =>
+      'Die Datei konnte nicht gespeichert oder geöffnet werden. Versuche einen anderen Ort.';
+
+  @override
+  String get backupAndroidOnly =>
+      'Sicherungsdateien gibt es in der Android-App.';
 }

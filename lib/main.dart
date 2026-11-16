@@ -1,3 +1,5 @@
+import 'services/backup_service.dart';
+import 'screens/backup_screen.dart';
 import 'l10n/l10n.dart';
 
 import 'dart:async';
@@ -75,6 +77,7 @@ class MainApp extends StatefulWidget {
   final InstagramDetectionBridge? detectionBridge;
   final NotificationService? notificationService;
   final StopwatchClock? stopwatchClock;
+  final BackupFiles? backupFiles;
   // The Android entry point enables first-run setup. Embedders and visual
   // fixtures can open the planner directly without starting device setup.
   final bool onboardingEnabled;
@@ -88,6 +91,7 @@ class MainApp extends StatefulWidget {
     this.detectionBridge,
     this.notificationService,
     this.stopwatchClock,
+    this.backupFiles,
     this.onboardingEnabled = false,
   });
 
@@ -131,6 +135,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   PlanHistory history = PlanHistory.empty;
   late final CalendarService _calendarService;
   late final InstagramDetectionBridge _detectionBridge;
+  late final BackupFiles _backupFiles = widget.backupFiles ?? BackupFiles();
   int _nativePendingSaves = 0, _nativeSaveRevision = 0;
   bool _nativePersistedReady = false, _nativeSaveFailed = false;
   int _onboardingStep = 0;
@@ -499,12 +504,37 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
                 onNotificationsChanged: _changeNotifications,
                 onSetupRequested: () => _openTutorial(restart: true),
                 onTourRequested: _startTour,
+                onBackupRequested: _openBackup,
                 initialDestination: destination,
               ),
             ),
           ),
         ),
       );
+
+  void _openBackup() => _navigatorKey.currentState!.push(
+    MaterialPageRoute<void>(
+      builder: (_) => BackupScreen(
+        files: _backupFiles,
+        current: _snapshot,
+        now: _now,
+        restore: _restoreBackup,
+      ),
+    ),
+  );
+
+  /// Replaces all planner data with a backup, then reloads it the normal
+  /// way (rollover, stopwatches, routines, notifications).
+  Future<bool> _restoreBackup(DaylockState state) async {
+    try {
+      await _storage.save(state);
+    } catch (_) {
+      return false;
+    }
+    _cachedJourney = null;
+    await _loadState();
+    return !_loadFailed;
+  }
 
   Future<void> _openTutorial({bool restart = false}) async {
     if (_tutorialOpen || _isLoading || _loadFailed) return;

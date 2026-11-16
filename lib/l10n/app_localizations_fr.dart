@@ -2562,4 +2562,70 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get diagRestrictionSkippedBreakActive =>
       'Restriction ignorée : une pause de 15 minutes est en cours.';
+
+  @override
+  String get backupTitle => 'Sauvegarde et restauration';
+
+  @override
+  String get backupSubtitle =>
+      'Gardez une copie de vos plans et de votre parcours';
+
+  @override
+  String get backupAutoTitle => 'La sauvegarde Android automatique est activée';
+
+  @override
+  String get backupAutoBody =>
+      'Si la sauvegarde est activée dans les paramètres du téléphone, Google garde une copie de vos plans Daylock et la restaure sur un nouveau téléphone. Les connexions d’agenda et les autorisations de blocage ne sont pas incluses.';
+
+  @override
+  String get backupFileLabel => 'Fichier de sauvegarde';
+
+  @override
+  String get backupExport => 'Exporter une sauvegarde';
+
+  @override
+  String get backupExportBody =>
+      'Enregistre vos plans, votre historique, vos domaines, routines, réussites et réglages dans un fichier de votre choix : Drive, Téléchargements ou ailleurs.';
+
+  @override
+  String get backupImport => 'Restaurer depuis un fichier';
+
+  @override
+  String get backupImportBody =>
+      'Remplace tout le contenu de Daylock par celui d’un fichier de sauvegarde.';
+
+  @override
+  String get backupConfirmTitle => 'Remplacer vos données Daylock ?';
+
+  @override
+  String get backupConfirmBody =>
+      'Tout le contenu de Daylock sera remplacé par cette sauvegarde. Impossible de revenir en arrière.';
+
+  @override
+  String get backupReplace => 'Remplacer';
+
+  @override
+  String get backupSaved => 'Sauvegarde enregistrée.';
+
+  @override
+  String get backupRestored => 'Sauvegarde restaurée.';
+
+  @override
+  String get backupNotDaylock => 'Ce fichier n’est pas une sauvegarde Daylock.';
+
+  @override
+  String get backupNewer =>
+      'Cette sauvegarde vient d’une version plus récente de Daylock. Mettez d’abord l’appli à jour.';
+
+  @override
+  String get backupDamaged =>
+      'Cette sauvegarde est endommagée et ne peut pas être restaurée.';
+
+  @override
+  String get backupFailed =>
+      'Impossible d’enregistrer ou d’ouvrir le fichier. Essayez un autre emplacement.';
+
+  @override
+  String get backupAndroidOnly =>
+      'Les fichiers de sauvegarde sont disponibles dans l’appli Android.';
 }
