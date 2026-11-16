@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../design/daylock_theme.dart';
@@ -12,7 +14,7 @@ class CommitmentEditor extends StatefulWidget {
   final bool Function() canCreate;
   final Task? initialTask;
   final AreaBook? areas;
-  final String heading, submitLabel;
+  final String? heading, submitLabel;
 
   /// Shows the Repeat row when set: the plan date a new repeat starts from.
   final DateTime? repeatFrom;
@@ -30,8 +32,8 @@ class CommitmentEditor extends StatefulWidget {
     required this.canCreate,
     this.initialTask,
     this.areas,
-    this.heading = 'New commitment',
-    this.submitLabel = 'Add commitment',
+    this.heading,
+    this.submitLabel,
     this.repeatFrom,
     this.initialRepeat,
     this.rotationName,
@@ -104,13 +106,15 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
     final theme = Theme.of(context);
     final rotation = widget.rotationName;
     final label = rotation != null
-        ? '$rotation · ${widget.initialRepeat?.label ?? 'Daily'}'
-        : _repeat?.label ?? 'Never';
+        ? '$rotation · ${context.l10n.repeatLabel(widget.initialRepeat ?? RoutineSchedule.daily())}'
+        : _repeat == null
+        ? context.l10n.repeatNever
+        : context.l10n.repeatLabel(_repeat!);
     return ListTile(
       key: const ValueKey('commitment-repeat'),
       contentPadding: EdgeInsets.zero,
       leading: Icon(Icons.repeat_rounded, color: theme.colorScheme.primary),
-      title: const Text('Repeat'),
+      title: Text(context.l10n.repeat),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -122,8 +126,7 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          if (rotation != null)
-            const Text('Part of a rotation. Change it in Routines.'),
+          if (rotation != null) Text(context.l10n.partOfRotation),
         ],
       ),
       trailing: rotation == null
@@ -135,7 +138,7 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
 
   InputDecoration _field(String label, {String? error}) => InputDecoration(
     labelText: label,
-    hintText: 'One small, specific step',
+    hintText: context.l10n.commitmentHint,
     errorText: error,
     contentPadding: const EdgeInsets.all(18),
   );
@@ -147,7 +150,7 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
       top: false,
       child: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.fromLTRB(
+        padding: const EdgeInsetsDirectional.fromSTEB(
           DaylockSpace.lg,
           0,
           DaylockSpace.lg,
@@ -161,12 +164,12 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
               children: [
                 Expanded(
                   child: Text(
-                    widget.heading,
+                    widget.heading ?? context.l10n.newCommitment,
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Close editor',
+                  tooltip: context.l10n.closeEditor,
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close_rounded),
                 ),
@@ -177,7 +180,7 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
               key: const ValueKey('commitment-name'),
               controller: _name,
               enabled: true,
-              decoration: _field('Commitment name'),
+              decoration: _field(context.l10n.commitmentName),
               style: Theme.of(context).textTheme.bodyLarge!
                   .copyWith(fontSize: 17),
               textCapitalization: TextCapitalization.sentences,
@@ -200,7 +203,7 @@ class _CommitmentEditorState extends State<CommitmentEditor> {
               key: const ValueKey('save-commitment'),
               onPressed: _valid ? _submit : null,
               icon: const Icon(Icons.add_rounded, size: DaylockSpace.icon),
-              label: Text(widget.submitLabel),
+              label: Text(widget.submitLabel ?? context.l10n.addCommitment),
             ),
           ],
         ),

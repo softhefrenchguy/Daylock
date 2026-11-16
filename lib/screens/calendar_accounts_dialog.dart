@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../models/calendar_account.dart';
@@ -55,7 +57,9 @@ class _CalendarAccountsDialogState extends State<CalendarAccountsDialog> {
       // Avoid displaying provider exceptions, which may contain credentials.
       if (mounted) {
         setState(
-          () => _error = error is CalendarFailure ? error.message : 'Could not update this account. Cached events are still available. Try again or reconnect.',
+          () => _error = error is CalendarFailure
+              ? context.l10n.calendarFailure(error)
+              : context.l10n.accountUpdateFailed,
         );
       }
     } finally {
@@ -68,18 +72,16 @@ class _CalendarAccountsDialogState extends State<CalendarAccountsDialog> {
       context: context,
       builder: (context) => AlertDialog(
         scrollable: true,
-        title: const Text('Disconnect account?'),
-        content: Text(
-          'Remove ${account.displayName} and its cached events from Daylock? Your external calendar will stay unchanged.',
-        ),
+        title: Text(context.l10n.disconnectAccountTitle),
+        content: Text(context.l10n.disconnectAccountBody(account.displayName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Disconnect'),
+            child: Text(context.l10n.disconnect),
           ),
         ],
       ),
@@ -94,7 +96,7 @@ class _CalendarAccountsDialogState extends State<CalendarAccountsDialog> {
     canPop: !_busy,
     child: AlertDialog(
       scrollable: true,
-      title: const Text('Calendar accounts'),
+      title: Text(context.l10n.calendarAccounts),
       content: SizedBox(
         width: 400,
         child: SingleChildScrollView(
@@ -102,29 +104,30 @@ class _CalendarAccountsDialogState extends State<CalendarAccountsDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'External calendars are read-only. Cached events are available offline.',
-              ),
+              Text(context.l10n.externalCalendarsReadOnly),
               if (CalendarProviderType.values.any(
                 (type) => !widget.canConnect(type),
               )) ...[
                 const SizedBox(height: 12),
-                const Text(
-                  'Account sign-in is not available for the disabled providers in this version.',
-                ),
+                Text(context.l10n.providersDisabled),
               ],
               for (final type in CalendarProviderType.values)
                 OutlinedButton(
                   onPressed: _busy || !widget.canConnect(type)
                       ? null
                       : () => _run(() => widget.onConnect(type)),
-                  child: Text('Connect ${type.label}'),
+                  child: Text(
+                    context.l10n.connectProvider(
+                      context.l10n.calendarProvider(type),
+                    ),
+                  ),
                 ),
-              if (_cache.accounts.isEmpty) const Text('No connected accounts.'),
+              if (_cache.accounts.isEmpty)
+                Text(context.l10n.noConnectedAccounts),
               for (final account in _cache.accounts) ...[
                 const Divider(),
                 Text(
-                  account.provider.label,
+                  context.l10n.calendarProvider(account.provider),
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Text(account.displayName),
@@ -136,11 +139,11 @@ class _CalendarAccountsDialogState extends State<CalendarAccountsDialog> {
                       onPressed: _busy || !widget.canConnect(account.provider)
                           ? null
                           : () => _run(() => widget.onSynchronize(account.id)),
-                      child: const Text('Sync now'),
+                      child: Text(context.l10n.syncNow),
                     ),
                     TextButton(
                       onPressed: _busy ? null : () => _disconnect(account),
-                      child: const Text('Disconnect'),
+                      child: Text(context.l10n.disconnect),
                     ),
                     if (widget.canReconnect?.call(account.provider) == true &&
                         widget.onReconnect != null)
@@ -148,7 +151,7 @@ class _CalendarAccountsDialogState extends State<CalendarAccountsDialog> {
                         onPressed: _busy
                             ? null
                             : () => _run(() => widget.onReconnect!(account.id)),
-                        child: const Text('Reconnect'),
+                        child: Text(context.l10n.reconnect),
                       ),
                   ],
                 ),
@@ -161,8 +164,10 @@ class _CalendarAccountsDialogState extends State<CalendarAccountsDialog> {
                     title: Text(calendar.name),
                     subtitle: Text(
                       calendar.lastSyncedAt == null
-                          ? 'Not synced yet'
-                          : 'Last synced ${MaterialLocalizations.of(context).formatShortDate(calendar.lastSyncedAt!.toLocal())} ${TimeOfDay.fromDateTime(calendar.lastSyncedAt!.toLocal()).format(context)}',
+                          ? context.l10n.notSyncedYet
+                          : context.l10n.lastSynced(
+                              '${MaterialLocalizations.of(context).formatShortDate(calendar.lastSyncedAt!.toLocal())} ${TimeOfDay.fromDateTime(calendar.lastSyncedAt!.toLocal()).format(context)}',
+                            ),
                     ),
                     value: calendar.isVisible,
                     onChanged: _busy
@@ -173,7 +178,7 @@ class _CalendarAccountsDialogState extends State<CalendarAccountsDialog> {
                           ),
                   ),
                 if (!_cache.calendars.any((c) => c.accountId == account.id))
-                  const Text('Sync to load this account’s calendars.'),
+                  Text(context.l10n.syncToLoad),
               ],
               if (_busy) const LinearProgressIndicator(),
               if (_error != null)
@@ -188,7 +193,7 @@ class _CalendarAccountsDialogState extends State<CalendarAccountsDialog> {
       actions: [
         TextButton(
           onPressed: _busy ? null : () => Navigator.pop(context),
-          child: const Text('Done'),
+          child: Text(context.l10n.done),
         ),
       ],
     ),

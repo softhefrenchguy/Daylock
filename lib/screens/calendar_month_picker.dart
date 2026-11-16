@@ -1,4 +1,7 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 
 import '../design/daylock_theme.dart';
@@ -16,20 +19,6 @@ class _CalendarMonthPickerState extends State<CalendarMonthPicker> {
   final _form = GlobalKey<FormState>();
   late final TextEditingController _year;
   late int _month;
-  static const _months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
 
   @override
   void initState() {
@@ -75,7 +64,7 @@ class _CalendarMonthPickerState extends State<CalendarMonthPicker> {
         return AlertDialog(
           scrollable: true,
           insetPadding: const EdgeInsets.all(24),
-          title: const Text('Choose month'),
+          title: Text(context.l10n.chooseMonth),
           content: SizedBox(
             width: width,
             child: Form(
@@ -87,7 +76,7 @@ class _CalendarMonthPickerState extends State<CalendarMonthPicker> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       IconButton(
-                        tooltip: 'Previous year',
+                        tooltip: context.l10n.previousYear,
                         icon: const Icon(Icons.chevron_left_rounded),
                         onPressed: _validYear == null || _validYear == 1
                             ? null
@@ -101,19 +90,19 @@ class _CalendarMonthPickerState extends State<CalendarMonthPicker> {
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
                           ],
-                          decoration: const InputDecoration(
-                            labelText: 'Year',
+                          decoration: InputDecoration(
+                            labelText: context.l10n.year,
                             errorMaxLines: 4,
                           ),
                           onChanged: (_) => setState(() {}),
                           onFieldSubmitted: (_) => _select(),
                           validator: (_) => _validYear == null
-                              ? 'Enter a year from 1 to 9999.'
+                              ? context.l10n.enterYear
                               : null,
                         ),
                       ),
                       IconButton(
-                        tooltip: 'Next year',
+                        tooltip: context.l10n.nextYear,
                         icon: const Icon(Icons.chevron_right_rounded),
                         onPressed: _validYear == null || _validYear == 9999
                             ? null
@@ -145,7 +134,10 @@ class _CalendarMonthPickerState extends State<CalendarMonthPicker> {
                                 ),
                               ),
                               onPressed: () => setState(() => _month = month),
-                              child: Text(_months[month - 1]),
+                              child: Text(
+                                DateFormat.MMM(context.l10n.localeName)
+                                    .format(DateTime(2024, month)),
+                              ),
                             ),
                           ),
                         ),
@@ -158,12 +150,12 @@ class _CalendarMonthPickerState extends State<CalendarMonthPicker> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.cancel),
             ),
             FilledButton(
               key: const ValueKey('calendar-picker-select'),
               onPressed: _select,
-              child: const Text('Show month'),
+              child: Text(context.l10n.showMonth),
             ),
           ],
         );

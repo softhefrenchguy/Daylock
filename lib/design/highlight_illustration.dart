@@ -124,7 +124,7 @@ class HighlightIllustration extends StatelessWidget {
                               for (final width in [1.0, .8, .6]) ...[
                                 FractionallySizedBox(
                                   widthFactor: width,
-                                  alignment: Alignment.centerLeft,
+                                  alignment: AlignmentDirectional.centerStart,
                                   child: Container(
                                     height: 4,
                                     decoration: BoxDecoration(

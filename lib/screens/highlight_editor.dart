@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../design/daylock_areas.dart';
@@ -94,7 +96,7 @@ class _HighlightEditorState extends State<HighlightEditor> {
     child: SafeArea(
       top: false,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
+        padding: const EdgeInsetsDirectional.fromSTEB(
           DaylockSpace.lg,
           0,
           DaylockSpace.lg,
@@ -108,13 +110,13 @@ class _HighlightEditorState extends State<HighlightEditor> {
                 Expanded(
                   child: Text(
                     widget.highlight == null
-                        ? 'New achievement'
-                        : 'Edit achievement',
+                        ? context.l10n.newAchievement
+                        : context.l10n.editAchievement,
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Close editor',
+                  tooltip: context.l10n.closeEditor,
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close),
                 ),
@@ -126,9 +128,9 @@ class _HighlightEditorState extends State<HighlightEditor> {
               controller: _title,
               maxLength: Highlight.maxTitleLength,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'What are you proud of?',
-                hintText: 'Passed my driving test',
+              decoration: InputDecoration(
+                labelText: context.l10n.achievementPrompt,
+                hintText: context.l10n.achievementHint,
               ),
               onChanged: (_) => setState(() {}),
             ),
@@ -148,16 +150,16 @@ class _HighlightEditorState extends State<HighlightEditor> {
               minLines: 2,
               maxLines: 5,
               maxLength: Highlight.maxDescriptionLength,
-              decoration: const InputDecoration(
-                labelText: 'A few words (optional)',
+              decoration: InputDecoration(
+                labelText: context.l10n.achievementNotes,
               ),
               onChanged: (_) => setState(() {}),
             ),
             SwitchListTile(
               key: const ValueKey('highlight-link-area'),
               contentPadding: EdgeInsets.zero,
-              title: const Text('Link to an Area'),
-              subtitle: const Text('Optional'),
+              title: Text(context.l10n.linkToArea),
+              subtitle: Text(context.l10n.optional),
               value: _areaId != null,
               onChanged: (value) => setState(
                 () => _areaId = value ? widget.areas.defaultArea.id : null,
@@ -165,9 +167,7 @@ class _HighlightEditorState extends State<HighlightEditor> {
             ),
             if (_areaId != null) ...[
               if (!widget.areas.areas.any((a) => a.id == _areaId))
-                const Text(
-                  'The previous Area is unavailable. Choose an Area or remove the link.',
-                ),
+                Text(context.l10n.previousAreaUnavailable),
               AreaSelector(
                 book: widget.areas,
                 selectedId: _areaId,
@@ -180,7 +180,7 @@ class _HighlightEditorState extends State<HighlightEditor> {
             FilledButton(
               key: const ValueKey('save-highlight'),
               onPressed: _valid ? _save : null,
-              child: const Text('Save achievement'),
+              child: Text(context.l10n.saveAchievement),
             ),
           ],
         ),
@@ -207,13 +207,19 @@ class _HighlightEditorState extends State<HighlightEditor> {
               setState(() => _choosingIllustration = !_choosingIllustration),
           icon: Icon(highlightIllustrationIcons[resolved]),
           label: Text(
-            'Illustration: ${automatic ? 'Automatic · ' : ''}${highlightIllustrationLabels[resolved]}',
+            automatic
+                ? context.l10n.illustrationAutomaticLabel(
+                    context.l10n.illustration(resolved),
+                  )
+                : context.l10n.illustrationLabel(
+                    context.l10n.illustration(resolved),
+                  ),
           ),
         ),
         if (_choosingIllustration) ...[
           const SizedBox(height: 8),
           Text(
-            'Choose a look, or let the title and Area suggest one.',
+            context.l10n.illustrationHelp,
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
@@ -223,7 +229,7 @@ class _HighlightEditorState extends State<HighlightEditor> {
             children: [
               ChoiceChip(
                 key: const ValueKey('highlight-icon-automatic'),
-                label: const Text('Automatic'),
+                label: Text(context.l10n.automatic),
                 selected: automatic,
                 materialTapTargetSize: MaterialTapTargetSize.padded,
                 onSelected: (_) => setState(() => _illustrationIcon = null),
@@ -232,7 +238,7 @@ class _HighlightEditorState extends State<HighlightEditor> {
                 ChoiceChip(
                   key: ValueKey('highlight-icon-${entry.key}'),
                   avatar: Icon(highlightIllustrationIcons[entry.key], size: 18),
-                  label: Text(entry.value),
+                  label: Text(context.l10n.illustration(entry.key)),
                   selected: _illustrationIcon == entry.key,
                   materialTapTargetSize: MaterialTapTargetSize.padded,
                   onSelected: (_) =>

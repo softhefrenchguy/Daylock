@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -11,70 +13,84 @@ import '../design/daylock_theme.dart';
 class TourStop {
   final int page;
   final List<Key> targets;
-  final String title, body;
-  const TourStop({
-    required this.page,
-    required this.targets,
-    required this.title,
-    required this.body,
-  });
+  final TourStopId id;
+  const TourStop({required this.page, required this.targets, required this.id});
+
+  String title(AppLocalizations l) => switch (id) {
+    TourStopId.day => l.tourDayTitle,
+    TourStopId.commitments => l.tourCommitmentsTitle,
+    TourStopId.freedom => l.tourFreedomTitle,
+    TourStopId.plan => l.tourPlanTitle,
+    TourStopId.add => l.tourAddTitle,
+    TourStopId.lock => l.tourLockTitle,
+    TourStopId.journey => l.tourJourneyTitle,
+    TourStopId.areas => l.tourAreasTitle,
+    TourStopId.settings => l.tourSettingsTitle,
+  };
+
+  String body(AppLocalizations l) => switch (id) {
+    TourStopId.day => l.tourDayBody,
+    TourStopId.commitments => l.tourCommitmentsBody,
+    TourStopId.freedom => l.tourFreedomBody,
+    TourStopId.plan => l.tourPlanBody,
+    TourStopId.add => l.tourAddBody,
+    TourStopId.lock => l.tourLockBody,
+    TourStopId.journey => l.tourJourneyBody,
+    TourStopId.areas => l.tourAreasBody,
+    TourStopId.settings => l.tourSettingsBody,
+  };
+}
+
+enum TourStopId {
+  day,
+  commitments,
+  freedom,
+  plan,
+  add,
+  lock,
+  journey,
+  areas,
+  settings,
 }
 
 /// The walk through the real app. Pages: 0 Today, 1 Plan, 2 Journey.
 const daylockTour = [
-  TourStop(
-    page: 0,
-    targets: [ValueKey('today-sky')],
-    title: 'This is your day',
-    body: 'The sun climbs as you keep today’s commitments. Keep them all and it’s fully risen.',
-  ),
+  TourStop(page: 0, targets: [ValueKey('today-sky')], id: TourStopId.day),
   TourStop(
     page: 0,
     targets: [ValueKey('today-commitments'), ValueKey('today-empty')],
-    title: 'Today’s commitments',
-    body: 'Tap the circle to keep one. Tap the row to run a stopwatch, or excuse it with a reason if something really came up.',
+    id: TourStopId.commitments,
   ),
   TourStop(
     page: 0,
     targets: [ValueKey('freedom-indicator')],
-    title: 'Freedom',
-    body: 'Apps you restrict open at Freedom Time, once today is kept and tomorrow is locked in. Tap here any time to see what’s left.',
+    id: TourStopId.freedom,
   ),
-  TourStop(
-    page: 1,
-    targets: [ValueKey('plan-sky')],
-    title: 'Plan tomorrow',
-    body: 'Each evening, plan tomorrow while today is still fresh. Pick a few things you’ll really do.',
-  ),
+  TourStop(page: 1, targets: [ValueKey('plan-sky')], id: TourStopId.plan),
   TourStop(
     page: 1,
     targets: [ValueKey('open-commitment-editor')],
-    title: 'Add and repeat',
-    body: 'Add a commitment and give it an Area. Turn on Repeat for habits, and they fill themselves in on their days.',
+    id: TourStopId.add,
   ),
   TourStop(
     page: 1,
     targets: [ValueKey('plan-commit-bar')],
-    title: 'Lock it in',
-    body: 'When tomorrow looks right, lock it in. After that it can’t change. That’s what makes it a commitment.',
+    id: TourStopId.lock,
   ),
   TourStop(
     page: 2,
     targets: [ValueKey('journey-streak'), ValueKey('journey-content')],
-    title: 'Your Journey',
-    body: 'Every kept day counts here: your streak, the effort you put in, and the achievements you’re proud of.',
+    id: TourStopId.journey,
   ),
   TourStop(
     page: 2,
     targets: [ValueKey('journey-manage-areas')],
-    title: 'Areas',
-    body: 'Each Area tracks one part of your life, like Body, Mind or Career. Add, rename or archive them here. Further down, open one to see its history.',
+    id: TourStopId.areas,
   ),
   TourStop(
     page: 0,
     targets: [ValueKey('open-settings')],
-    title: 'Settings',
-    body: 'Freedom Time, app blocking, routines, reminders and colours live here. You can replay this tour from Settings too.',
+    id: TourStopId.settings,
   ),
 ];
 
@@ -538,7 +554,7 @@ class _TourBubble extends StatelessWidget {
           // Text scrolls if space is tight; the buttons always stay visible.
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -568,7 +584,7 @@ class _TourBubble extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          '${index + 1} of $total',
+                          context.l10n.stepOf(index + 1, total),
                           key: const ValueKey('tour-progress'),
                           style: theme.textTheme.labelLarge!.copyWith(
                             color: scheme.onSurfaceVariant,
@@ -581,13 +597,13 @@ class _TourBubble extends StatelessWidget {
                   Semantics(
                     header: true,
                     child: Text(
-                      stop.title,
+                      stop.title(context.l10n),
                       style: theme.textTheme.titleLarge!.copyWith(fontSize: 21),
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    stop.body,
+                    stop.body(context.l10n),
                     style: theme.textTheme.bodyMedium!.copyWith(
                       height: 1.45,
                       color: scheme.onSurfaceVariant,
@@ -598,7 +614,7 @@ class _TourBubble extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 12, 10),
             child: Wrap(
               alignment: WrapAlignment.end,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -612,13 +628,13 @@ class _TourBubble extends StatelessWidget {
                       foregroundColor: scheme.onSurfaceVariant,
                     ),
                     onPressed: onClose,
-                    child: const Text('Skip tour'),
+                    child: Text(context.l10n.skipTour),
                   ),
                 if (onBack != null)
                   TextButton(
                     key: const ValueKey('tour-back'),
                     onPressed: onBack,
-                    child: const Text('Back'),
+                    child: Text(context.l10n.back),
                   ),
                 FilledButton(
                   key: const ValueKey('tour-next'),
@@ -627,7 +643,7 @@ class _TourBubble extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                   ),
                   onPressed: onNext,
-                  child: Text(last ? 'Done' : 'Next'),
+                  child: Text(last ? context.l10n.done : context.l10n.next),
                 ),
               ],
             ),
@@ -637,11 +653,15 @@ class _TourBubble extends StatelessWidget {
     );
     final arrow = arrowX == null
         ? null
-        : Padding(
-            padding: EdgeInsets.only(left: arrowX! - 10),
-            child: CustomPaint(
-              size: const Size(20, 10),
-              painter: _Arrow(color: surface, up: arrowUp),
+        // arrowX is measured on screen, so it stays physical in Arabic too.
+        : Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.only(left: arrowX! - 10),
+              child: CustomPaint(
+                size: const Size(20, 10),
+                painter: _Arrow(color: surface, up: arrowUp),
+              ),
             ),
           );
     return Semantics(
@@ -649,7 +669,7 @@ class _TourBubble extends StatelessWidget {
       scopesRoute: true,
       namesRoute: true,
       explicitChildNodes: true,
-      label: 'App tour, step ${index + 1} of $total',
+      label: context.l10n.tourStepSemantics(index + 1, total),
       liveRegion: true,
       child: Column(
         key: sizeKey,

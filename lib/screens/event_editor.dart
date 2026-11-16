@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../models/event.dart';
@@ -48,7 +50,7 @@ class _EventEditorState extends State<EventEditor> {
       _time(text ?? '');
       return null;
     } on FormatException {
-      return 'Use HH:mm (00:00–23:59).';
+      return context.l10n.eventTimeFormat;
     }
   }
 
@@ -59,7 +61,7 @@ class _EventEditorState extends State<EventEditor> {
       final start = _time(_start.text);
       final end = _time(text ?? '');
       if (start != null && end != null && end.compareTo(start) <= 0) {
-        return 'End must be after start.';
+        return context.l10n.eventEndAfterStart;
       }
     } on FormatException {
       // The start field shows its own validation error.
@@ -95,20 +97,22 @@ class _EventEditorState extends State<EventEditor> {
   Widget build(BuildContext context) => widget.event?.isExternal == true
       ? AlertDialog(
           scrollable: true,
-          title: const Text('Read-only event'),
-          content: const Text(
-            'External events can only be changed in their calendar.',
-          ),
+          title: Text(context.l10n.readOnlyEvent),
+          content: Text(context.l10n.externalEventsReadOnly),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
+              child: Text(context.l10n.close),
             ),
           ],
         )
       : AlertDialog(
           scrollable: true,
-          title: Text(widget.event == null ? 'Add event' : 'Edit event'),
+          title: Text(
+            widget.event == null
+                ? context.l10n.addEvent
+                : context.l10n.editEvent,
+          ),
           content: SizedBox(
             width: 360,
             child: SingleChildScrollView(
@@ -121,10 +125,12 @@ class _EventEditorState extends State<EventEditor> {
                     TextFormField(
                       key: const ValueKey('event-title'),
                       controller: _title,
-                      decoration: const InputDecoration(labelText: 'Title'),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.title,
+                      ),
                       textCapitalization: TextCapitalization.sentences,
                       validator: (text) => text == null || text.trim().isEmpty
-                          ? 'Enter a title.'
+                          ? context.l10n.enterTitle
                           : null,
                     ),
                     const SizedBox(height: 16),
@@ -141,8 +147,8 @@ class _EventEditorState extends State<EventEditor> {
                       key: const ValueKey('event-start'),
                       controller: _start,
                       keyboardType: TextInputType.datetime,
-                      decoration: const InputDecoration(
-                        labelText: 'Start time (optional)',
+                      decoration: InputDecoration(
+                        labelText: context.l10n.startTimeOptional,
                         hintText: '14:00',
                       ),
                       validator: _validateTime,
@@ -151,8 +157,8 @@ class _EventEditorState extends State<EventEditor> {
                       key: const ValueKey('event-end'),
                       controller: _end,
                       keyboardType: TextInputType.datetime,
-                      decoration: const InputDecoration(
-                        labelText: 'End time (optional)',
+                      decoration: InputDecoration(
+                        labelText: context.l10n.endTimeOptional,
                         hintText: '16:00',
                       ),
                       validator: _validateEnd,
@@ -160,8 +166,8 @@ class _EventEditorState extends State<EventEditor> {
                     TextFormField(
                       key: const ValueKey('event-notes'),
                       controller: _notes,
-                      decoration: const InputDecoration(
-                        labelText: 'Notes (optional)',
+                      decoration: InputDecoration(
+                        labelText: context.l10n.notesOptional,
                       ),
                       maxLines: 3,
                     ),
@@ -173,9 +179,9 @@ class _EventEditorState extends State<EventEditor> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.cancel),
             ),
-            FilledButton(onPressed: _save, child: const Text('Save event')),
+            FilledButton(onPressed: _save, child: Text(context.l10n.saveEvent)),
           ],
         );
 }

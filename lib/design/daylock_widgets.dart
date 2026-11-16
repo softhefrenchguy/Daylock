@@ -1,12 +1,18 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import 'daylock_theme.dart';
 
-String recordedFocusLabel(int milliseconds) {
+/// "12 min" or "12 min 5 s", in [l]'s language (English by default).
+String recordedFocusLabel(int milliseconds, [AppLocalizations? l]) {
+  l ??= englishStrings;
   final seconds = milliseconds ~/ 1000;
   final minutes = seconds ~/ 60;
   final remainder = seconds % 60;
-  return remainder == 0 ? '$minutes min' : '$minutes min $remainder s';
+  return remainder == 0
+      ? l.durationMinutes(minutes)
+      : l.durationMinutesSeconds(minutes, remainder);
 }
 
 Duration daylockMotion(BuildContext context) =>
@@ -144,22 +150,20 @@ class DaylockLoadState extends StatelessWidget {
               Text('DAYLOCK', style: Theme.of(context).textTheme.headlineLarge),
               const SizedBox(height: DaylockSpace.md),
               Text(
-                failed
-                    ? 'Could not load your saved commitments.'
-                    : 'Getting your day ready.',
+                failed ? context.l10n.loadFailed : context.l10n.loadingDay,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               const SizedBox(height: DaylockSpace.lg),
               if (failed)
                 DaylockAction(
-                  label: 'Retry',
+                  label: context.l10n.retry,
                   icon: Icons.refresh_rounded,
                   onPressed: onRetry,
                 )
               else
                 Semantics(
-                  label: 'Loading commitments',
+                  label: context.l10n.loadingCommitments,
                   child: SizedBox(
                     width: 24,
                     height: 24,

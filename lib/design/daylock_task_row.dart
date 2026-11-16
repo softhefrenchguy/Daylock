@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../models/area.dart';
@@ -38,31 +40,33 @@ class DaylockTaskRow extends StatelessWidget {
     final scheme = theme.colorScheme;
     final elapsed = task.focusMillisecondsAt(currentTime);
     final timerAction = task.isFocusRunning
-        ? 'Pause stopwatch'
+        ? context.l10n.pauseStopwatch
         : elapsed > 0
-        ? 'Resume stopwatch'
-        : 'Start stopwatch';
+        ? context.l10n.resumeStopwatch
+        : context.l10n.startStopwatch;
     final tones = AreaTones.forContext(
       context,
       area == null ? scheme.primary : Color(area!.colour),
     );
     final areaLabel = area == null
         ? null
-        : '${area!.name}${area!.isArchived ? ' (archived)' : ''}';
+        : area!.isArchived
+        ? context.l10n.archivedArea(area!.name)
+        : area!.name;
     final kept = task.isCompleted;
     final excused = task.isExcused;
     final muted = kept || excused;
 
     final details = <String>[
       ?areaLabel,
-      if (kept) 'kept',
-      if (excused) 'Excused',
+      if (kept) context.l10n.keptLower,
+      if (excused) context.l10n.outcomeExcused,
     ];
 
     return InkWell(
       onTap: onDetailsRequested,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(4, 4, 2, 4),
+        padding: const EdgeInsetsDirectional.fromSTEB(4, 4, 2, 4),
         child: Row(
           children: [
             if (excused)
@@ -72,7 +76,7 @@ class DaylockTaskRow extends StatelessWidget {
                 child: Icon(
                   Icons.shield_outlined,
                   color: scheme.onSurfaceVariant,
-                  semanticLabel: 'Excused',
+                  semanticLabel: context.l10n.outcomeExcused,
                 ),
               )
             else
@@ -89,8 +93,8 @@ class DaylockTaskRow extends StatelessWidget {
                     checkColor: tones.onInk,
                     side: BorderSide(color: tones.ink, width: 2),
                     semanticLabel: kept
-                        ? 'Kept: ${task.name}'
-                        : 'Keep ${task.name}',
+                        ? context.l10n.keptName(task.name)
+                        : context.l10n.keepTask(task.name),
                   ),
                 ),
               ),
@@ -167,7 +171,7 @@ class DaylockTaskRow extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'Recorded time',
+                            context.l10n.recordedTimeLabel,
                             style: theme.textTheme.bodySmall!.copyWith(
                               color: scheme.onSurfaceVariant,
                             ),
@@ -199,7 +203,7 @@ class DaylockTaskRow extends StatelessWidget {
             ],
             if (onDetailsRequested != null)
               IconButton(
-                tooltip: 'Actions for ${task.name}',
+                tooltip: context.l10n.actionsFor(task.name),
                 onPressed: onDetailsRequested,
                 color: scheme.onSurfaceVariant,
                 icon: const Icon(Icons.more_vert_rounded, size: 22),

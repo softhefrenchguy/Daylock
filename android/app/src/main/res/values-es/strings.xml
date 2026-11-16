@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from the Daylock translations. Lock screen and notification text. -->
+<resources>
+    <string name="lock_app_locked">%1$s está bloqueada</string>
+    <string name="lock_not_yet">Todavía no.</string>
+    <string name="lock_freedom_earned">Libertad ganada.</string>
+    <string name="lock_refresh_status">Actualiza el estado de la Libertad.</string>
+    <string name="lock_paused">Restricción en pausa.</string>
+    <string name="lock_keep_word">Primero cumple tu palabra.</string>
+    <string name="lock_conditions_satisfied">Se cumplen tus condiciones de Libertad.</string>
+    <string name="lock_freedom_off">El Control de Libertad está desactivado.</string>
+    <string name="lock_reconcile">Abre Daylock para actualizar tus planes.</string>
+    <string name="lock_not_selected">Las restricciones están en pausa o esta app ya no está seleccionada.</string>
+    <string name="lock_opens_again">%1$s se abrirá de nuevo cuando ganes la Libertad.</string>
+    <string name="lock_available_recovery">%1$s está disponible mientras haga falta recuperar.</string>
+    <string name="lock_available">%1$s está disponible.</string>
+    <string name="lock_freedom">Libertad</string>
+    <string name="lock_satisfied">Cumplido</string>
+    <string name="lock_remaining">Pendiente</string>
+    <string name="lock_unknown">Desconocido</string>
+    <string name="lock_time_reached">Hora de Libertad alcanzada · %1$s</string>
+    <string name="lock_time_refresh">Hora de Libertad alcanzada · hay que actualizar</string>
+    <string name="lock_eligible_refresh">Compromisos válidos completados · hay que actualizar</string>
+    <string name="lock_no_eligible">Sin compromisos válidos</string>
+    <string name="lock_eligible_count">Compromisos válidos completados · %1$d / %2$d</string>
+    <string name="lock_tomorrow_committed">Plan de mañana comprometido</string>
+    <string name="lock_empty_day">Los días vacíos o justificados por completo no ganan Libertad.</string>
+    <string name="lock_new_day_unplanned">Ha empezado un nuevo día sin plan. Abre Daylock para planificar hoy.</string>
+    <string name="lock_new_day">Ha empezado un nuevo día. Abre Daylock para archivar el historial y preparar el día siguiente.</string>
+    <string name="lock_return_daylock">Volver a Daylock</string>
+    <string name="lock_other_actions">Otras acciones</string>
+    <string name="lock_other_hint">Volver a Inicio, desactivar el bloqueo o cambiar el acceso de Accesibilidad.</string>
+    <string name="lock_return_home">Volver a Inicio</string>
+    <string name="lock_disable">Desactivar restricciones de apps</string>
+    <string name="lock_disable_failed">Bloqueo desactivado en esta sesión. Retira Accesibilidad si el guardado sigue fallando.</string>
+    <string name="lock_accessibility_settings">Ajustes de Accesibilidad</string>
+    <string name="lock_in_control">Tú tienes el control. Desactiva el bloqueo o retira el acceso de Accesibilidad cuando quieras.</string>
+    <string name="notice_channel">Avisos de restricción</string>
+    <string name="notice_channel_description">Explica las restricciones de apps cuando no se pudo mostrar la pantalla de bloqueo de Daylock</string>
+    <string name="notice_body">Completa tus compromisos de Daylock para ganar la Libertad.</string>
+    <string name="toast_blocking_paused">Daylock: bloqueo en pausa. Abre Daylock para actualizar la Libertad.</string>
+    <string name="running_body">Páusalo cuando termines.</string>
+    <string name="running_pause">Pausar</string>
+    <string name="channel_plan">Planificar mañana</string>
+    <string name="channel_commitments">Recordatorios de compromisos</string>
+    <string name="channel_freedom">Libertad</string>
+    <string name="channel_focus">Cronómetro en marcha</string>
+    <string name="running_title">Cronometrando · %1$s</string>
+    <string name="reminder_plan_title">Planificar mañana</string>
+    <string name="reminder_plan_body">Mañana aún no está comprometido. Tómate un momento para planificar tu día.</string>
+    <string name="reminder_commitments_title">Cumple tus compromisos</string>
+    <string name="reminder_freedom_earned_title">Libertad ganada</string>
+    <string name="reminder_freedom_earned_body">Has completado tus compromisos y comprometido mañana. Disfruta tu Hora de Libertad.</string>
+    <string name="reminder_freedom_time_title">Llegó la Hora de Libertad</string>
+    <string name="reminder_freedom_no_eligible">Hoy no hay compromisos válidos. Hoy no se puede ganar la Libertad.</string>
+    <string name="reminder_freedom_finish_commit">Termina tus compromisos pendientes y compromete mañana para ganar la Libertad.</string>
+    <string name="reminder_freedom_finish">Termina tus compromisos pendientes para ganar la Libertad.</string>
+    <string name="reminder_freedom_commit">Compromete el plan de mañana para ganar la Libertad.</string>
+    <string name="reminder_stopwatch_title">¿Sigues cronometrando %1$s?</string>
+    <plurals name="reminder_commitments_body">
+        <item quantity="one">Te queda %1$d compromiso por completar hoy.</item>
+        <item quantity="other">Te quedan %1$d compromisos por completar hoy.</item>
+    </plurals>
+    <plurals name="reminder_stopwatch_body">
+        <item quantity="one">Tu cronómetro lleva %1$d hora en marcha. Páusalo si ya terminaste.</item>
+        <item quantity="other">Tu cronómetro lleva %1$d horas en marcha. Páusalo si ya terminaste.</item>
+    </plurals>
+</resources>

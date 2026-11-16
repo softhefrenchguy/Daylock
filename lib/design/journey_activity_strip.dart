@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -24,7 +26,20 @@ class JourneyActivityStrip extends StatelessWidget {
 
   String description(BuildContext context) {
     final locale = MaterialLocalizations.of(context);
-    return 'Last 30 days, ${usesFocus ? 'recorded time' : 'completed commitments'}. ${[for (final bucket in buckets) '${locale.formatShortDate(bucket.from)} to ${locale.formatShortDate(bucket.through)}: ${usesFocus ? journeyFocusLabel(bucket.summary.focusMilliseconds) : bucket.summary.completedCount}'].join('; ')}';
+    final l = context.l10n;
+    final days = [
+      for (final bucket in buckets)
+        l.activityRange(
+          locale.formatShortDate(bucket.from),
+          locale.formatShortDate(bucket.through),
+          usesFocus
+              ? l.focusDuration(bucket.summary.focusMilliseconds)
+              : '${bucket.summary.completedCount}',
+        ),
+    ].join('; ');
+    return usesFocus
+        ? l.activityDescriptionTime(days)
+        : l.activityDescriptionCompleted(days);
   }
 
   @override
@@ -72,7 +87,9 @@ class JourneyActivityStrip extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          '30 days · ${usesFocus ? 'time' : 'completed'}',
+          usesFocus
+              ? context.l10n.thirtyDaysTime
+              : context.l10n.thirtyDaysCompleted,
           style: Theme.of(context).textTheme.bodySmall!.copyWith(
             fontSize: 9,
             height: 1.2,

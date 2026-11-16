@@ -113,6 +113,27 @@ data class ReminderEvaluation(val decisions: List<ReminderDecision>, val nextAla
  * daily message. Zoned calendar dates handle DST gaps/overlaps and clock changes.
  * Reuses the same native Freedom policy used by the existing FreedomService bridge.
  */
+/** Notification wording. English by default; the runtime uses Android's translations. */
+interface ReminderTexts {
+    fun planTitle(): String = "Plan tomorrow"
+    fun planBody(): String = "Tomorrow isn't committed yet. Take a moment to plan your day."
+    fun commitmentsTitle(): String = "Keep your commitments"
+    fun commitmentsBody(remaining: Int): String =
+        "You have $remaining commitment${if (remaining == 1) "" else "s"} left to complete today."
+    fun earnedTitle(): String = "Freedom earned"
+    fun earnedBody(): String = "You've completed your commitments and committed tomorrow. Enjoy your Freedom Time."
+    fun freedomTimeTitle(): String = "Freedom Time is here"
+    fun freedomNoEligible(): String = "Today has no eligible commitments. Freedom can't be earned today."
+    fun freedomFinishAndCommit(): String = "Finish your remaining commitments and commit tomorrow to earn Freedom."
+    fun freedomFinish(): String = "Finish your remaining commitments to earn Freedom."
+    fun freedomCommitTomorrow(): String = "Commit tomorrow's plan to earn Freedom."
+    fun stopwatchTitle(name: String): String = "Still timing $name?"
+    fun stopwatchBody(hours: Int): String =
+        "Your stopwatch has been running for $hours hours. Pause it if you've stopped."
+
+    companion object { val English = object : ReminderTexts {} }
+}
+
 object NotificationPolicy {
     /** A running stopwatch gets a nudge each time it passes another interval. */
     const val STOPWATCH_NUDGE_MS = 2 * 60 * 60 * 1000L
@@ -127,7 +148,7 @@ object NotificationPolicy {
     }
 
     fun evaluate(s: ReminderSnapshot?, valid: Boolean, seen: Set<String>, now: Long, zone: ZoneId,
-        allowed: Set<String>): ReminderEvaluation {
+        allowed: Set<String>, texts: ReminderTexts = ReminderTexts.English): ReminderEvaluation {
         if (!valid || s == null || allowed.isEmpty()) return ReminderEvaluation(emptyList(), null)
         val local = Instant.ofEpochMilli(now).atZone(zone)
         val date = local.toLocalDate()
@@ -158,12 +179,11 @@ object NotificationPolicy {
             if (now >= time) decisions.add(ReminderDecision(setOf(key), message())) else upcoming.add(time)
         }
         daily("plan", p.planMinute) {
-            if (tomorrowCommitted) null else ReminderMessage("plan", "Plan tomorrow",
-                "Tomorrow isn't committed yet. Take a moment to plan your day.", day)
+            if (tomorrowCommitted) null else ReminderMessage("plan", texts.planTitle(), texts.planBody(), day)
         }
         daily("commitments", p.commitmentMinute) {
-            if (remaining == 0) null else ReminderMessage("commitments", "Keep your commitments",
-                "You have $remaining commitment${if (remaining == 1) "" else "s"} left to complete today.", day)
+            if (remaining == 0) null else ReminderMessage("commitments", texts.commitmentsTitle(),
+                texts.commitmentsBody(remaining), day)
         }
         if ("freedom" in enabled) {
             val time = at(s.freedomHour * 60 + s.freedomMinute)
@@ -173,14 +193,14 @@ object NotificationPolicy {
             val timeKey = "$day|freedom"
             val earnedKey = "$day|earned"
             if (now >= time && result.state == "earned" && earnedKey !in seen) {
-                decisions.add(ReminderDecision(setOf(timeKey, earnedKey), ReminderMessage("freedom", "Freedom earned",
-                    "You've completed your commitments and committed tomorrow. Enjoy your Freedom Time.", day)))
+                decisions.add(ReminderDecision(setOf(timeKey, earnedKey), ReminderMessage("freedom", texts.earnedTitle(),
+                    texts.earnedBody(), day)))
             } else if (now >= time && timeKey !in seen) {
-                val body = if (eligible == 0) "Today has no eligible commitments. Freedom can't be earned today."
-                    else if (remaining > 0 && !tomorrowCommitted) "Finish your remaining commitments and commit tomorrow to earn Freedom."
-                    else if (remaining > 0) "Finish your remaining commitments to earn Freedom."
-                    else "Commit tomorrow's plan to earn Freedom."
-                decisions.add(ReminderDecision(setOf(timeKey), ReminderMessage("freedom", "Freedom Time is here", body, day)))
+                val body = if (eligible == 0) texts.freedomNoEligible()
+                    else if (remaining > 0 && !tomorrowCommitted) texts.freedomFinishAndCommit()
+                    else if (remaining > 0) texts.freedomFinish()
+                    else texts.freedomCommitTomorrow()
+                decisions.add(ReminderDecision(setOf(timeKey), ReminderMessage("freedom", texts.freedomTimeTitle(), body, day)))
             } else if (now < time && timeKey !in seen) upcoming.add(time)
         }
         val stopwatch = if ("focus" in enabled) running(s, true, now, zone) else null
@@ -191,8 +211,8 @@ object NotificationPolicy {
             val key = "$day|stopwatch|${stopwatch.index}|$passed"
             if (passed >= 1 && key !in seen) {
                 val hours = passed * STOPWATCH_NUDGE_MS / 3_600_000
-                decisions.add(ReminderDecision(setOf(key), ReminderMessage("focus", "Still timing ${task.name}?",
-                    "Your stopwatch has been running for $hours hours. Pause it if you've stopped.",
+                decisions.add(ReminderDecision(setOf(key), ReminderMessage("focus", texts.stopwatchTitle(task.name),
+                    texts.stopwatchBody(hours.toInt()),
                     day, stopwatch.index, task.name)))
             }
             upcoming.add(task.runningSinceMs!! + (passed + 1) * STOPWATCH_NUDGE_MS - task.elapsedMs)

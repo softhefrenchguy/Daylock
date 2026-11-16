@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from the Daylock translations. Lock screen and notification text. -->
+<resources>
+    <string name="lock_app_locked">%1$s ist gesperrt</string>
+    <string name="lock_not_yet">Noch nicht.</string>
+    <string name="lock_freedom_earned">Freiheit verdient.</string>
+    <string name="lock_refresh_status">Freiheitsstatus aktualisieren.</string>
+    <string name="lock_paused">Einschränkung pausiert.</string>
+    <string name="lock_keep_word">Halte zuerst Wort.</string>
+    <string name="lock_conditions_satisfied">Deine Freiheitsbedingungen sind erfüllt.</string>
+    <string name="lock_freedom_off">Freiheitskontrolle ist aus.</string>
+    <string name="lock_reconcile">Öffne Daylock, um deine Pläne abzugleichen.</string>
+    <string name="lock_not_selected">App-Einschränkungen sind pausiert oder diese App ist nicht mehr ausgewählt.</string>
+    <string name="lock_opens_again">%1$s öffnet sich wieder, sobald du dir Freiheit verdient hast.</string>
+    <string name="lock_available_recovery">%1$s ist verfügbar, solange eine Wiederherstellung nötig ist.</string>
+    <string name="lock_available">%1$s ist verfügbar.</string>
+    <string name="lock_freedom">Freiheit</string>
+    <string name="lock_satisfied">Erfüllt</string>
+    <string name="lock_remaining">Offen</string>
+    <string name="lock_unknown">Unbekannt</string>
+    <string name="lock_time_reached">Freiheitszeit erreicht · %1$s</string>
+    <string name="lock_time_refresh">Freiheitszeit erreicht · Aktualisierung nötig</string>
+    <string name="lock_eligible_refresh">Zählende Vorsätze erledigt · Aktualisierung nötig</string>
+    <string name="lock_no_eligible">Keine zählenden Vorsätze</string>
+    <string name="lock_eligible_count">Zählende Vorsätze erledigt · %1$d / %2$d</string>
+    <string name="lock_tomorrow_committed">Plan für morgen festgelegt</string>
+    <string name="lock_empty_day">Leere oder komplett entschuldigte Tage bringen keine Freiheit.</string>
+    <string name="lock_new_day_unplanned">Ein neuer Tag hat ohne Plan begonnen. Öffne Daylock, um heute zu planen.</string>
+    <string name="lock_new_day">Ein neuer Tag hat begonnen. Öffne Daylock, um den Verlauf zu archivieren und den nächsten Tag vorzubereiten.</string>
+    <string name="lock_return_daylock">Zurück zu Daylock</string>
+    <string name="lock_other_actions">Weitere Aktionen</string>
+    <string name="lock_other_hint">Zum Startbildschirm, Sperre ausschalten oder Zugriff auf Bedienungshilfen ändern.</string>
+    <string name="lock_return_home">Zum Startbildschirm</string>
+    <string name="lock_disable">App-Einschränkungen ausschalten</string>
+    <string name="lock_disable_failed">Sperre für diese Sitzung ausgeschaltet. Widerrufe die Bedienungshilfe, wenn das Speichern weiter fehlschlägt.</string>
+    <string name="lock_accessibility_settings">Bedienungshilfen</string>
+    <string name="lock_in_control">Du behältst die Kontrolle. Schalte die Sperre aus oder widerrufe den Zugriff auf Bedienungshilfen jederzeit.</string>
+    <string name="notice_channel">Hinweise zu App-Einschränkungen</string>
+    <string name="notice_channel_description">Erklärt App-Einschränkungen, wenn der Daylock-Sperrbildschirm nicht angezeigt werden konnte</string>
+    <string name="notice_body">Erledige deine Daylock-Vorsätze, um dir Freiheit zu verdienen.</string>
+    <string name="toast_blocking_paused">Daylock: Sperre pausiert. Öffne Daylock, um den Freiheitsstatus zu aktualisieren.</string>
+    <string name="running_body">Pausiere sie, wenn du aufhörst.</string>
+    <string name="running_pause">Pause</string>
+    <string name="channel_plan">Morgen planen</string>
+    <string name="channel_commitments">Vorsatz-Erinnerungen</string>
+    <string name="channel_freedom">Freiheit</string>
+    <string name="channel_focus">Laufende Stoppuhr</string>
+    <string name="running_title">Läuft · %1$s</string>
+    <string name="reminder_plan_title">Morgen planen</string>
+    <string name="reminder_plan_body">Morgen ist noch nicht festgelegt. Nimm dir einen Moment, um deinen Tag zu planen.</string>
+    <string name="reminder_commitments_title">Halte deine Vorsätze</string>
+    <string name="reminder_freedom_earned_title">Freiheit verdient</string>
+    <string name="reminder_freedom_earned_body">Du hast deine Vorsätze erledigt und morgen festgelegt. Genieß deine Freiheitszeit.</string>
+    <string name="reminder_freedom_time_title">Es ist Freiheitszeit</string>
+    <string name="reminder_freedom_no_eligible">Heute gibt es keine zählenden Vorsätze. Freiheit kann heute nicht verdient werden.</string>
+    <string name="reminder_freedom_finish_commit">Erledige deine restlichen Vorsätze und lege morgen fest, um dir Freiheit zu verdienen.</string>
+    <string name="reminder_freedom_finish">Erledige deine restlichen Vorsätze, um dir Freiheit zu verdienen.</string>
+    <string name="reminder_freedom_commit">Lege den Plan für morgen fest, um dir Freiheit zu verdienen.</string>
+    <string name="reminder_stopwatch_title">Läuft %1$s noch?</string>
+    <plurals name="reminder_commitments_body">
+        <item quantity="one">Du hast heute noch %1$d Vorsatz zu erledigen.</item>
+        <item quantity="other">Du hast heute noch %1$d Vorsätze zu erledigen.</item>
+    </plurals>
+    <plurals name="reminder_stopwatch_body">
+        <item quantity="one">Deine Stoppuhr läuft seit %1$d Stunde. Pausiere sie, wenn du fertig bist.</item>
+        <item quantity="other">Deine Stoppuhr läuft seit %1$d Stunden. Pausiere sie, wenn du fertig bist.</item>
+    </plurals>
+</resources>

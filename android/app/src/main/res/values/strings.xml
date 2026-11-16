@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from the Daylock translations. Lock screen and notification text. -->
+<resources>
+    <string name="lock_app_locked">%1$s is locked</string>
+    <string name="lock_not_yet">Not yet.</string>
+    <string name="lock_freedom_earned">Freedom earned.</string>
+    <string name="lock_refresh_status">Refresh Freedom status.</string>
+    <string name="lock_paused">Restriction paused.</string>
+    <string name="lock_keep_word">Keep your word first.</string>
+    <string name="lock_conditions_satisfied">Your Freedom conditions are satisfied.</string>
+    <string name="lock_freedom_off">Freedom Control is off.</string>
+    <string name="lock_reconcile">Open Daylock to reconcile your plans.</string>
+    <string name="lock_not_selected">App restrictions are paused or this app is no longer selected.</string>
+    <string name="lock_opens_again">%1$s opens again once Freedom is earned.</string>
+    <string name="lock_available_recovery">%1$s is available while recovery is needed.</string>
+    <string name="lock_available">%1$s is available.</string>
+    <string name="lock_freedom">Freedom</string>
+    <string name="lock_satisfied">Satisfied</string>
+    <string name="lock_remaining">Remaining</string>
+    <string name="lock_unknown">Unknown</string>
+    <string name="lock_time_reached">Freedom Time reached · %1$s</string>
+    <string name="lock_time_refresh">Freedom Time reached · refresh needed</string>
+    <string name="lock_eligible_refresh">Eligible commitments completed · refresh needed</string>
+    <string name="lock_no_eligible">No eligible commitments</string>
+    <string name="lock_eligible_count">Eligible commitments completed · %1$d / %2$d</string>
+    <string name="lock_tomorrow_committed">Tomorrow’s plan committed</string>
+    <string name="lock_empty_day">Empty or all-excused days do not automatically earn Freedom.</string>
+    <string name="lock_new_day_unplanned">A new day has started with no plan yet. Open Daylock to plan today.</string>
+    <string name="lock_new_day">A new local day has started. Open Daylock to archive history and prepare the following day.</string>
+    <string name="lock_return_daylock">Return to Daylock</string>
+    <string name="lock_other_actions">Other actions</string>
+    <string name="lock_other_hint">Return Home, disable blocking or change Accessibility access.</string>
+    <string name="lock_return_home">Return to Home</string>
+    <string name="lock_disable">Disable app restrictions</string>
+    <string name="lock_disable_failed">Blocking disabled for this session. Revoke Accessibility if saving keeps failing.</string>
+    <string name="lock_accessibility_settings">Accessibility Settings</string>
+    <string name="lock_in_control">You remain in control. Disable blocking or revoke Accessibility access at any time.</string>
+    <string name="notice_channel">App restriction notices</string>
+    <string name="notice_channel_description">Explains selected app restrictions when the Daylock lock screen could not be shown</string>
+    <string name="notice_body">Complete your Daylock commitments to earn Freedom.</string>
+    <string name="toast_blocking_paused">Daylock: blocking paused. Open Daylock to refresh Freedom status.</string>
+    <string name="running_body">Pause it when you stop.</string>
+    <string name="running_pause">Pause</string>
+    <string name="channel_plan">Plan Tomorrow</string>
+    <string name="channel_commitments">Commitment reminders</string>
+    <string name="channel_freedom">Freedom</string>
+    <string name="channel_focus">Running stopwatch</string>
+    <string name="running_title">Timing · %1$s</string>
+    <string name="reminder_plan_title">Plan tomorrow</string>
+    <string name="reminder_plan_body">Tomorrow isn’t committed yet. Take a moment to plan your day.</string>
+    <string name="reminder_commitments_title">Keep your commitments</string>
+    <string name="reminder_freedom_earned_title">Freedom earned</string>
+    <string name="reminder_freedom_earned_body">You’ve completed your commitments and committed tomorrow. Enjoy your Freedom Time.</string>
+    <string name="reminder_freedom_time_title">Freedom Time is here</string>
+    <string name="reminder_freedom_no_eligible">Today has no eligible commitments. Freedom can’t be earned today.</string>
+    <string name="reminder_freedom_finish_commit">Finish your remaining commitments and commit tomorrow to earn Freedom.</string>
+    <string name="reminder_freedom_finish">Finish your remaining commitments to earn Freedom.</string>
+    <string name="reminder_freedom_commit">Commit tomorrow’s plan to earn Freedom.</string>
+    <string name="reminder_stopwatch_title">Still timing %1$s?</string>
+    <plurals name="reminder_commitments_body">
+        <item quantity="one">You have %1$d commitment left to complete today.</item>
+        <item quantity="other">You have %1$d commitments left to complete today.</item>
+    </plurals>
+    <plurals name="reminder_stopwatch_body">
+        <item quantity="one">Your stopwatch has been running for %1$d hour. Pause it if you’ve stopped.</item>
+        <item quantity="other">Your stopwatch has been running for %1$d hours. Pause it if you’ve stopped.</item>
+    </plurals>
+</resources>

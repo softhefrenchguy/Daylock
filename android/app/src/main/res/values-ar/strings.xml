@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from the Daylock translations. Lock screen and notification text. -->
+<resources>
+    <string name="lock_app_locked">%1$s مقفل</string>
+    <string name="lock_not_yet">ليس بعد.</string>
+    <string name="lock_freedom_earned">تم كسب الحرية.</string>
+    <string name="lock_refresh_status">حدّث حالة الحرية.</string>
+    <string name="lock_paused">التقييد متوقف مؤقتًا.</string>
+    <string name="lock_keep_word">أوفِ بوعدك أولًا.</string>
+    <string name="lock_conditions_satisfied">شروط حريتك متحققة.</string>
+    <string name="lock_freedom_off">التحكم في الحرية متوقف.</string>
+    <string name="lock_reconcile">افتح Daylock لتحديث خططك.</string>
+    <string name="lock_not_selected">تقييد التطبيقات متوقف مؤقتًا أو لم يعد هذا التطبيق محددًا.</string>
+    <string name="lock_opens_again">سيُفتح %1$s مجددًا عندما تكسب الحرية.</string>
+    <string name="lock_available_recovery">%1$s متاح ما دام الاسترداد مطلوبًا.</string>
+    <string name="lock_available">%1$s متاح.</string>
+    <string name="lock_freedom">الحرية</string>
+    <string name="lock_satisfied">متحقق</string>
+    <string name="lock_remaining">متبقٍ</string>
+    <string name="lock_unknown">غير معروف</string>
+    <string name="lock_time_reached">بلوغ وقت الحرية · %1$s</string>
+    <string name="lock_time_refresh">بلوغ وقت الحرية · يلزم التحديث</string>
+    <string name="lock_eligible_refresh">إنجاز الالتزامات المحتسبة · يلزم التحديث</string>
+    <string name="lock_no_eligible">لا التزامات محتسبة</string>
+    <string name="lock_eligible_count">إنجاز الالتزامات المحتسبة · %1$d / %2$d</string>
+    <string name="lock_tomorrow_committed">الالتزام بخطة الغد</string>
+    <string name="lock_empty_day">الأيام الفارغة أو المعفاة بالكامل لا تكسبك الحرية.</string>
+    <string name="lock_new_day_unplanned">بدأ يوم جديد دون خطة. افتح Daylock لتخطط لليوم.</string>
+    <string name="lock_new_day">بدأ يوم جديد. افتح Daylock لأرشفة السجل وتجهيز اليوم التالي.</string>
+    <string name="lock_return_daylock">العودة إلى Daylock</string>
+    <string name="lock_other_actions">إجراءات أخرى</string>
+    <string name="lock_other_hint">العودة إلى الشاشة الرئيسية أو إيقاف الحظر أو تغيير وصول سهولة الاستخدام.</string>
+    <string name="lock_return_home">العودة إلى الشاشة الرئيسية</string>
+    <string name="lock_disable">إيقاف تقييد التطبيقات</string>
+    <string name="lock_disable_failed">أُوقف الحظر لهذه الجلسة. اسحب سهولة الاستخدام إن استمر فشل الحفظ.</string>
+    <string name="lock_accessibility_settings">إعدادات سهولة الاستخدام</string>
+    <string name="lock_in_control">أنت المتحكم. أوقف الحظر أو اسحب وصول سهولة الاستخدام في أي وقت.</string>
+    <string name="notice_channel">إشعارات تقييد التطبيقات</string>
+    <string name="notice_channel_description">يشرح تقييد التطبيقات عندما يتعذّر عرض شاشة قفل Daylock</string>
+    <string name="notice_body">أنجز التزاماتك في Daylock لتكسب الحرية.</string>
+    <string name="toast_blocking_paused">Daylock: الحظر متوقف مؤقتًا. افتح Daylock لتحديث حالة الحرية.</string>
+    <string name="running_body">أوقفه مؤقتًا عندما تنتهي.</string>
+    <string name="running_pause">إيقاف مؤقت</string>
+    <string name="channel_plan">خطّط للغد</string>
+    <string name="channel_commitments">تذكيرات الالتزامات</string>
+    <string name="channel_freedom">الحرية</string>
+    <string name="channel_focus">ساعة الإيقاف العاملة</string>
+    <string name="running_title">جارٍ التوقيت · %1$s</string>
+    <string name="reminder_plan_title">خطّط للغد</string>
+    <string name="reminder_plan_body">لم تلتزم بخطة الغد بعد. خذ لحظة لتخطط ليومك.</string>
+    <string name="reminder_commitments_title">أوفِ بالتزاماتك</string>
+    <string name="reminder_freedom_earned_title">تم كسب الحرية</string>
+    <string name="reminder_freedom_earned_body">أنجزت التزاماتك والتزمت بخطة الغد. استمتع بوقت حريتك.</string>
+    <string name="reminder_freedom_time_title">حان وقت الحرية</string>
+    <string name="reminder_freedom_no_eligible">لا التزامات محتسبة اليوم. لا يمكن كسب الحرية اليوم.</string>
+    <string name="reminder_freedom_finish_commit">أنجز التزاماتك المتبقية والتزم بخطة الغد لتكسب الحرية.</string>
+    <string name="reminder_freedom_finish">أنجز التزاماتك المتبقية لتكسب الحرية.</string>
+    <string name="reminder_freedom_commit">التزم بخطة الغد لتكسب الحرية.</string>
+    <string name="reminder_stopwatch_title">هل ما زلت توقّت %1$s؟</string>
+    <plurals name="reminder_commitments_body">
+        <item quantity="zero">لا التزامات متبقية اليوم.</item>
+        <item quantity="one">بقي التزام واحد لتنجزه اليوم.</item>
+        <item quantity="two">بقي التزامان لتنجزهما اليوم.</item>
+        <item quantity="few">بقيت %1$d التزامات لتنجزها اليوم.</item>
+        <item quantity="many">بقي %1$d التزامًا لتنجزه اليوم.</item>
+        <item quantity="other">بقي %1$d التزام لتنجزه اليوم.</item>
+    </plurals>
+    <plurals name="reminder_stopwatch_body">
+        <item quantity="zero">ساعة الإيقاف تعمل. أوقفها مؤقتًا إن انتهيت.</item>
+        <item quantity="one">ساعة الإيقاف تعمل منذ ساعة. أوقفها مؤقتًا إن انتهيت.</item>
+        <item quantity="two">ساعة الإيقاف تعمل منذ ساعتين. أوقفها مؤقتًا إن انتهيت.</item>
+        <item quantity="few">ساعة الإيقاف تعمل منذ %1$d ساعات. أوقفها مؤقتًا إن انتهيت.</item>
+        <item quantity="many">ساعة الإيقاف تعمل منذ %1$d ساعة. أوقفها مؤقتًا إن انتهيت.</item>
+        <item quantity="other">ساعة الإيقاف تعمل منذ %1$d ساعة. أوقفها مؤقتًا إن انتهيت.</item>
+    </plurals>
+</resources>

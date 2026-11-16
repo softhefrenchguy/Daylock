@@ -1,3 +1,7 @@
+import 'package:flutter/widgets.dart';
+
+import '../../l10n/l10n.dart';
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -52,17 +56,24 @@ class AndroidNotificationService extends NotificationService {
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >()!;
-    for (final entry in const {
-      'plan': 'Plan Tomorrow',
-      'commitments': 'Commitment reminders',
-      'freedom': 'Freedom',
-      'focus': 'Running stopwatch',
+    // Channel names appear in Android settings, in the phone's language.
+    final l = lookupAppLocalizations(
+      basicLocaleListResolution(
+        WidgetsBinding.instance.platformDispatcher.locales,
+        daylockLocales,
+      ),
+    );
+    for (final entry in {
+      'plan': l.channelPlan,
+      'commitments': l.channelCommitments,
+      'freedom': l.channelFreedom,
+      'focus': l.channelFocus,
     }.entries) {
       await android.createNotificationChannel(
         AndroidNotificationChannel(
           'daylock_${entry.key}',
           entry.value,
-          description: 'Daylock ${entry.value.toLowerCase()}',
+          description: 'Daylock · ${entry.value}',
           importance: Importance.defaultImportance,
         ),
       );

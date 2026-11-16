@@ -1,4 +1,7 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../design/area_tones.dart';
 import '../design/daylock_areas.dart';
@@ -11,23 +14,15 @@ import '../models/highlight.dart';
 import '../models/highlight_illustration.dart';
 import '../services/journey_service.dart';
 
-const _monthsShort = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-String achievementDateLabel(DateTime date) =>
-    '${date.day} ${_monthsShort[date.month - 1]}';
+/// "16 Nov" ("16 nov.").
+String achievementDateLabel(DateTime date) {
+  ensureDateFormatting();
+  final locale = Intl.getCurrentLocale();
+  return (locale.startsWith('en')
+          ? DateFormat('d MMM', locale)
+          : DateFormat.MMMd(locale))
+      .format(date);
+}
 
 class JourneyScreen extends StatelessWidget {
   final AreaBook areas;
@@ -91,13 +86,13 @@ class JourneyScreen extends StatelessWidget {
               mood: SceneMood.dusk,
               height: 244,
               horizontalPadding: padding,
-              title: 'Journey',
+              title: context.l10n.journey,
               actions: [
                 if (onManageAreas != null)
                   DaylockSkyButton(
                     buttonKey: const ValueKey('journey-manage-areas'),
                     icon: Icons.tune_rounded,
-                    tooltip: 'Manage Areas',
+                    tooltip: context.l10n.manageAreas,
                     onPressed: onManageAreas,
                   ),
               ],
@@ -106,7 +101,7 @@ class JourneyScreen extends StatelessWidget {
                 child: Semantics(
                   key: const ValueKey('journey-streak'),
                   container: true,
-                  label: streak == 1 ? '1 day streak' : '$streak day streak',
+                  label: context.l10n.dayStreakLabel(streak),
                   child: ExcludeSemantics(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -135,7 +130,7 @@ class JourneyScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'day streak',
+                                  context.l10n.dayStreakWord(streak),
                                   style: theme.textTheme.titleLarge!.copyWith(
                                     fontSize: 22,
                                     color: sky.onSky,
@@ -143,10 +138,10 @@ class JourneyScreen extends StatelessWidget {
                                 ),
                                 Text(
                                   streak == 0
-                                      ? 'Keep all of today to start one'
+                                      ? context.l10n.streakStartHint
                                       : streak >= longest
-                                      ? 'Your longest yet'
-                                      : 'Longest: $longest days',
+                                      ? context.l10n.streakLongestYet
+                                      : context.l10n.streakLongest(longest),
                                   style: theme.textTheme.bodyMedium!.copyWith(
                                     color: sky.onSkyMuted,
                                   ),
@@ -169,13 +164,16 @@ class JourneyScreen extends StatelessWidget {
                   children: [
                     _Total(
                       value: '${summary.completedCount}',
-                      label: 'kept',
+                      label: context.l10n.totalKept,
                       valueKey: const ValueKey('journey-total-completed'),
                       color: gold,
                     ),
                     _Total(
-                      value: _shortFocus(summary.focusMilliseconds),
-                      label: 'focused',
+                      value: _shortFocus(
+                        context.l10n,
+                        summary.focusMilliseconds,
+                      ),
+                      label: context.l10n.totalFocused,
                       valueKey: const ValueKey('journey-total-focus'),
                       color: dark
                           ? const Color(0xFF7FE3D3)
@@ -197,7 +195,7 @@ class JourneyScreen extends StatelessWidget {
             ),
             boxed(
               DaylockSectionHeader(
-                title: 'Achievements',
+                title: context.l10n.achievements,
                 action: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -207,14 +205,14 @@ class JourneyScreen extends StatelessWidget {
                           key: const ValueKey('all-highlights'),
                           onPressed: onAllHighlights,
                           child: Text(
-                            'See all ${achievements.length}',
+                            context.l10n.seeAll(achievements.length),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ),
                     IconButton.filledTonal(
                       key: const ValueKey('add-highlight'),
-                      tooltip: 'Add achievement',
+                      tooltip: context.l10n.addAchievement,
                       onPressed: onAddHighlight,
                       icon: const Icon(Icons.add_rounded),
                     ),
@@ -233,7 +231,7 @@ class JourneyScreen extends StatelessWidget {
                 children: [
                   for (final highlight in achievements.take(12))
                     Padding(
-                      padding: const EdgeInsets.only(right: 12),
+                      padding: const EdgeInsetsDirectional.only(end: 12),
                       child: _AchievementCard(
                         highlight: highlight,
                         area: areas.areas
@@ -257,23 +255,23 @@ class JourneyScreen extends StatelessWidget {
             ),
             boxed(
               DaylockSectionHeader(
-                title: 'Last 5 weeks',
+                title: context.l10n.last5Weeks,
                 action: TextButton(
                   key: const ValueKey('daily-history'),
                   onPressed: onDailyHistory,
-                  child: const Text('Daily history'),
+                  child: Text(context.l10n.dailyHistory),
                 ),
               ),
             ),
             boxed(_WeeksGrid(data: data)),
             boxed(
               DaylockSectionHeader(
-                title: 'Your Areas',
+                title: context.l10n.yourAreas,
                 action: onManageAreas == null
                     ? null
                     : TextButton(
                         onPressed: onManageAreas,
-                        child: const Text('Manage'),
+                        child: Text(context.l10n.manage),
                       ),
               ),
             ),
@@ -304,8 +302,8 @@ class JourneyScreen extends StatelessWidget {
                           icon: Icons.inventory_2_outlined,
                           color: scheme.primary,
                         ),
-                        title: const Text('Past Chapters'),
-                        subtitle: const Text('Areas you’ve archived'),
+                        title: Text(context.l10n.pastChapters),
+                        subtitle: Text(context.l10n.areasArchived),
                         trailing: const Icon(Icons.chevron_right_rounded),
                       ),
                     ],
@@ -319,10 +317,10 @@ class JourneyScreen extends StatelessWidget {
   }
 }
 
-String _shortFocus(int milliseconds) {
+String _shortFocus(AppLocalizations l, int milliseconds) {
   final minutes = milliseconds ~/ 60000;
-  if (minutes < 60) return '${minutes}m';
-  return '${minutes ~/ 60}h';
+  if (minutes < 60) return l.shortMinutes(minutes);
+  return l.shortHours(minutes ~/ 60);
 }
 
 class _Total extends StatelessWidget {
@@ -400,8 +398,10 @@ class _AchievementCard extends StatelessWidget {
     );
     return Semantics(
       button: true,
-      label:
-          'Achievement: ${highlight.title}, ${achievementDateLabel(highlight.date)}',
+      label: context.l10n.achievementSemantics(
+        highlight.title,
+        achievementDateLabel(highlight.date),
+      ),
       child: Material(
         key: ValueKey('highlight-${highlight.id}'),
         color: card,
@@ -441,7 +441,7 @@ class _AchievementCard extends StatelessWidget {
                       [
                         achievementDateLabel(highlight.date),
                         if (area != null) area!.name,
-                        if (areaMissing) 'Area unavailable',
+                        if (areaMissing) context.l10n.areaUnavailable,
                       ].join(' · '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -497,7 +497,9 @@ class _AddAchievementCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  empty ? 'Keep a moment that matters.' : 'Add an achievement',
+                  empty
+                      ? context.l10n.keepAMoment
+                      : context.l10n.addAnAchievement,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleLarge!.copyWith(fontSize: 17),
@@ -505,7 +507,7 @@ class _AddAchievementCard extends StatelessWidget {
                 if (empty) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'A driving licence, a first 10k, a finished chapter.',
+                    context.l10n.achievementExamples,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall!.copyWith(
@@ -609,7 +611,13 @@ class _WeeksGrid extends StatelessWidget {
       );
     }
 
-    const initials = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    // Narrow weekday letters in the app's language (M T W… / L M M…).
+    ensureDateFormatting();
+    final initials = [
+      for (var day = 1; day <= 7; day++)
+        DateFormat.EEEEE(context.l10n.localeName)
+            .format(DateTime(2024, 1, day)),
+    ];
     return DaylockGroup(
       key: const ValueKey('journey-weeks'),
       padding: const EdgeInsets.all(14),
@@ -617,8 +625,8 @@ class _WeeksGrid extends StatelessWidget {
         Semantics(
           container: true,
           label: keptDays == 1
-              ? 'Last 5 weeks: 1 day fully kept'
-              : 'Last 5 weeks: $keptDays days fully kept',
+              ? context.l10n.last5WeeksKept(1)
+              : context.l10n.last5WeeksKept(keptDays),
           child: ExcludeSemantics(
             child: Column(
               children: [
@@ -669,9 +677,9 @@ class _WeeksGrid extends StatelessWidget {
             spacing: 16,
             runSpacing: 6,
             children: [
-              legend(gold, 'All kept'),
-              legend(some, 'Some kept'),
-              legend(missed, 'Missed'),
+              legend(gold, context.l10n.legendAllKept),
+              legend(some, context.l10n.legendSomeKept),
+              legend(missed, context.l10n.legendMissed),
             ],
           ),
         ),
@@ -701,7 +709,7 @@ class _AreaRow extends StatelessWidget {
       key: ValueKey('journey-area-${area.id}'),
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+        padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 12, 12),
         child: Row(
           children: [
             Container(
@@ -737,7 +745,7 @@ class _AreaRow extends StatelessWidget {
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
-                          '$kept this week',
+                          context.l10n.keptThisWeek(kept),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodyMedium!.copyWith(
@@ -756,8 +764,8 @@ class _AreaRow extends StatelessWidget {
                       backgroundColor: scheme.outlineVariant,
                       valueColor: AlwaysStoppedAnimation(tones.ink),
                       semanticsLabel: kept == 1
-                          ? '${area.name}: 1 kept this week'
-                          : '${area.name}: $kept kept this week',
+                          ? context.l10n.areaKeptThisWeek(area.name, 1)
+                          : context.l10n.areaKeptThisWeek(area.name, kept),
                       semanticsValue: '${(fraction * 100).round()}%',
                     ),
                   ),

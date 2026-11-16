@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../models/area.dart';
@@ -31,7 +33,7 @@ class JourneyHighlightTile extends StatelessWidget {
           ),
           if (linked.isNotEmpty) AreaBadge(area: linked.single),
           if (highlight.areaId != null && linked.isEmpty)
-            const Text('Area unavailable'),
+            Text(context.l10n.areaUnavailable),
         ],
       ),
       onTap: onTap,
@@ -63,7 +65,7 @@ class JourneyActivityChart extends StatelessWidget {
     String range(JourneyBucket b) =>
         '${local.formatShortDate(b.from)} – ${local.formatShortDate(b.through)}';
     String label(int i) =>
-        '${range(buckets[i])}: ${focus ? '${journeyFocusLabel(values[i])} recorded time' : '${values[i]} completed commitments'}';
+        '${range(buckets[i])}: ${focus ? context.l10n.recordedTime(context.l10n.focusDuration(values[i])) : context.l10n.completedCommitments(values[i])}';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -72,8 +74,8 @@ class JourneyActivityChart extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
               focus
-                  ? 'Recorded time will appear here.'
-                  : 'Completed commitments will appear here.',
+                  ? context.l10n.recordedTimeEmpty
+                  : context.l10n.completedEmpty,
             ),
           ),
         SizedBox(
@@ -126,13 +128,13 @@ class JourneyActivityChart extends StatelessWidget {
         ),
         ExpansionTile(
           tilePadding: EdgeInsets.zero,
-          title: const Text('Activity details'),
+          title: Text(context.l10n.activityDetails),
           children: [
             for (var i = 0; i < buckets.length; i++)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Align(
-                  alignment: Alignment.centerLeft,
+                  alignment: AlignmentDirectional.centerStart,
                   child: Text(label(i)),
                 ),
               ),

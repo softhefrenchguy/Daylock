@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../design/journey_area_grid.dart';
@@ -21,7 +23,7 @@ class PastChaptersScreen extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Past Chapters')),
+    appBar: AppBar(title: Text(context.l10n.pastChapters)),
     body: SafeArea(
       child: Center(
         child: ConstrainedBox(
@@ -31,8 +33,8 @@ class PastChaptersScreen extends StatelessWidget {
             children: [
               Text(
                 areas.areas.any((a) => a.isArchived)
-                    ? 'Parts of your life, kept here to revisit.'
-                    : 'Archived Areas will stay here, along with their history.',
+                    ? context.l10n.pastChaptersIntro
+                    : context.l10n.pastChaptersEmpty,
               ),
               const SizedBox(height: 16),
               JourneyAreaGrid(
@@ -43,11 +45,11 @@ class PastChaptersScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Align(
-                alignment: Alignment.centerLeft,
+                alignment: AlignmentDirectional.centerStart,
                 child: TextButton.icon(
                   onPressed: onManageAreas,
                   icon: const Icon(Icons.tune_rounded),
-                  label: const Text('Manage Areas'),
+                  label: Text(context.l10n.manageAreas),
                 ),
               ),
             ],

@@ -114,7 +114,7 @@ class DaylockSectionHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.action,
-    this.padding = const EdgeInsets.fromLTRB(0, 24, 0, 10),
+    this.padding = const EdgeInsetsDirectional.fromSTEB(0, 24, 0, 10),
   });
 
   @override
@@ -189,7 +189,7 @@ class DaylockSkyHeader extends StatelessWidget {
           child: SafeArea(
             bottom: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(
+              padding: EdgeInsetsDirectional.fromSTEB(
                 horizontalPadding,
                 14,
                 horizontalPadding - 8,
@@ -236,9 +236,9 @@ class DaylockSkyHeader extends StatelessWidget {
                     ),
                     const Spacer(),
                     Padding(
-                      padding: EdgeInsets.only(
+                      padding: EdgeInsetsDirectional.only(
                         top: 12,
-                        right: horizontalPadding - 8,
+                        end: horizontalPadding - 8,
                         bottom: bottom == null ? 40 : 22,
                       ),
                       child: bottom ?? const SizedBox.shrink(),

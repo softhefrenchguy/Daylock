@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../design/daylock_areas.dart';
@@ -28,7 +30,7 @@ class AreasScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Areas')),
+    appBar: AppBar(title: Text(context.l10n.areas)),
     body: SafeArea(
       child: Center(
         child: ConstrainedBox(
@@ -36,21 +38,19 @@ class AreasScreen extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.all(DaylockSpace.lg),
             children: [
-              const Text(
-                'Give your commitments a home. Your default Area is used whenever no other Area is selected.',
-              ),
+              Text(context.l10n.areasIntro),
               const SizedBox(height: 16),
               OutlinedButton.icon(
                 key: const ValueKey('create-area'),
                 onPressed: () => _edit(context),
                 icon: const Icon(Icons.add),
-                label: const Text('Create Area'),
+                label: Text(context.l10n.createArea),
               ),
               const SizedBox(height: 16),
               for (final archived in [false, true]) ...[
                 if (archived && book.areas.any((a) => a.isArchived))
                   Text(
-                    'Archived',
+                    context.l10n.archived,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 for (final area in book.areas.where(
@@ -61,7 +61,7 @@ class AreasScreen extends StatelessWidget {
                     contentPadding: EdgeInsets.zero,
                     title: AreaBadge(area: area),
                     subtitle: area.isDefault
-                        ? const Text('Default · Always available')
+                        ? Text(context.l10n.defaultAlwaysAvailable)
                         : null,
                     onTap: () => _edit(context, area),
                   ),
@@ -70,23 +70,25 @@ class AreasScreen extends StatelessWidget {
                     children: [
                       TextButton(
                         onPressed: () => _edit(context, area),
-                        child: const Text('Edit'),
+                        child: Text(context.l10n.edit),
                       ),
                       if (!area.isDefault)
                         TextButton(
                           key: ValueKey('archive-area-${area.id}'),
                           onPressed: () =>
                               onArchived(area.id, !area.isArchived),
-                          child: Text(area.isArchived ? 'Restore' : 'Archive'),
+                          child: Text(
+                            area.isArchived
+                                ? context.l10n.restore
+                                : context.l10n.archive,
+                          ),
                         ),
                     ],
                   ),
                   const Divider(),
                 ],
               ],
-              const Text(
-                'Archiving keeps existing commitments and history linked. New commitments use active Areas only.',
-              ),
+              Text(context.l10n.archivingExplainer),
             ],
           ),
         ),
@@ -154,12 +156,14 @@ class _AreaEditorState extends State<AreaEditor> {
               children: [
                 Expanded(
                   child: Text(
-                    widget.area == null ? 'Create Area' : 'Edit Area',
+                    widget.area == null
+                        ? context.l10n.createArea
+                        : context.l10n.editArea,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Close editor',
+                  tooltip: context.l10n.closeEditor,
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close),
                 ),
@@ -170,12 +174,12 @@ class _AreaEditorState extends State<AreaEditor> {
               controller: _name,
               maxLength: Area.maxNameLength,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(labelText: 'Area name'),
+              decoration: InputDecoration(labelText: context.l10n.areaName),
               onChanged: (_) => setState(() {}),
               onSubmitted: (_) => _save(),
             ),
             const SizedBox(height: 12),
-            const Text('Icon'),
+            Text(context.l10n.icon),
             Wrap(
               spacing: 8,
               children: [
@@ -183,14 +187,14 @@ class _AreaEditorState extends State<AreaEditor> {
                   ChoiceChip(
                     key: ValueKey('area-icon-${entry.key}'),
                     avatar: Icon(entry.value, size: 20),
-                    label: Text(entry.key),
+                    label: Text(context.l10n.areaIcon(entry.key)),
                     selected: _icon == entry.key,
                     onSelected: (_) => setState(() => _icon = entry.key),
                   ),
               ],
             ),
             const SizedBox(height: 12),
-            const Text('Colour'),
+            Text(context.l10n.colour),
             Wrap(
               spacing: 8,
               children: [
@@ -202,7 +206,7 @@ class _AreaEditorState extends State<AreaEditor> {
                       color: Color(entry.value),
                       size: 20,
                     ),
-                    label: Text(entry.key),
+                    label: Text(context.l10n.areaColour(entry.key)),
                     selected: _colour == entry.value,
                     onSelected: (_) => setState(() => _colour = entry.value),
                   ),
@@ -216,7 +220,7 @@ class _AreaEditorState extends State<AreaEditor> {
                       _name.text.trim().runes.length > Area.maxNameLength
                   ? null
                   : _save,
-              child: const Text('Save Area'),
+              child: Text(context.l10n.saveArea),
             ),
           ],
         ),

@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../models/area.dart';
@@ -98,17 +100,17 @@ class JourneyAreaTile extends StatelessWidget {
     required this.onTap,
   });
 
-  String get progress {
+  String progress(AppLocalizations l) {
     if (summary.focusMilliseconds > 0) {
-      return '${journeyFocusLabel(summary.focusMilliseconds)} recorded';
+      return l.durationRecorded(l.focusDuration(summary.focusMilliseconds));
     }
     if (summary.completedCount > 0) {
-      return '${summary.completedCount} completed';
+      return l.completedCount(summary.completedCount);
     }
     if (summary.records.isEmpty && latestHighlight != null) {
       return latestHighlight!.title;
     }
-    return summary.records.isEmpty ? 'Open space' : '0 completed';
+    return summary.records.isEmpty ? l.openSpace : l.completedCount(0);
   }
 
   @override
@@ -124,7 +126,7 @@ class JourneyAreaTile extends StatelessWidget {
     return Semantics(
       button: true,
       label:
-          '${area.name}. $progress. ${chart.hasActivity ? '${chart.description(context)}. ' : ''}Open Area',
+          '${area.name}. ${progress(context.l10n)}. ${chart.hasActivity ? '${chart.description(context)}. ' : ''}${context.l10n.openArea}',
       onTap: onTap,
       child: ExcludeSemantics(
         child: JourneySurface(
@@ -170,7 +172,7 @@ class JourneyAreaTile extends StatelessWidget {
                   ),
                   SizedBox(height: compact ? 4 : 8),
                   Text(
-                    progress,
+                    progress(context.l10n),
                     maxLines: expandText ? null : 2,
                     overflow: expandText ? null : TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall!.copyWith(
@@ -182,7 +184,7 @@ class JourneyAreaTile extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 3),
                       child: Text(
-                        'Latest achievement',
+                        context.l10n.latestAchievement,
                         style: theme.textTheme.bodySmall!.copyWith(
                           color: colors.onSurfaceVariant,
                           fontSize: 10,

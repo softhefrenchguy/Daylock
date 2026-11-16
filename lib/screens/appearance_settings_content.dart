@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../design/appearance_preferences.dart';
@@ -61,13 +63,15 @@ class AppearanceSettingsContent extends StatelessWidget {
       const SizedBox(height: DaylockSpace.sm),
       Text(
         preferences.mode == AppearanceMode.system
-            ? 'Follows your device appearance.'
-            : '${preferences.mode.label} appearance, in any device mode.',
+            ? context.l10n.appearanceFollowsDevice
+            : context.l10n.appearanceFixed(
+                context.l10n.appearanceMode(preferences.mode),
+              ),
         style: Theme.of(context).textTheme.bodyMedium!
             .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
       const SizedBox(height: DaylockSpace.xl),
-      const DaylockLabel('COLOUR THEME'),
+      DaylockLabel(context.l10n.appearanceColourTheme),
       const SizedBox(height: DaylockSpace.md),
       LayoutBuilder(
         builder: (context, constraints) {
@@ -98,7 +102,7 @@ class AppearanceSettingsContent extends StatelessWidget {
         },
       ),
       const SizedBox(height: DaylockSpace.xl),
-      const DaylockLabel('LIVE PREVIEW'),
+      DaylockLabel(context.l10n.appearanceLivePreview),
       const SizedBox(height: DaylockSpace.md),
       const AppearancePreview(),
       const SizedBox(height: DaylockSpace.xl),
@@ -110,8 +114,8 @@ class AppearanceSettingsContent extends StatelessWidget {
             Icons.grid_view_rounded,
             color: Theme.of(context).colorScheme.primary,
           ),
-          title: const Text('Manage Areas'),
-          subtitle: Text('$areaCount active Areas'),
+          title: Text(context.l10n.manageAreas),
+          subtitle: Text(context.l10n.activeAreas(areaCount)),
           trailing: const Icon(Icons.chevron_right_rounded),
           onTap: onAreasRequested,
         ),
@@ -144,7 +148,7 @@ class _AppearanceChoice extends StatelessWidget {
       size: 24,
     );
     final label = Text(
-      mode.label,
+      context.l10n.appearanceMode(mode),
       style: Theme.of(context).textTheme.labelLarge,
     );
     return _SelectableSurface(
@@ -204,7 +208,7 @@ class _PaletteChoice extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  colour.label,
+                  context.l10n.colourTheme(colour),
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
               ),
@@ -226,7 +230,9 @@ class _PaletteChoice extends StatelessWidget {
                   palette.surfaceContainerHigh,
                 ])
                   Padding(
-                    padding: const EdgeInsets.only(right: DaylockSpace.sm),
+                    padding: const EdgeInsetsDirectional.only(
+                      end: DaylockSpace.sm,
+                    ),
                     child: Container(
                       width: 24,
                       height: 24,
@@ -286,7 +292,7 @@ class AppearancePreview extends StatelessWidget {
     final semantic = DaylockColors.of(context);
     final text = Theme.of(context).textTheme;
     return Semantics(
-      label: 'Appearance preview. Example commitment styling.',
+      label: context.l10n.appearancePreviewLabel,
       child: ExcludeSemantics(
         child: Container(
           key: const ValueKey('appearance-preview'),
@@ -304,9 +310,9 @@ class AppearancePreview extends StatelessWidget {
                 spacing: DaylockSpace.sm,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Text('Today', style: text.titleLarge),
+                  Text(context.l10n.today, style: text.titleLarge),
                   Text(
-                    '1 / 2 complete',
+                    context.l10n.appearancePreviewComplete,
                     style: text.bodyMedium!.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -314,7 +320,10 @@ class AppearancePreview extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: DaylockSpace.md),
-              const DaylockProgress(value: 0.5, label: 'Example progress'),
+              DaylockProgress(
+                value: 0.5,
+                label: context.l10n.appearancePreviewProgress,
+              ),
               const SizedBox(height: DaylockSpace.md),
               Row(
                 children: [
@@ -325,7 +334,10 @@ class AppearancePreview extends StatelessWidget {
                   ),
                   const SizedBox(width: DaylockSpace.sm),
                   Expanded(
-                    child: Text('Keep your word.', style: text.labelLarge),
+                    child: Text(
+                      context.l10n.keepYourWord,
+                      style: text.labelLarge,
+                    ),
                   ),
                 ],
               ),
@@ -346,7 +358,10 @@ class AppearancePreview extends StatelessWidget {
                         children: [
                           DaylockLabel('STOPWATCH', color: scheme.primary),
                           const SizedBox(height: DaylockSpace.xs),
-                          Text('23:00 recorded', style: text.labelLarge),
+                          Text(
+                            context.l10n.appearancePreviewRecorded,
+                            style: text.labelLarge,
+                          ),
                         ],
                       ),
                     ),

@@ -1,7 +1,7 @@
 name: daylock
 description: "A local-first daily planning and commitments app."
 publish_to: 'none'
-version: 0.2.6+22
+version: 0.2.7+23
 
 environment:
   sdk: ^3.13.5
@@ -9,12 +9,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   flutter_appauth: ^12.1.0
   flutter_local_notifications: 22.3.2
   flutter_secure_storage: ^11.2.0
   google_sign_in: ^7.2.0
   google_sign_in_platform_interface: ^3.1.0
   http: ^1.6.0
+  intl: any
   shared_preferences: ^2.5.6
   timezone: ^0.11.1
 
@@ -27,6 +30,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
   fonts:
     # Nunito (SIL Open Font License, assets/fonts/OFL.txt) for display headings.
     - family: Nunito

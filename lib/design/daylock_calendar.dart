@@ -1,6 +1,9 @@
+import '../l10n/l10n.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../models/calendar_activity.dart';
 import '../models/event.dart';
@@ -149,14 +152,9 @@ class _DaylockMonthGridState extends State<DaylockMonthGrid> {
                   children: [
                     Row(
                       children: [
-                        for (final label in const [
-                          'MO',
-                          'TU',
-                          'WE',
-                          'TH',
-                          'FR',
-                          'SA',
-                          'SU',
+                        for (final label in [
+                          for (var day = 1; day <= 7; day++)
+                            _weekdayHeader(context.l10n, day),
                         ])
                           Expanded(
                             child: Padding(
@@ -246,17 +244,24 @@ class _CalendarDateTile extends StatelessWidget {
     final description = progress == null
         ? activity.isRecorded
               ? activity.excusedCount > 0
-                    ? 'No eligible commitments, ${activity.excusedCount} excused, neutral'
-                    : 'No commitments, neutral'
-              : 'No recorded commitments, neutral'
-        : '${activity.completedCount} of ${activity.eligibleCount} eligible commitments complete, ${progress.round()} percent, ${activity.excusedCount} excused';
+                    ? context.l10n.calendarDayExcusedNeutral(
+                        activity.excusedCount,
+                      )
+                    : context.l10n.calendarDayNeutral
+              : context.l10n.calendarDayUnrecorded
+        : context.l10n.calendarDayProgress(
+            activity.completedCount,
+            activity.eligibleCount,
+            progress.round(),
+            activity.excusedCount,
+          );
     return Semantics(
       key: ValueKey('calendar-day-$key'),
       button: true,
       selected: selected,
       label:
-          '${MaterialLocalizations.of(context).formatFullDate(date)}${activity.isToday ? ', Today' : ''}',
-      value: '$description, $eventCount scheduled events',
+          '${MaterialLocalizations.of(context).formatFullDate(date)}${activity.isToday ? context.l10n.calendarTodaySuffix : ''}',
+      value: context.l10n.calendarDayValue(description, eventCount),
       onTap: onSelected,
       excludeSemantics: true,
       child: InkWell(
@@ -334,15 +339,25 @@ class _CalendarDateTile extends StatelessWidget {
   }
 }
 
-String _intensityLabel(HeatmapIntensity intensity) => switch (intensity) {
-  HeatmapIntensity.neutral =>
-    'Neutral: no eligible commitments, missing history or future date',
-  HeatmapIntensity.zero => 'Recorded commitments: 0 percent complete',
-  HeatmapIntensity.low => 'More than 0 to 25 percent complete',
-  HeatmapIntensity.medium => 'More than 25 to 50 percent complete',
-  HeatmapIntensity.high => 'More than 50 to less than 100 percent complete',
-  HeatmapIntensity.complete => '100 percent complete',
-};
+String _intensityLabel(AppLocalizations l, HeatmapIntensity intensity) =>
+    switch (intensity) {
+      HeatmapIntensity.neutral => l.heatNeutral,
+      HeatmapIntensity.zero => l.heatZero,
+      HeatmapIntensity.low => l.heatLow,
+      HeatmapIntensity.medium => l.heatMedium,
+      HeatmapIntensity.high => l.heatHigh,
+      HeatmapIntensity.complete => l.heatComplete,
+    };
+
+/// Two-letter weekday heading ("MO", "LU"); a single letter in Arabic.
+String _weekdayHeader(AppLocalizations l, int weekday) {
+  final date = DateTime(2024, 1, weekday);
+  if (l.localeName.startsWith('ar')) {
+    return DateFormat.EEEEE(l.localeName).format(date);
+  }
+  final short = DateFormat.E(l.localeName).format(date).replaceAll('.', '');
+  return short.substring(0, short.length < 2 ? short.length : 2).toUpperCase();
+}
 
 class DaylockHeatmapLegend extends StatelessWidget {
   const DaylockHeatmapLegend({super.key});
@@ -352,9 +367,9 @@ class DaylockHeatmapLegend extends StatelessWidget {
     final theme = Theme.of(context);
     final palette = DaylockHeatmapPalette(theme.colorScheme);
     Widget swatch(HeatmapIntensity intensity) => Tooltip(
-      message: _intensityLabel(intensity),
+      message: _intensityLabel(context.l10n, intensity),
       child: Semantics(
-        label: _intensityLabel(intensity),
+        label: _intensityLabel(context.l10n, intensity),
         excludeSemantics: true,
         child: SizedBox(
           width: 20,
@@ -386,7 +401,7 @@ class DaylockHeatmapLegend extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         swatch(HeatmapIntensity.neutral),
-        Text('Less', style: labelStyle),
+        Text(context.l10n.heatLess, style: labelStyle),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -394,7 +409,7 @@ class DaylockHeatmapLegend extends StatelessWidget {
               swatch(intensity),
           ],
         ),
-        Text('More', style: labelStyle),
+        Text(context.l10n.heatMore, style: labelStyle),
       ],
     );
   }

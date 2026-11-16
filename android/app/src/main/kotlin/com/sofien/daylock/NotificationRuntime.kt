@@ -30,8 +30,8 @@ object NotificationRuntime {
     private const val RECORD = "record"
     private const val ALARM_ID = 7400
     val worker = Executors.newSingleThreadExecutor()
-    private val categories = mapOf("plan" to "Plan Tomorrow", "commitments" to "Commitment reminders",
-        "freedom" to "Freedom", "focus" to "Running stopwatch")
+    private val categories = mapOf("plan" to R.string.channel_plan, "commitments" to R.string.channel_commitments,
+        "freedom" to R.string.channel_freedom, "focus" to R.string.channel_focus)
     /** The ongoing "Timing …" notification; reminders use 7401–7404. */
     private const val RUNNING_ID = 7405
     private const val PAUSE_REQUEST = 7406
@@ -81,7 +81,7 @@ object NotificationRuntime {
         val date = Instant.ofEpochMilli(now).atZone(zone).toLocalDate().toString()
         if (record.lastDate != date || !allowed(context)) clearNotifications(context)
         val channels = enabledChannels(context)
-        val result = NotificationPolicy.evaluate(record.snapshot, record.valid, record.seen, now, zone, channels)
+        val result = NotificationPolicy.evaluate(record.snapshot, record.valid, record.seen, now, zone, channels, AndroidReminderTexts(context))
         for (decision in result.decisions) {
             // Persist before posting: a process death can miss an alert, but
             // cannot turn reboot/clock changes into duplicate notifications.
@@ -91,7 +91,7 @@ object NotificationRuntime {
         record = repo.load()
         showRunning(context, NotificationPolicy.running(record.snapshot, record.valid, now, zone)
             ?.takeIf { "focus" in channels })
-        val next = NotificationPolicy.evaluate(record.snapshot, record.valid, record.seen, now, zone, channels).nextAlarmMs
+        val next = NotificationPolicy.evaluate(record.snapshot, record.valid, record.seen, now, zone, channels, AndroidReminderTexts(context)).nextAlarmMs
         if (next != null) context.getSystemService(AlarmManager::class.java)
             .setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next, alarmIntent(context))
     }
@@ -100,7 +100,7 @@ object NotificationRuntime {
         val manager = context.getSystemService(NotificationManager::class.java)
         if (Build.VERSION.SDK_INT >= 26) {
             manager.createNotificationChannel(NotificationChannel("daylock_${message.category}",
-                categories.getValue(message.category), NotificationManager.IMPORTANCE_DEFAULT))
+                context.getString(categories.getValue(message.category)), NotificationManager.IMPORTANCE_DEFAULT))
         }
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -121,7 +121,7 @@ object NotificationRuntime {
     private fun ensureChannel(context: Context, category: String) {
         if (Build.VERSION.SDK_INT >= 26) {
             context.getSystemService(NotificationManager::class.java).createNotificationChannel(
-                NotificationChannel("daylock_$category", categories.getValue(category), NotificationManager.IMPORTANCE_DEFAULT))
+                NotificationChannel("daylock_$category", context.getString(categories.getValue(category)), NotificationManager.IMPORTANCE_DEFAULT))
         }
     }
     private fun openIntent(context: Context, requestCode: Int, payload: String) = PendingIntent.getActivity(context,
@@ -139,13 +139,13 @@ object NotificationRuntime {
         val message = ReminderMessage("focus", "", "", running.date, running.index, running.task.name)
         val notification = NotificationCompat.Builder(context, "daylock_focus")
             .setSmallIcon(R.drawable.ic_stat_daylock)
-            .setContentTitle("Timing · ${running.task.name}")
-            .setContentText("Pause it when you stop.")
+            .setContentTitle(context.getString(R.string.running_title, running.task.name))
+            .setContentText(context.getString(R.string.running_body))
             .setUsesChronometer(true).setShowWhen(true).setWhen(running.chronometerBaseMs)
             .setOngoing(true).setSilent(true).setOnlyAlertOnce(true)
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
             .setContentIntent(openIntent(context, RUNNING_ID, message.payload()))
-            .addAction(0, "Pause", openIntent(context, PAUSE_REQUEST, message.payload("pause")))
+            .addAction(0, context.getString(R.string.running_pause), openIntent(context, PAUSE_REQUEST, message.payload("pause")))
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setPriority(NotificationCompat.PRIORITY_LOW).build()
         try { manager.notify(RUNNING_ID, notification) } catch (_: SecurityException) { }
@@ -208,4 +208,24 @@ class NotificationBridge(private val activity: MainActivity, messenger: BinaryMe
         if (tapReady) channel.invokeMethod("tap", payload) else pendingTap = payload
     }
     fun close() { channel.setMethodCallHandler(null) }
+}
+
+/** Reminder wording from Android resources, in the phone's language. */
+class AndroidReminderTexts(private val context: Context) : ReminderTexts {
+    private fun s(id: Int, vararg args: Any) = context.getString(id, *args)
+    override fun planTitle() = s(R.string.reminder_plan_title)
+    override fun planBody() = s(R.string.reminder_plan_body)
+    override fun commitmentsTitle() = s(R.string.reminder_commitments_title)
+    override fun commitmentsBody(remaining: Int): String =
+        context.resources.getQuantityString(R.plurals.reminder_commitments_body, remaining, remaining)
+    override fun earnedTitle() = s(R.string.reminder_freedom_earned_title)
+    override fun earnedBody() = s(R.string.reminder_freedom_earned_body)
+    override fun freedomTimeTitle() = s(R.string.reminder_freedom_time_title)
+    override fun freedomNoEligible() = s(R.string.reminder_freedom_no_eligible)
+    override fun freedomFinishAndCommit() = s(R.string.reminder_freedom_finish_commit)
+    override fun freedomFinish() = s(R.string.reminder_freedom_finish)
+    override fun freedomCommitTomorrow() = s(R.string.reminder_freedom_commit)
+    override fun stopwatchTitle(name: String) = s(R.string.reminder_stopwatch_title, name)
+    override fun stopwatchBody(hours: Int): String =
+        context.resources.getQuantityString(R.plurals.reminder_stopwatch_body, hours, hours)
 }

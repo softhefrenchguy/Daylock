@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -130,13 +132,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final bridge = s.detectionBridge;
     return SettingsPage(
       title: switch (destination) {
-        SettingsDestination.freedom => 'Freedom Control',
-        SettingsDestination.planning => 'Planning & Routines',
-        SettingsDestination.appearance => 'Appearance',
-        SettingsDestination.notifications => 'Notifications',
-        SettingsDestination.about => 'About',
-        SettingsDestination.restricted => 'Restricted Apps',
-        SettingsDestination.diagnostics => 'Permissions & Diagnostics',
+        SettingsDestination.freedom => context.l10n.settingsFreedomControl,
+        SettingsDestination.planning => context.l10n.settingsPlanningRoutines,
+        SettingsDestination.appearance => context.l10n.settingsAppearance,
+        SettingsDestination.notifications => context.l10n.settingsNotifications,
+        SettingsDestination.about => context.l10n.settingsAbout,
+        SettingsDestination.restricted => context.l10n.settingsRestrictedApps,
+        SettingsDestination.diagnostics =>
+          context.l10n.settingsPermissionsDiagnostics,
       },
       children: switch (destination) {
         SettingsDestination.appearance => [
@@ -151,12 +154,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SettingsNavigationCard(
             id: 'manage-routines',
             icon: Icons.checklist_rounded,
-            title: 'Manage routines',
-            subtitle: '${s.routineCount} routines',
+            title: context.l10n.settingsManageRoutines,
+            subtitle: context.l10n.routineCount(s.routineCount),
             onTap: s.onRoutinesRequested,
           ),
-          const Text(
-            'Plan your next steps with recurring commitments.',
+          Text(
+            context.l10n.settingsRoutinesIntro,
             style: TextStyle(height: 1.5),
           ),
         ],
@@ -168,7 +171,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               service: s.notificationService!,
             )
           else
-            const Text('Notification controls are unavailable on this device.'),
+            Text(context.l10n.settingsNotificationsUnavailable),
         ],
         SettingsDestination.about => [
           JourneySurface(
@@ -180,17 +183,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const DaylockLabel('DAYLOCK'),
                   const SizedBox(height: 10),
                   Text(
-                    'Keep your word.',
+                    context.l10n.keepYourWord,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Commitments, optional stopwatches and progress in the areas that matter.',
-                  ),
+                  Text(context.l10n.settingsAboutCommitments),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Choose which supported Android apps to restrict until Freedom is earned.',
-                  ),
+                  Text(context.l10n.settingsRestrictedIntro),
                 ],
               ),
             ),
@@ -203,7 +202,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               mode: DetectionSectionMode.restricted,
             )
           else
-            const Text('App restrictions are available on Android.'),
+            Text(context.l10n.settingsRestrictionsAndroidOnly),
         ],
         SettingsDestination.diagnostics => [
           if (bridge != null)
@@ -212,7 +211,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               mode: DetectionSectionMode.diagnostics,
             )
           else
-            const Text('Accessibility diagnostics are available on Android.'),
+            Text(context.l10n.settingsDiagnosticsAndroidOnly),
         ],
         SettingsDestination.freedom => [
           _FreedomSettingsHero(
@@ -223,7 +222,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               SwitchListTile(
                 key: const ValueKey('freedom-enabled'),
-                title: const Text('Freedom Control'),
+                title: Text(context.l10n.settingsFreedomControl),
                 value: s.freedomSettings.enabled,
                 onChanged: s.onFreedomChanged == null
                     ? null
@@ -233,7 +232,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               ListTile(
                 key: const ValueKey('freedom-time'),
-                title: const Text('Freedom Time'),
+                title: Text(context.l10n.freedomTime),
                 subtitle: Text(s.freedomSettings.timeLabel),
                 trailing: const Icon(Icons.schedule_outlined),
                 onTap: s.onFreedomChanged == null
@@ -252,13 +251,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     tint: DaylockHues.pink,
                     id: 'settings-restricted',
                     icon: Icons.lock_outline_rounded,
-                    title: 'Restricted Apps',
+                    title: context.l10n.settingsRestrictedApps,
                     subtitle:
                         status.error != null || status.selectionError != null
-                        ? 'App restriction status needs attention'
+                        ? context.l10n.settingsRestrictionNeedsAttention
                         : status.blockingEnabled
-                        ? '${status.selectedPackages.length} selected, switch on'
-                        : '${status.selectedPackages.length} selected, switch off',
+                        ? context.l10n.settingsSelectedSwitchOn(
+                            status.selectedPackages.length,
+                          )
+                        : context.l10n.settingsSelectedSwitchOff(
+                            status.selectedPackages.length,
+                          ),
                     onTap: () => _open(SettingsDestination.restricted),
                   ),
                   SettingsNavigationCard(
@@ -266,16 +269,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     tint: DaylockHues.blue,
                     id: 'settings-diagnostics',
                     icon: Icons.accessibility_new_rounded,
-                    title: 'Accessibility',
+                    title: context.l10n.accessibility,
                     subtitle: status.error != null
-                        ? 'Status unavailable'
+                        ? context.l10n.statusUnavailable
                         : !status.supported
-                        ? 'Available on Android'
+                        ? context.l10n.availableOnAndroid
                         : status.connected
-                        ? 'Service connected'
+                        ? context.l10n.serviceConnected
                         : status.enabled
-                        ? 'Waiting for connection'
-                        : 'Service disabled',
+                        ? context.l10n.waitingForConnection
+                        : context.l10n.serviceDisabled,
                     onTap: () => _open(SettingsDestination.diagnostics),
                   ),
                 ],
@@ -285,8 +288,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SettingsNavigationCard(
               id: 'settings-restricted',
               icon: Icons.lock_outline_rounded,
-              title: 'Restricted Apps',
-              subtitle: 'Choose installed Android apps',
+              title: context.l10n.settingsRestrictedApps,
+              subtitle: context.l10n.settingsChooseInstalledApps,
               onTap: () => _open(SettingsDestination.restricted),
             ),
         ],
@@ -301,36 +304,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
       SettingsDestination.freedom: (
         Icons.lock_outline_rounded,
         DaylockHues.violet,
-        'Freedom Control',
-        'Restricted apps, Freedom Time and permissions',
-        '${freedom.enabled ? 'On' : 'Off'} \u00b7 ${freedom.timeLabel}',
+        context.l10n.settingsFreedomControl,
+        context.l10n.settingsFreedomSubtitle,
+        '${freedom.enabled ? context.l10n.on : context.l10n.off} \u00b7 ${freedom.timeLabel}',
       ),
       SettingsDestination.planning: (
         Icons.checklist_rounded,
         DaylockHues.teal,
-        'Planning & Routines',
-        'Recurring commitments and planning',
+        context.l10n.settingsPlanningRoutines,
+        context.l10n.settingsPlanningSubtitle,
         widget.routineCount == 1
-            ? '1 routine'
-            : '${widget.routineCount} routines',
+            ? context.l10n.routineCount(1)
+            : context.l10n.routineCount(widget.routineCount),
       ),
       SettingsDestination.appearance: (
         Icons.palette_outlined,
         DaylockHues.pink,
-        'Appearance',
-        'Theme, colours and Areas',
-        '${widget.preferences.mode.label} \u00b7 ${widget.preferences.colour.label}',
+        context.l10n.settingsAppearance,
+        context.l10n.settingsAppearanceSubtitle,
+        '${context.l10n.appearanceMode(widget.preferences.mode)} \u00b7 ${context.l10n.colourTheme(widget.preferences.colour)}',
       ),
       SettingsDestination.notifications: (
         Icons.notifications_outlined,
         DaylockHues.amber,
-        'Notifications',
-        'Reminders and alerts',
+        context.l10n.settingsNotifications,
+        context.l10n.settingsNotificationsSubtitle,
         null,
       ),
     };
     return SettingsPage(
-      title: 'Settings',
+      title: context.l10n.settingsTitle,
       children: [
         DaylockGroup(
           children: [
@@ -355,8 +358,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               id: 'settings-setup',
               icon: Icons.explore_outlined,
               tint: DaylockHues.blue,
-              title: 'Run Setup Tutorial',
-              subtitle: 'Permissions, distractions and your first commitment',
+              title: context.l10n.settingsRunSetup,
+              subtitle: context.l10n.settingsRunSetupSubtitle,
               onTap: widget.onSetupRequested,
             ),
             if (widget.onTourRequested != null)
@@ -365,8 +368,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 id: 'settings-tour',
                 icon: Icons.tour_outlined,
                 tint: DaylockHues.amber,
-                title: 'Take the App Tour',
-                subtitle: 'A guided look at Today, Plan and Journey',
+                title: context.l10n.settingsTakeTour,
+                subtitle: context.l10n.settingsTakeTourSubtitle,
                 onTap: widget.onTourRequested,
               ),
             SettingsNavigationCard(
@@ -374,8 +377,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               id: 'settings-about',
               icon: Icons.info_outline_rounded,
               tint: DaylockHues.grey,
-              title: 'About',
-              subtitle: 'App information',
+              title: context.l10n.settingsAbout,
+              subtitle: context.l10n.settingsAboutSubtitle,
               onTap: () => _open(SettingsDestination.about),
             ),
           ],
@@ -383,7 +386,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Padding(
           padding: const EdgeInsets.only(top: 28),
           child: Text(
-            'Plan your day. Earn your freedom.',
+            context.l10n.tagline,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium!.copyWith(
               fontFamily: 'Nunito',
@@ -407,7 +410,7 @@ class SettingsPage extends StatelessWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 20, 16),
+            padding: const EdgeInsetsDirectional.fromSTEB(12, 12, 20, 16),
             child: Row(
               children: [
                 const BackButton(),
@@ -429,7 +432,12 @@ class SettingsPage extends StatelessWidget {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 640),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                    padding: const EdgeInsetsDirectional.fromSTEB(
+                      20,
+                      0,
+                      20,
+                      24,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -486,7 +494,7 @@ class SettingsNavigationCard extends StatelessWidget {
       key: grouped ? ValueKey(id) : null,
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+        padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 10, 12),
         child: Row(
           children: [
             DaylockIconTile(icon: icon, color: tint ?? scheme.primary),
@@ -548,8 +556,8 @@ class _FreedomSettingsHero extends StatelessWidget {
         padding: const EdgeInsets.all(18),
         child: Text(
           settings.enabled
-              ? 'Freedom status unavailable'
-              : 'Freedom Control is off',
+              ? context.l10n.freedomStatusUnavailable
+              : context.l10n.freedomControlOff,
           style: Theme.of(context).textTheme.titleLarge,
         ),
       ),

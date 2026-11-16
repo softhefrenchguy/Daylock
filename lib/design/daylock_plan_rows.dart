@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../models/event.dart';
@@ -28,7 +30,7 @@ class DaylockPlanTaskRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Semantics(
-      label: 'Commitment',
+      label: context.l10n.commitment,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
@@ -84,7 +86,9 @@ class DaylockPlanTaskRow extends StatelessWidget {
                           Flexible(
                             child: Text(
                               repeatLabel!,
-                              semanticsLabel: 'Repeats $repeatLabel',
+                              semanticsLabel: context.l10n.repeatsLabel(
+                                repeatLabel!,
+                              ),
                               style: theme.textTheme.bodySmall!.copyWith(
                                 fontSize: 13,
                                 color: theme.colorScheme.onSurfaceVariant,
@@ -126,7 +130,7 @@ class DaylockPlanEventRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final time = Text(
-      event.timeLabelForDate(date),
+      context.l10n.eventTime(event, date),
       style: theme.textTheme.labelLarge!.copyWith(fontSize: 13),
     );
     final details = Column(
@@ -139,7 +143,7 @@ class DaylockPlanEventRow extends StatelessWidget {
           ),
         ),
         Text(
-          event.source.label,
+          context.l10n.eventSource(event.source),
           style: theme.textTheme.bodySmall!.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -170,7 +174,7 @@ class DaylockPlanEventRow extends StatelessWidget {
                       ),
                     ),
                   ),
-                  padding: const EdgeInsets.only(left: 12),
+                  padding: const EdgeInsetsDirectional.only(start: 12),
                   child: stacked
                       ? Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

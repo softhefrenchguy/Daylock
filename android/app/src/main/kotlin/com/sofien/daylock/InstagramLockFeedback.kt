@@ -48,8 +48,8 @@ object InstagramLockFeedback {
                 DetectionRuntime.store.eligibility()) != InstagramRestriction.BLOCK) return
         val manager = context.getSystemService(NotificationManager::class.java)
         if (Build.VERSION.SDK_INT >= 26) manager.createNotificationChannel(NotificationChannel(
-            CHANNEL, "App restriction notices", NotificationManager.IMPORTANCE_DEFAULT).apply {
-            description = "Explains selected app restrictions when the Daylock lock screen could not be shown"
+            CHANNEL, context.getString(R.string.notice_channel), NotificationManager.IMPORTANCE_DEFAULT).apply {
+            description = context.getString(R.string.notice_channel_description)
         })
         val permitted = NotificationManagerCompat.from(context).areNotificationsEnabled() &&
             (Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) &&
@@ -73,9 +73,9 @@ object InstagramLockFeedback {
         // Direct user-tapped activity PendingIntent. No trampoline, full-screen
         // intent, manual send(), or grant of unrestricted background launch rights.
         manager.notify(ID, NotificationCompat.Builder(context, CHANNEL)
-            .setSmallIcon(R.drawable.ic_stat_daylock).setContentTitle("${DetectionRuntime.catalog.label(packageName)} is locked")
-            .setContentText("Complete your Daylock commitments to earn Freedom.")
-            .setStyle(NotificationCompat.BigTextStyle().bigText("Complete your Daylock commitments to earn Freedom."))
+            .setSmallIcon(R.drawable.ic_stat_daylock).setContentTitle(context.getString(R.string.lock_app_locked, DetectionRuntime.catalog.label(packageName)))
+            .setContentText(context.getString(R.string.notice_body))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(context.getString(R.string.notice_body)))
             .setContentIntent(tap).setAutoCancel(true).setOnlyAlertOnce(true)
             .setTimeoutAfter(InstagramFallbackPolicy.COOLDOWN_MS)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE).setPriority(NotificationCompat.PRIORITY_DEFAULT).build())

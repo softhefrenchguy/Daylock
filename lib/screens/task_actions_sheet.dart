@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../design/area_tones.dart';
@@ -39,9 +41,9 @@ class TaskActionsSheet extends StatelessWidget {
     );
     final elapsed = task.focusMillisecondsAt(currentTime);
     final status = switch (task.outcome) {
-      TaskOutcome.completed => 'Kept',
-      TaskOutcome.excused => 'Excused',
-      TaskOutcome.incomplete => 'Not kept yet',
+      TaskOutcome.completed => context.l10n.statusKept,
+      TaskOutcome.excused => context.l10n.outcomeExcused,
+      TaskOutcome.incomplete => context.l10n.statusNotKeptYet,
     };
     Widget action({
       required Key key,
@@ -60,7 +62,7 @@ class TaskActionsSheet extends StatelessWidget {
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
+        padding: const EdgeInsetsDirectional.fromSTEB(
           DaylockSpace.lg,
           0,
           DaylockSpace.lg,
@@ -76,7 +78,10 @@ class TaskActionsSheet extends StatelessWidget {
               [
                 if (area != null) area!.name,
                 status,
-                if (elapsed > 0) '${recordedFocusLabel(elapsed)} recorded',
+                if (elapsed > 0)
+                  context.l10n.durationRecorded(
+                    recordedFocusLabel(elapsed, context.l10n),
+                  ),
               ].join(' · '),
               style: theme.textTheme.bodyMedium!.copyWith(
                 color: area == null ? scheme.onSurfaceVariant : tones.ink,
@@ -86,7 +91,7 @@ class TaskActionsSheet extends StatelessWidget {
             if (task.excuseReason != null) ...[
               const SizedBox(height: 14),
               Text(
-                'Excuse reason',
+                context.l10n.excuseReason,
                 style: theme.textTheme.labelLarge!.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
@@ -105,21 +110,21 @@ class TaskActionsSheet extends StatelessWidget {
                   key: const ValueKey('task-mark-completed'),
                   icon: Icons.check_rounded,
                   color: daylockGold(theme.brightness),
-                  label: 'Mark completed',
+                  label: context.l10n.markCompleted,
                   outcome: TaskOutcome.completed,
                 ),
                 action(
                   key: const ValueKey('task-excuse'),
                   icon: Icons.shield_outlined,
                   color: DaylockHues.blue,
-                  label: 'Excuse task',
+                  label: context.l10n.excuseTask,
                   outcome: TaskOutcome.excused,
                 ),
                 action(
                   key: const ValueKey('task-reset'),
                   icon: Icons.restart_alt_rounded,
                   color: DaylockHues.grey,
-                  label: 'Reset to incomplete',
+                  label: context.l10n.resetToIncomplete,
                   outcome: TaskOutcome.incomplete,
                 ),
               ],
@@ -171,31 +176,29 @@ class _ExcuseReasonDialogState extends State<ExcuseReasonDialog> {
   @override
   Widget build(BuildContext context) => AlertDialog(
     scrollable: true,
-    title: const Text('Excuse commitment'),
+    title: Text(context.l10n.excuseCommitment),
     content: Form(
       key: _form,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'What outside circumstance prevented you from completing it?',
-          ),
+          Text(context.l10n.excusePrompt),
           const SizedBox(height: 16),
           TextFormField(
             key: const ValueKey('excuse-reason'),
             controller: _reason,
-            decoration: const InputDecoration(labelText: 'Reason'),
+            decoration: InputDecoration(labelText: context.l10n.reason),
             maxLines: 3,
             maxLength: Task.maxExcuseReasonLength,
             textCapitalization: TextCapitalization.sentences,
             validator: (value) {
               final reason = value?.trim() ?? '';
-              if (reason.isEmpty) return 'Enter a short reason.';
+              if (reason.isEmpty) return context.l10n.enterShortReason;
               // TextField counts graphemes; the persisted model bounds String
               // length. Check both so multi-code-unit text cannot bypass it.
               if (reason.length > Task.maxExcuseReasonLength) {
-                return 'Please shorten this reason.';
+                return context.l10n.shortenReason;
               }
               return null;
             },
@@ -206,12 +209,12 @@ class _ExcuseReasonDialogState extends State<ExcuseReasonDialog> {
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: Text(context.l10n.cancel),
       ),
       FilledButton(
         key: const ValueKey('confirm-excuse'),
         onPressed: _submit,
-        child: const Text('Excuse task'),
+        child: Text(context.l10n.excuseTask),
       ),
     ],
   );

@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -90,10 +92,8 @@ class _BlockingHealthNoticeState extends State<BlockingHealthNotice> {
     final scheme = theme.colorScheme;
     final stopped = s.enabled; // Switched on, but Android is not running it.
     final body = stopped
-        ? 'Android stopped Daylock in the background, so your selected apps '
-              'open freely. In Accessibility, turn Daylock off and on again.'
-        : 'Accessibility access for Daylock is off, so your selected apps '
-              'open freely. Turn it on to bring the lock back.';
+        ? context.l10n.healthStoppedBody
+        : context.l10n.healthOffBody;
     return Padding(
       padding: const EdgeInsets.only(top: 14),
       child: Material(
@@ -101,7 +101,7 @@ class _BlockingHealthNoticeState extends State<BlockingHealthNotice> {
         color: scheme.errorContainer,
         borderRadius: BorderRadius.circular(DaylockSpace.cardRadius),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 16, 18, 10),
+          padding: const EdgeInsetsDirectional.fromSTEB(18, 16, 18, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -112,8 +112,8 @@ class _BlockingHealthNoticeState extends State<BlockingHealthNotice> {
                   Expanded(
                     child: Text(
                       stopped
-                          ? 'App blocking has stopped'
-                          : 'App blocking is off',
+                          ? context.l10n.healthStoppedTitle
+                          : context.l10n.setupBlockingOff,
                       style: theme.textTheme.titleMedium!.copyWith(
                         color: scheme.onErrorContainer,
                       ),
@@ -132,10 +132,7 @@ class _BlockingHealthNoticeState extends State<BlockingHealthNotice> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    'To stop it happening again on Xiaomi / Poco: in Daylockâ€™s '
-                    'App info allow Autostart, set Battery saver to No '
-                    'restrictions, allow pop-ups while running in the '
-                    'background, and avoid swiping Daylock away in Recents.',
+                    context.l10n.healthXiaomiTip,
                     style: theme.textTheme.bodySmall!.copyWith(
                       color: scheme.onErrorContainer,
                     ),
@@ -151,7 +148,7 @@ class _BlockingHealthNoticeState extends State<BlockingHealthNotice> {
                       foregroundColor: scheme.onErrorContainer,
                     ),
                     onPressed: widget.onOpenAccessibility,
-                    child: const Text('Open Accessibility'),
+                    child: Text(context.l10n.openAccessibility),
                   ),
                   if (s.xiaomiDevice)
                     TextButton(
@@ -160,7 +157,7 @@ class _BlockingHealthNoticeState extends State<BlockingHealthNotice> {
                         foregroundColor: scheme.onErrorContainer,
                       ),
                       onPressed: widget.onOpenAppInfo,
-                      child: const Text('Open App info'),
+                      child: Text(context.l10n.openAppInfo),
                     ),
                 ],
               ),

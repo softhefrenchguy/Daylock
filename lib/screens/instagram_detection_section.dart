@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../design/daylock_theme.dart';
@@ -8,75 +10,61 @@ import 'restricted_apps_section.dart';
 
 enum DetectionSectionMode { full, restricted, diagnostics }
 
-String _restrictionDiagnostic(String? value) => switch (value) {
-  null => 'No restriction attempt yet.',
-  'skipped_event_delayed' => 'Android delivered the app-opening event too late. On Xiaomi / HyperOS, review Daylock’s App info → Power → No restrictions, then test opening a selected app from Home.',
-  'test_requested' =>
-    'Test requested: waiting for a fresh selected-app detection.',
-  'detected_selected_app' =>
-    'Selected app detected. Checking Freedom and restriction eligibility.',
-  'eligibility_notEarned' => 'Eligibility evaluated: Freedom is not earned.',
-  'eligibility_earned' =>
-    'Eligibility evaluated: Freedom is earned; the app is allowed.',
-  'eligibility_disabled' =>
-    'Eligibility evaluated: Freedom Control is off; the app is allowed.',
-  'eligibility_unknown' =>
-    'Eligibility could not be confirmed; blocking is paused safely.',
-  'restriction_triggered' =>
-    'Restriction triggered: starting the Daylock lock flow.',
-  'restriction_recovery' =>
-    'Restriction needs Daylock to refresh Freedom state.',
-  'recovery_shown' => 'Last attempt: recovery screen shown. Open Daylock to refresh plans or disable blocking.',
-  'lock_shown' => 'Last restriction attempt: Daylock lock screen shown.',
-  'state_unknown' =>
-    'Last attempt: selected apps allowed while Freedom state was unavailable.',
-  'lock_launch_requested' =>
-    'Last attempt: lock screen requested; display not yet confirmed.',
-  'lock_fallback_posted' => 'Last attempt: lock screen not confirmed; app restriction notification posted. Android controls its delivery.',
-  'lock_fallback_unavailable' => 'Last attempt: lock screen not confirmed. Allow notifications and the App restriction notices channel in Android settings for fallback notices.',
-  'home_only' => 'Last attempt: Home requested; lock screen was not confirmed.',
-  'lock_launch_failed' || 'lock_launch_unconfirmed' => 'Last attempt: lock screen was not confirmed. Android may restrict background launches.',
-  'home_failed' => 'Last attempt: Android rejected Home navigation. Restriction could not be applied.',
-  'skipped_foreground_changed_before_eligibility' ||
-  'skipped_foreground_changed_before_navigation' =>
-    'Restriction skipped: the foreground app changed before enforcement.',
-  'skipped_accessibility_disabled' =>
-    'Restriction skipped: Accessibility is no longer enabled.',
-  'skipped_selection_unavailable' =>
-    'Restriction skipped: the selected app could not be verified.',
-  'skipped_device_not_interactive' =>
-    'Restriction skipped: the device was locked or not interactive.',
-  'skipped_service_inactive' =>
-    'Restriction skipped: the Accessibility service was no longer active.',
-  'skipped_lock_already_visible' =>
-    'Restriction skipped: a Daylock lock screen was already visible.',
-  'retrying_state_changed' =>
-    'Freedom state changed during enforcement; checking it once more.',
-  'skipped_state_changed' =>
-    'Restriction skipped: Freedom state changed while opening the app.',
-  'skipped_freedom_earned' => 'Restriction skipped: Freedom is earned.',
-  'skipped_freedom_disabled' => 'Restriction skipped: Freedom Control is off.',
-  'skipped_launch_throttled' =>
-    'Restriction skipped: a lock-screen attempt is already in progress.',
-  _ => 'Last restriction state could not be verified.',
-};
+String _restrictionDiagnostic(AppLocalizations l, String? value) =>
+    switch (value) {
+      null => l.diagRestrictionNone,
+      'skipped_event_delayed' => l.diagRestrictionSkippedEventDelayed,
+      'test_requested' => l.diagRestrictionTestRequested,
+      'detected_selected_app' => l.diagRestrictionDetectedSelectedApp,
+      'eligibility_notEarned' => l.diagRestrictionEligibilityNotEarned,
+      'eligibility_earned' => l.diagRestrictionEligibilityEarned,
+      'eligibility_disabled' => l.diagRestrictionEligibilityDisabled,
+      'eligibility_unknown' => l.diagRestrictionEligibilityUnknown,
+      'restriction_triggered' => l.diagRestrictionRestrictionTriggered,
+      'restriction_recovery' => l.diagRestrictionRestrictionRecovery,
+      'recovery_shown' => l.diagRestrictionRecoveryShown,
+      'lock_shown' => l.diagRestrictionLockShown,
+      'state_unknown' => l.diagRestrictionStateUnknown,
+      'lock_launch_requested' => l.diagRestrictionLockLaunchRequested,
+      'lock_fallback_posted' => l.diagRestrictionLockFallbackPosted,
+      'lock_fallback_unavailable' => l.diagRestrictionLockFallbackUnavailable,
+      'home_only' => l.diagRestrictionHomeOnly,
+      'lock_launch_failed' ||
+      'lock_launch_unconfirmed' => l.diagRestrictionLockLaunchUnconfirmed,
+      'home_failed' => l.diagRestrictionHomeFailed,
+      'skipped_foreground_changed_before_eligibility' ||
+      'skipped_foreground_changed_before_navigation' =>
+        l.diagRestrictionSkippedForegroundChangedBeforeNavigation,
+      'skipped_accessibility_disabled' =>
+        l.diagRestrictionSkippedAccessibilityDisabled,
+      'skipped_selection_unavailable' =>
+        l.diagRestrictionSkippedSelectionUnavailable,
+      'skipped_device_not_interactive' =>
+        l.diagRestrictionSkippedDeviceNotInteractive,
+      'skipped_service_inactive' => l.diagRestrictionSkippedServiceInactive,
+      'skipped_lock_already_visible' =>
+        l.diagRestrictionSkippedLockAlreadyVisible,
+      'retrying_state_changed' => l.diagRestrictionRetryingStateChanged,
+      'skipped_state_changed' => l.diagRestrictionSkippedStateChanged,
+      'skipped_freedom_earned' => l.diagRestrictionSkippedFreedomEarned,
+      'skipped_freedom_disabled' => l.diagRestrictionSkippedFreedomDisabled,
+      'skipped_launch_throttled' => l.diagRestrictionSkippedLaunchThrottled,
+      _ => l.diagRestrictionOther,
+    };
 
-String _homeDiagnostic(String? value) => switch (value) {
-  'attempted' => 'Home action: requested.',
-  'accepted' => 'Home action: Android accepted the request.',
-  'rejected' => 'Home action: Android rejected the request.',
+String _homeDiagnostic(AppLocalizations l, String? value) => switch (value) {
+  'attempted' => l.diagHomeAttempted,
+  'accepted' => l.diagHomeAccepted,
+  'rejected' => l.diagHomeRejected,
   _ => '',
 };
 
-String _lockDiagnostic(String? value) => switch (value) {
-  'attempted' => 'Lock screen: launch requested.',
-  'requested_unconfirmed' =>
-    'Lock screen: request returned; visibility is not confirmed yet.',
-  'shown' => 'Lock screen: visible and confirmed.',
-  'failed_exception' =>
-    'Lock screen: Android rejected or failed the launch request.',
-  'unconfirmed' =>
-    'Lock screen: not confirmed; a fallback notification may be used.',
+String _lockDiagnostic(AppLocalizations l, String? value) => switch (value) {
+  'attempted' => l.diagLockAttempted,
+  'requested_unconfirmed' => l.diagLockRequestedUnconfirmed,
+  'shown' => l.diagLockShown,
+  'failed_exception' => l.diagLockFailedException,
+  'unconfirmed' => l.diagLockUnconfirmed,
   _ => '',
 };
 
@@ -97,26 +85,17 @@ class InstagramDetectionSection extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         scrollable: true,
-        title: const Text('App restriction permission'),
-        content: const Text(
-          'Daylock uses Android Accessibility to detect when a selected app opens, including while Daylock is in the background. '
-          'It saves only the latest selected-app detection, Freedom status and restriction result on this device; nothing is sent to a server. '
-          'Installed-app lists and selections stay on this device. It does not read screen content or collect browsing history. '
-          'With the separate app restrictions switch enabled, it can return Home and show a branded Daylock lock screen when Freedom is not earned. '
-          'Window package changes are compared only to cancel actions if you switch apps; other app names are not retained. '
-          'It does not draw overlays or restrict unselected apps.\n\n'
-          'You choose whether to enable “Daylock app restrictions” in Android Accessibility Settings. '
-          'You can disable it there at any time.',
-        ),
+        title: Text(context.l10n.diagPermissionTitle),
+        content: Text(context.l10n.diagPermissionBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             key: const ValueKey('agree-detection'),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Agree and open Settings'),
+            child: Text(context.l10n.diagAgreeOpenSettings),
           ),
         ],
       ),
@@ -135,24 +114,17 @@ class InstagramDetectionSection extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         scrollable: true,
-        title: const Text('Enable app restrictions?'),
-        content: const Text(
-          'When Freedom Control is on and Freedom is not earned, Daylock uses Accessibility to leave a selected app and show its own lock screen. '
-          'Installed-app lists and selections stay on this device. It does not read screen content or collect browsing history. Only the latest selected-app detection and restriction result stay on this device. '
-          'Other window package names are compared only to cancel a pending action if you switch apps; they are not retained. '
-          'You can turn blocking off here or revoke Accessibility access at any time.\n\n'
-          'Freedom inputs stay valid for their calendar date without reopening Daylock. If current state is missing or invalid, Daylock offers a recovery screen with Open Daylock and Disable Blocking; subsequent openings are allowed while recovery is needed. '
-          'This is a voluntary restriction, not a tamper-proof or parental-control system.',
-        ),
+        title: Text(context.l10n.diagEnableBlockingTitle),
+        content: Text(context.l10n.diagEnableBlockingBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             key: const ValueKey('confirm-instagram-blocking'),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Enable blocking'),
+            child: Text(context.l10n.diagEnableBlocking),
           ),
         ],
       ),
@@ -173,18 +145,14 @@ class InstagramDetectionSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (mode == DetectionSectionMode.full) ...[
-                const DaylockLabel('APP RESTRICTIONS'),
+                DaylockLabel(context.l10n.diagAppRestrictionsLabel),
                 const SizedBox(height: DaylockSpace.sm),
-                const Text(
-                  'Accessibility detects selected apps opening in the background. Optional blocking shows a Daylock lock screen or returns Home until Freedom is earned. If the screen cannot appear, a notification explains the block when Android permits it.',
-                ),
+                Text(context.l10n.diagAppRestrictionsIntro),
                 SwitchListTile(
                   key: const ValueKey('instagram-blocking-enabled'),
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('App restrictions'),
-                  subtitle: const Text(
-                    'Separate from Freedom Control. Off by default.',
-                  ),
+                  title: Text(context.l10n.diagAppRestrictions),
+                  subtitle: Text(context.l10n.diagSeparateFromFreedom),
                   value: status.blockingEnabled,
                   onChanged: status.supported && status.error == null
                       ? (value) => _changeBlocking(context, value)
@@ -192,77 +160,80 @@ class InstagramDetectionSection extends StatelessWidget {
                 ),
                 Text(
                   status.error != null
-                      ? 'App restriction status unavailable'
+                      ? context.l10n.diagStatusUnavailable
                       : !status.blockingEnabled
-                      ? 'App restrictions: off'
+                      ? context.l10n.diagRestrictionsOff
                       : !status.enabled || !status.connected
-                      ? 'App restrictions: waiting for Accessibility access'
+                      ? context.l10n.diagWaitingForAccessibility
                       : status.freedomState == 'disabled'
-                      ? 'Selected apps allowed — Freedom Control is off'
+                      ? context.l10n.diagAllowedFreedomOff
                       : status.freedomState == 'earned'
-                      ? 'Selected apps allowed — Freedom earned'
+                      ? context.l10n.diagAllowedFreedomEarned
                       : status.freedomState == 'unknown'
-                      ? 'Blocking paused — open Daylock to refresh Freedom state'
-                      : 'App restrictions ready — launch and navigation depend on Android',
+                      ? context.l10n.diagBlockingPaused
+                      : context.l10n.diagRestrictionsReady,
                   key: const ValueKey('instagram-blocking-status'),
                 ),
                 if (status.lastRestriction != null)
-                  Text(_restrictionDiagnostic(status.lastRestriction)),
+                  Text(
+                    _restrictionDiagnostic(
+                      context.l10n,
+                      status.lastRestriction,
+                    ),
+                  ),
                 const SizedBox(height: DaylockSpace.md),
                 Text(
                   status.error != null
-                      ? 'Service status unavailable'
+                      ? context.l10n.diagServiceStatusUnavailable
                       : !status.supported
-                      ? 'Native detection is available on Android only.'
+                      ? context.l10n.diagAndroidOnly
                       : !status.enabled
-                      ? 'Accessibility service: disabled'
+                      ? context.l10n.diagServiceDisabled
                       : status.connected
-                      ? 'Accessibility service: enabled and connected'
-                      : 'Accessibility service: enabled — waiting for Android to connect',
+                      ? context.l10n.diagServiceConnected
+                      : context.l10n.diagServiceWaiting,
                   key: const ValueKey('detection-service-status'),
                 ),
                 if (status.blockingSaveFailed)
-                  const Text(
-                    'The blocking choice could not be saved. Disabling takes effect now, but may not survive a restart. Revoke Accessibility access if necessary.',
-                  ),
+                  Text(context.l10n.diagBlockingSaveFailed),
                 const SizedBox(height: DaylockSpace.sm),
                 Text(
                   status.lastDetectedAt == null
-                      ? 'No selected app has been detected yet.'
-                      : 'Last restricted-app detection: ${MaterialLocalizations.of(context).formatMediumDate(status.lastDetectedAt!)} '
-                            '${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(status.lastDetectedAt!), alwaysUse24HourFormat: true)}',
+                      ? context.l10n.diagNoDetectionYet
+                      : context.l10n.diagLastDetection(
+                          '${MaterialLocalizations.of(context).formatMediumDate(status.lastDetectedAt!)} '
+                          '${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(status.lastDetectedAt!), alwaysUse24HourFormat: true)}',
+                        ),
                   key: const ValueKey('instagram-last-detection'),
                 ),
                 if (status.freedomAtDetection != null)
                   Text(
-                    'Freedom at that detection: ${InstagramDetectionStatus.freedomLabel(status.freedomAtDetection!)}',
+                    context.l10n.diagFreedomAtDetection(
+                      context.l10n.freedomState(status.freedomAtDetection!),
+                    ),
                   ),
                 const SizedBox(height: DaylockSpace.sm),
                 Text(
-                  'Current native Freedom state: ${InstagramDetectionStatus.freedomLabel(status.freedomState)}',
+                  context.l10n.diagCurrentFreedom(
+                    context.l10n.freedomState(status.freedomState),
+                  ),
                   key: const ValueKey('native-freedom-status'),
                 ),
                 if (status.freedomState == 'unknown' && status.supported)
                   Text(
                     status.freedomReason == 'focus_needs_refresh'
-                        ? 'An active Focus session needs Daylock to reconcile its timer. Native detection does not mark it complete.'
-                        : 'Current dated state is unavailable. Open Daylock to reconcile plans or turn blocking off. Valid current-day inputs do not expire after five minutes.',
+                        ? context.l10n.diagFocusNeedsRefresh
+                        : context.l10n.diagStateUnavailable,
                   ),
                 if (status.freedomReason == 'rollover_reconciled')
-                  const Text(
-                    'New day: using the saved plan for this date. Open Daylock to archive history and prepare the following day.',
-                  ),
+                  Text(context.l10n.diagRolloverReconciled),
                 if (status.freedomReason == 'no_eligible_commitments')
-                  const Text(
-                    'No eligible commitments. Empty or all-excused days do not earn Freedom.',
-                  ),
+                  Text(context.l10n.diagNoEligible),
                 if (status.detectionSaveFailed)
-                  const Text(
-                    'The latest detection could not be persisted and may not survive a restart.',
-                  ),
+                  Text(context.l10n.diagDetectionSaveFailed),
                 if (status.error != null)
                   Text(
-                    status.error!,
+                    context.l10n.known(status.error!),
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.error,
                     ),
@@ -270,16 +241,12 @@ class InstagramDetectionSection extends StatelessWidget {
                 if (status.error != null && status.supported)
                   TextButton(
                     onPressed: () => bridge.setBlockingEnabled(false),
-                    child: const Text('Turn blocking off'),
+                    child: Text(context.l10n.diagTurnBlockingOff),
                   ),
                 const SizedBox(height: DaylockSpace.md),
-                const Text(
-                  'Android Settings → Accessibility → Downloaded/Installed apps → Daylock app restrictions. Turn the service on manually. Names vary by phone.',
-                ),
+                Text(context.l10n.diagSettingsPath),
                 const SizedBox(height: DaylockSpace.sm),
-                const Text(
-                  'If Android 15 shows “Restricted settings”, inspect Daylock’s App info for “Allow restricted settings” and confirm only for this development build you trust.',
-                ),
+                Text(context.l10n.diagRestrictedSettings),
                 const SizedBox(height: DaylockSpace.sm),
               ] else ...[
                 JourneySurface(
@@ -290,26 +257,38 @@ class InstagramDetectionSection extends StatelessWidget {
                       children: [
                         Text(
                           status.error != null
-                              ? 'Service status unavailable'
+                              ? context.l10n.diagServiceStatusUnavailable
                               : !status.supported
-                              ? 'Available on Android only'
-                              : 'Accessibility service: ${status.enabled ? 'enabled' : 'disabled'}',
+                              ? context.l10n.diagAvailableAndroidOnly
+                              : status.enabled
+                              ? context.l10n.diagServiceEnabledShort
+                              : context.l10n.diagServiceDisabled,
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'Service ${status.connected ? 'connected' : 'disconnected'}',
+                          status.connected
+                              ? context.l10n.serviceConnected
+                              : context.l10n.diagServiceDisconnected,
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'App restrictions: ${status.blockingEnabled ? 'on' : 'off'}',
+                          status.blockingEnabled
+                              ? context.l10n.diagRestrictionsOn
+                              : context.l10n.diagRestrictionsOff,
                         ),
                         const SizedBox(height: 10),
-                        Text('${status.selectedPackages.length} selected apps'),
+                        Text(
+                          context.l10n.selectedAppsCount(
+                            status.selectedPackages.length,
+                          ),
+                        ),
                         if (status.selectionError != null)
-                          Text(status.selectionError!),
+                          Text(context.l10n.known(status.selectionError!)),
                         const SizedBox(height: 10),
                         Text(
-                          'Native Freedom: ${InstagramDetectionStatus.freedomLabel(status.freedomState)}',
+                          context.l10n.diagNativeFreedom(
+                            context.l10n.freedomState(status.freedomState),
+                          ),
                         ),
                       ],
                     ),
@@ -319,75 +298,92 @@ class InstagramDetectionSection extends StatelessWidget {
                 JourneySurface(
                   child: ExpansionTile(
                     key: const ValueKey('detection-details'),
-                    title: const Text('Technical details & setup'),
+                    title: Text(context.l10n.diagTechnicalDetails),
                     childrenPadding: const EdgeInsets.all(16),
                     children: [
-                      Text(_restrictionDiagnostic(status.lastRestriction)),
+                      Text(
+                        _restrictionDiagnostic(
+                          context.l10n,
+                          status.lastRestriction,
+                        ),
+                      ),
                       if (status.lastHomeAction != null &&
-                          _homeDiagnostic(status.lastHomeAction).isNotEmpty)
-                        Text(_homeDiagnostic(status.lastHomeAction)),
+                          _homeDiagnostic(
+                            context.l10n,
+                            status.lastHomeAction,
+                          ).isNotEmpty)
+                        Text(
+                          _homeDiagnostic(context.l10n, status.lastHomeAction),
+                        ),
                       if (status.lastLockLaunch != null &&
-                          _lockDiagnostic(status.lastLockLaunch).isNotEmpty)
-                        Text(_lockDiagnostic(status.lastLockLaunch)),
+                          _lockDiagnostic(
+                            context.l10n,
+                            status.lastLockLaunch,
+                          ).isNotEmpty)
+                        Text(
+                          _lockDiagnostic(context.l10n, status.lastLockLaunch),
+                        ),
                       const SizedBox(height: DaylockSpace.md),
                       Text(
                         status.error != null
-                            ? 'Service status unavailable'
+                            ? context.l10n.diagServiceStatusUnavailable
                             : !status.supported
-                            ? 'Native detection is available on Android only.'
+                            ? context.l10n.diagAndroidOnly
                             : !status.enabled
-                            ? 'Accessibility service: disabled'
+                            ? context.l10n.diagServiceDisabled
                             : status.connected
-                            ? 'Accessibility service: enabled and connected'
-                            : 'Accessibility service: enabled — waiting for Android to connect',
+                            ? context.l10n.diagServiceConnected
+                            : context.l10n.diagServiceWaiting,
                         key: const ValueKey('detection-service-status'),
                       ),
                       if (status.blockingSaveFailed)
-                        const Text(
-                          'The blocking choice could not be saved. Disabling takes effect now, but may not survive a restart. Revoke Accessibility access if necessary.',
-                        ),
+                        Text(context.l10n.diagBlockingSaveFailed),
                       const SizedBox(height: DaylockSpace.sm),
                       Text(
                         status.lastDetectedAt == null
-                            ? 'No selected app has been detected yet.'
-                            : 'Last restricted-app detection: ${MaterialLocalizations.of(context).formatMediumDate(status.lastDetectedAt!)} '
-                                  '${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(status.lastDetectedAt!), alwaysUse24HourFormat: true)}',
+                            ? context.l10n.diagNoDetectionYet
+                            : context.l10n.diagLastDetection(
+                                '${MaterialLocalizations.of(context).formatMediumDate(status.lastDetectedAt!)} '
+                                '${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(status.lastDetectedAt!), alwaysUse24HourFormat: true)}',
+                              ),
                         key: const ValueKey('instagram-last-detection'),
                       ),
                       if (status.lastDetectedPackage != null)
                         Text(
-                          'Last restricted package: ${status.lastDetectedPackage}',
+                          context.l10n.diagLastPackage(
+                            status.lastDetectedPackage!,
+                          ),
                         ),
                       if (status.freedomAtDetection != null)
                         Text(
-                          'Freedom at that detection: ${InstagramDetectionStatus.freedomLabel(status.freedomAtDetection!)}',
+                          context.l10n.diagFreedomAtDetection(
+                            context.l10n.freedomState(
+                              status.freedomAtDetection!,
+                            ),
+                          ),
                         ),
                       const SizedBox(height: DaylockSpace.sm),
                       Text(
-                        'Current native Freedom state: ${InstagramDetectionStatus.freedomLabel(status.freedomState)}',
+                        context.l10n.diagCurrentFreedom(
+                          context.l10n.freedomState(status.freedomState),
+                        ),
                         key: const ValueKey('native-freedom-status'),
                       ),
                       if (status.freedomState == 'unknown' && status.supported)
                         Text(
                           status.freedomReason == 'focus_needs_refresh'
-                              ? 'An active Focus session needs Daylock to reconcile its timer. Native detection does not mark it complete.'
-                              : 'Current dated state is unavailable. Open Daylock to reconcile plans or turn blocking off. Valid current-day inputs do not expire after five minutes.',
+                              ? context.l10n.diagFocusNeedsRefresh
+                              : context.l10n.diagStateUnavailable,
                         ),
                       if (status.freedomReason == 'rollover_reconciled')
-                        const Text(
-                          'New day: using the saved plan for this date. Open Daylock to archive history and prepare the following day.',
-                        ),
+                        Text(context.l10n.diagRolloverReconciled),
                       if (status.freedomReason == 'no_eligible_commitments')
-                        const Text(
-                          'No eligible commitments. Empty or all-excused days do not earn Freedom.',
-                        ),
+                        Text(context.l10n.diagNoEligible),
                       if (status.detectionSaveFailed)
-                        const Text(
-                          'The latest detection could not be persisted and may not survive a restart.',
-                        ),
+                        Text(context.l10n.diagDetectionSaveFailed),
                       if (status.error != null)
                         Text(
-                          status.error!,
+                          context.l10n.known(status.error!),
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.error,
                           ),
@@ -395,16 +391,12 @@ class InstagramDetectionSection extends StatelessWidget {
                       if (status.error != null && status.supported)
                         TextButton(
                           onPressed: () => bridge.setBlockingEnabled(false),
-                          child: const Text('Turn blocking off'),
+                          child: Text(context.l10n.diagTurnBlockingOff),
                         ),
                       const SizedBox(height: DaylockSpace.md),
-                      const Text(
-                        'Android Settings → Accessibility → Downloaded/Installed apps → Daylock app restrictions. Turn the service on manually. Names vary by phone.',
-                      ),
+                      Text(context.l10n.diagSettingsPath),
                       const SizedBox(height: DaylockSpace.sm),
-                      const Text(
-                        'If Android 15 shows “Restricted settings”, inspect Daylock’s App info for “Allow restricted settings” and confirm only for this development build you trust.',
-                      ),
+                      Text(context.l10n.diagRestrictedSettings),
                       const SizedBox(height: DaylockSpace.sm),
                     ],
                   ),
@@ -421,12 +413,12 @@ class InstagramDetectionSection extends StatelessWidget {
                       onPressed: status.supported
                           ? () => explainAndOpen(context, bridge)
                           : null,
-                      child: const Text('Open Accessibility Settings'),
+                      child: Text(context.l10n.openAccessibilitySettings),
                     ),
                     TextButton(
                       key: const ValueKey('refresh-detection'),
                       onPressed: status.supported ? bridge.refresh : null,
-                      child: const Text('Refresh status'),
+                      child: Text(context.l10n.refreshStatus),
                     ),
                   ],
                 ),

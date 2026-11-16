@@ -1,7 +1,10 @@
+import 'l10n/l10n.dart';
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import 'design/daylock_theme.dart';
 import 'design/daylock_widgets.dart';
@@ -299,11 +302,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       if (_nativeSaveFailed) {
         _messengerKey.currentState?.showSnackBar(
           SnackBar(
-            content: const Text(
-              'Save your pending changes before changing a stopwatch.',
-            ),
+            content: Text(_l.savePendingBeforeStopwatch),
             action: SnackBarAction(
-              label: 'Retry',
+              label: _l.retry,
               onPressed: () => unawaited(_saveState()),
             ),
           ),
@@ -459,9 +460,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       if (!mounted) return;
       _messengerKey.currentState?.showSnackBar(
         SnackBar(
-          content: const Text('Could not save appearance settings.'),
+          content: Text(_l.couldNotSaveAppearance),
           action: SnackBarAction(
-            label: 'Retry',
+            label: _l.retry,
             onPressed: () => unawaited(_saveAppearance(_appearance.value)),
           ),
         ),
@@ -560,9 +561,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       );
     } catch (_) {
       _messengerKey.currentState?.showSnackBar(
-        const SnackBar(
-          content: Text('Could not save setup. Please retry from Settings.'),
-        ),
+        SnackBar(content: Text(_l.couldNotSaveSetup)),
       );
     } finally {
       _tutorialOpen = false;
@@ -595,13 +594,8 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     _refreshClock();
     final plan = tomorrowPlan;
     if (plan.isCommitted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Tomorrow’s plan is already committed. Existing commitments are kept. Add another after the next day starts.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_l.tomorrowAlreadyCommitted)));
       return false;
     }
     final task = await showModalBottomSheet<Task>(
@@ -610,7 +604,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       useSafeArea: true,
       builder: (_) => CommitmentEditor(
         areas: areas,
-        heading: 'Your first commitment · tomorrow',
+        heading: _l.firstCommitmentHeading,
         canCreate: () => identical(plan, tomorrowPlan) && !plan.isCommitted,
       ),
     );
@@ -702,7 +696,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     if (task.name != target.taskName || !task.isFocusRunning) return;
     _toggleFocus(task, todayPlan);
     _messengerKey.currentState?.showSnackBar(
-      SnackBar(content: Text('Paused ${task.name}.')),
+      SnackBar(content: Text(_l.pausedTask(task.name))),
     );
   }
 
@@ -849,14 +843,14 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         duration: const Duration(seconds: 6),
         content: Row(
           children: [
-            Expanded(child: Text('Removed for ${daylockWeekday(date)}.')),
+            Expanded(child: Text(_l.removedForWeekday(daylockWeekday(date)))),
             TextButton(
               key: const ValueKey('routine-removed-undo'),
               onPressed: () {
                 messenger.hideCurrentSnackBar();
                 _undoRemoval(task, index, routine.id, source);
               },
-              child: const Text('Undo'),
+              child: Text(_l.undo),
             ),
             TextButton(
               key: const ValueKey('routine-removed-stop'),
@@ -864,7 +858,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
                 messenger.hideCurrentSnackBar();
                 _stopRepeating(routine.id);
               },
-              child: const Text('Stop repeating'),
+              child: Text(_l.stopRepeating),
             ),
           ],
         ),
@@ -899,7 +893,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     _planningChanges.value++;
     unawaited(_saveState());
     _messengerKey.currentState?.showSnackBar(
-      const SnackBar(content: Text('Stopped repeating.')),
+      SnackBar(content: Text(_l.stoppedRepeating)),
     );
   }
 
@@ -921,7 +915,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       builder: (_) => ValueListenableBuilder<int>(
         valueListenable: _journeyChanges,
         builder: (context, revision, _) => Scaffold(
-          appBar: AppBar(title: const Text('Daily history')),
+          appBar: AppBar(title: Text(_l.dailyHistory)),
           body: _buildCalendar(date),
         ),
       ),
@@ -990,7 +984,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       builder: (_) => ValueListenableBuilder<int>(
         valueListenable: _journeyChanges,
         builder: (context, revision, _) => Scaffold(
-          appBar: AppBar(title: const Text('Achievements')),
+          appBar: AppBar(title: Text(_l.achievements)),
           body: SafeArea(
             child: Center(
               child: ConstrainedBox(
@@ -999,17 +993,15 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
                   padding: const EdgeInsets.all(24),
                   children: [
                     Align(
-                      alignment: Alignment.centerLeft,
+                      alignment: AlignmentDirectional.centerStart,
                       child: OutlinedButton.icon(
                         onPressed: () => _editHighlight(),
                         icon: const Icon(Icons.add),
-                        label: const Text('Add achievement'),
+                        label: Text(_l.addAchievement),
                       ),
                     ),
                     if (highlights.highlights.isEmpty)
-                      const Text(
-                        'Things you’re proud of: a driving licence, a first 10k, a finished chapter.',
-                      ),
+                      Text(_l.achievementsIntro),
                     for (final highlight in highlights.newestFirst)
                       JourneyHighlightTile(
                         highlight: highlight,
@@ -1036,15 +1028,13 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           );
           if (matches.isEmpty) {
             return Scaffold(
-              appBar: AppBar(title: const Text('Achievement')),
-              body: const Center(
-                child: Text('This achievement has been removed.'),
-              ),
+              appBar: AppBar(title: Text(_l.achievement)),
+              body: Center(child: Text(_l.achievementRemoved)),
             );
           }
           final highlight = matches.single;
           return Scaffold(
-            appBar: AppBar(title: const Text('Achievement')),
+            appBar: AppBar(title: Text(_l.achievement)),
             body: SafeArea(
               child: Center(
                 child: ConstrainedBox(
@@ -1066,7 +1056,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
                         Text(
                           areas.areas.any((a) => a.id == highlight.areaId)
                               ? areas.resolve(highlight.areaId).name
-                              : 'Area unavailable',
+                              : _l.areaUnavailable,
                         ),
                       ],
                       if (highlight.description != null) ...[
@@ -1081,13 +1071,13 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
                             key: const ValueKey('edit-highlight'),
                             onPressed: () =>
                                 _editHighlight(original: highlight),
-                            child: const Text('Edit'),
+                            child: Text(_l.edit),
                           ),
                           TextButton(
                             key: const ValueKey('delete-highlight'),
                             onPressed: () =>
                                 _deleteHighlight(context, highlight),
-                            child: const Text('Delete'),
+                            child: Text(_l.delete),
                           ),
                         ],
                       ),
@@ -1110,19 +1100,17 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       context: context,
       builder: (dialogContext) => AlertDialog(
         scrollable: true,
-        title: const Text('Delete achievement?'),
-        content: Text(
-          'Remove “${highlight.title}”? Your commitments and Areas will stay as they are.',
-        ),
+        title: Text(_l.deleteAchievementTitle),
+        content: Text(_l.deleteAchievementBody(highlight.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Keep achievement'),
+            child: Text(_l.keepAchievement),
           ),
           FilledButton(
             key: const ValueKey('confirm-delete-highlight'),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(_l.delete),
           ),
         ],
       ),
@@ -1154,9 +1142,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       if (!mounted) return;
       _messengerKey.currentState?.showSnackBar(
         SnackBar(
-          content: const Text('Could not save your changes.'),
+          content: Text(_l.couldNotSaveChanges),
           action: SnackBarAction(
-            label: 'Retry',
+            label: _l.retry,
             onPressed: () => unawaited(_saveState()),
           ),
         ),
@@ -1184,6 +1172,11 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             Brightness.dark,
           ),
           themeMode: preferences.mode.themeMode,
+          // Follows the phone's language (or Daylock's own language in
+          // Android settings), falling back to English.
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: daylockLocales,
+          onGenerateTitle: (context) => context.l10n.appTitle,
           themeAnimationDuration:
               (MediaQuery.maybeOf(context)?.disableAnimations ??
                   WidgetsBinding
@@ -1195,29 +1188,43 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
               : const Duration(milliseconds: 220),
           home: _buildHome(),
           // The tour sits above every route; the app stays mounted below it.
-          builder: (context, child) => Stack(
-            children: [
-              child!,
-              if (_tourStep != null)
-                Positioned.fill(
-                  child: AppTourOverlay(
-                    key: const ValueKey('app-tour'),
-                    index: _tourStep!,
-                    searchRoot: () => _navigatorKey.currentContext,
-                    onShowPage: (page) {
-                      if (page != selectedPage) {
-                        setState(() => selectedPage = page);
-                      }
-                    },
-                    onNext: () => _goToTourStop(_tourStep! + 1),
-                    onBack: () => _goToTourStop(_tourStep! - 1),
-                    onClose: _endTour,
+          builder: (context, child) => _withAppLocale(
+            context,
+            Stack(
+              children: [
+                child!,
+                if (_tourStep != null)
+                  Positioned.fill(
+                    child: AppTourOverlay(
+                      key: const ValueKey('app-tour'),
+                      index: _tourStep!,
+                      searchRoot: () => _navigatorKey.currentContext,
+                      onShowPage: (page) {
+                        if (page != selectedPage) {
+                          setState(() => selectedPage = page);
+                        }
+                      },
+                      onNext: () => _goToTourStop(_tourStep! + 1),
+                      onBack: () => _goToTourStop(_tourStep! - 1),
+                      onClose: _endTour,
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       );
+
+  /// The app's text in the phone's language. This State sits above the
+  /// app's localizations, so text is read through the navigator.
+  AppLocalizations get _l =>
+      _navigatorKey.currentContext?.l10n ?? englishStrings;
+
+  /// Dates and weekday names follow the app's language.
+  Widget _withAppLocale(BuildContext context, Widget child) {
+    Intl.defaultLocale = Localizations.localeOf(context).toString();
+    return child;
+  }
 
   Widget _buildCalendar(DateTime? selectedDate) => CalendarScreen(
     areas: areas,
@@ -1376,30 +1383,32 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           enabled: _tourStep != null,
           child: pages[selectedPage],
         ),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: selectedPage,
-          onDestinationSelected: (index) {
-            setState(() {
-              selectedPage = index;
-            });
-          },
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.wb_sunny_outlined),
-              selectedIcon: Icon(Icons.wb_sunny_rounded),
-              label: 'Today',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.bedtime_outlined),
-              selectedIcon: Icon(Icons.bedtime_rounded),
-              label: 'Plan',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.landscape_outlined),
-              selectedIcon: Icon(Icons.landscape_rounded),
-              label: 'Journey',
-            ),
-          ],
+        bottomNavigationBar: Builder(
+          builder: (context) => NavigationBar(
+            selectedIndex: selectedPage,
+            onDestinationSelected: (index) {
+              setState(() {
+                selectedPage = index;
+              });
+            },
+            destinations: [
+              NavigationDestination(
+                icon: const Icon(Icons.wb_sunny_outlined),
+                selectedIcon: const Icon(Icons.wb_sunny_rounded),
+                label: context.l10n.today,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.bedtime_outlined),
+                selectedIcon: const Icon(Icons.bedtime_rounded),
+                label: context.l10n.plan,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.landscape_outlined),
+                selectedIcon: const Icon(Icons.landscape_rounded),
+                label: context.l10n.journey,
+              ),
+            ],
+          ),
         ),
       ),
     );

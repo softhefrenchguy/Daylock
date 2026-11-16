@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../models/calendar_activity.dart';
@@ -27,29 +29,31 @@ class DaylockCalendarCommitments extends StatelessWidget {
       children: [
         Semantics(
           label: activity.isToday
-              ? 'Today commitments, read-only. Manage commitments in Today.'
-              : 'Commitment history, read-only',
+              ? context.l10n.calTodayReadOnly
+              : context.l10n.calHistoryReadOnly,
           excludeSemantics: true,
           child: DaylockLabel(
-            activity.isToday ? 'TODAY’S COMMITMENTS' : 'COMMITMENT HISTORY',
+            activity.isToday
+                ? context.l10n.calTodayLabel
+                : context.l10n.calHistoryLabel,
           ),
         ),
         const SizedBox(height: DaylockSpace.sm),
         if (!activity.isRecorded)
-          Text(
-            'No commitment history recorded.',
-            style: theme.textTheme.bodyMedium,
-          )
+          Text(context.l10n.calNoHistory, style: theme.textTheme.bodyMedium)
         else if (tasks.isEmpty)
           Text(
             activity.isToday
-                ? 'No commitments for today.'
-                : 'No commitments recorded. Neutral day.',
+                ? context.l10n.calNoCommitmentsToday
+                : context.l10n.calNeutralDay,
             style: theme.textTheme.bodyMedium,
           )
         else ...[
           if (activity.eligibleCount == 0)
-            Text('No eligible commitments', style: theme.textTheme.bodyLarge)
+            Text(
+              context.l10n.noEligibleCommitments,
+              style: theme.textTheme.bodyLarge,
+            )
           else
             Wrap(
               spacing: 16,
@@ -64,7 +68,10 @@ class DaylockCalendarCommitments extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${activity.completedCount} of ${activity.eligibleCount} kept',
+                  context.l10n.keptOfEligible(
+                    activity.completedCount,
+                    activity.eligibleCount,
+                  ),
                   style: theme.textTheme.bodyLarge,
                 ),
               ],
@@ -72,7 +79,7 @@ class DaylockCalendarCommitments extends StatelessWidget {
           if (activity.excusedCount > 0) ...[
             const SizedBox(height: 4),
             Text(
-              '${activity.excusedCount} excused',
+              context.l10n.excusedCount(activity.excusedCount),
               key: const ValueKey('calendar-excused-count'),
               style: theme.textTheme.bodyMedium!.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -83,12 +90,14 @@ class DaylockCalendarCommitments extends StatelessWidget {
             const SizedBox(height: 12),
             DaylockProgress(
               value: activity.completedCount / activity.eligibleCount,
-              label: 'Commitment completion for selected date',
+              label: context.l10n.calCompletionLabel,
             ),
           ],
           const SizedBox(height: 12),
           Text(
-            'Recorded time: ${recordedFocusLabel(activity.focusMilliseconds)}',
+            context.l10n.calRecordedTime(
+              recordedFocusLabel(activity.focusMilliseconds, context.l10n),
+            ),
             key: const ValueKey('calendar-recorded-focus'),
             style: theme.textTheme.bodyMedium!.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -122,14 +131,16 @@ class DaylockCalendarCommitments extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Commitment · ${task.outcome.label}',
+                          context.l10n.calCommitmentOutcome(
+                            context.l10n.taskOutcome(task.outcome),
+                          ),
                           style: theme.textTheme.bodySmall!.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                         if (task.excuseReason != null)
                           Text(
-                            'Reason: ${task.excuseReason}',
+                            context.l10n.calReason(task.excuseReason!),
                             style: theme.textTheme.bodyMedium!.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -139,7 +150,12 @@ class DaylockCalendarCommitments extends StatelessWidget {
                         if (task.accumulatedFocusMilliseconds > 0 ||
                             task.focusTarget != null) ...[
                           Text(
-                            '${recordedFocusLabel(task.accumulatedFocusMilliseconds)} recorded',
+                            context.l10n.durationRecorded(
+                              recordedFocusLabel(
+                                task.accumulatedFocusMilliseconds,
+                                context.l10n,
+                              ),
+                            ),
                             style: theme.textTheme.bodyMedium!.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -161,10 +177,10 @@ class DaylockCalendarCommitments extends StatelessWidget {
                         ? Icons.check_circle_outline_rounded
                         : Icons.radio_button_unchecked_rounded,
                     semanticLabel: task.isExcused
-                        ? 'Excused'
+                        ? context.l10n.outcomeExcused
                         : task.isCompleted
-                        ? 'Completed'
-                        : 'Incomplete',
+                        ? context.l10n.outcomeCompleted
+                        : context.l10n.outcomeIncomplete,
                     size: DaylockSpace.icon,
                     color: task.isCompleted
                         ? theme.colorScheme.primary
@@ -215,19 +231,19 @@ class DaylockCalendarEventRow extends StatelessWidget {
               Icons.lock_outline,
               size: DaylockSpace.icon,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
-              semanticLabel: 'Read-only cached event',
+              semanticLabel: context.l10n.calReadOnlyCached,
             ),
           )
         : Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                tooltip: 'Edit ${event.title}',
+                tooltip: context.l10n.editNamed(event.title),
                 icon: const Icon(Icons.edit_outlined),
                 onPressed: onView,
               ),
               IconButton(
-                tooltip: 'Delete ${event.title}',
+                tooltip: context.l10n.deleteNamed(event.title),
                 icon: const Icon(Icons.delete_outline),
                 onPressed: onDelete,
               ),
@@ -245,7 +261,10 @@ class DaylockCalendarEventRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   row,
-                  Align(alignment: Alignment.centerRight, child: actions),
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: actions,
+                  ),
                 ],
               );
             }

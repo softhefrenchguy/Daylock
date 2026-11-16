@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../design/daylock_widgets.dart';
@@ -50,7 +52,7 @@ class NotificationSettingsSection extends StatelessWidget {
         title: Text(title),
         value: supported && value,
         subtitle: status.blockedChannels.contains(category)
-            ? const Text('Blocked in Android system settings')
+            ? Text(context.l10n.notifBlockedInSystem)
             : null,
         onChanged: supported ? changed : null,
       );
@@ -67,22 +69,21 @@ class NotificationSettingsSection extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const DaylockLabel('NOTIFICATIONS'),
+          DaylockLabel(context.l10n.notifLabel),
           const SizedBox(height: DaylockSpace.sm),
           Text(switch (status.permission) {
-            NotificationPermission.allowed => 'System permission: allowed',
-            NotificationPermission.denied => 'System permission: not allowed',
-            NotificationPermission.error =>
-              'Notification setup needs attention',
-            NotificationPermission.unknown => 'Checking system permission…',
-            NotificationPermission.unsupported =>
-              'Scheduled notifications unavailable',
+            NotificationPermission.allowed =>
+              context.l10n.notifPermissionAllowed,
+            NotificationPermission.denied => context.l10n.notifPermissionDenied,
+            NotificationPermission.error => context.l10n.notifNeedsAttention,
+            NotificationPermission.unknown => context.l10n.notifChecking,
+            NotificationPermission.unsupported => context.l10n.notifUnavailable,
           }, key: const ValueKey('notification-status')),
           const SizedBox(height: DaylockSpace.sm),
           ExpansionTile(
-            title: const Text('Permission help'),
+            title: Text(context.l10n.notifPermissionHelp),
             tilePadding: EdgeInsets.zero,
-            children: [Text(status.explanation)],
+            children: [Text(context.l10n.known(status.explanation))],
           ),
           if (supported) ...[
             const SizedBox(height: DaylockSpace.sm),
@@ -97,8 +98,8 @@ class NotificationSettingsSection extends StatelessWidget {
               label: Text(
                 status.permission == NotificationPermission.allowed ||
                         status.askedBefore
-                    ? 'Open notification settings'
-                    : 'Allow notifications',
+                    ? context.l10n.notifOpenSettings
+                    : context.l10n.setupAllowNotifications,
               ),
             ),
           ],
@@ -110,7 +111,7 @@ class NotificationSettingsSection extends StatelessWidget {
                 children: [
                   toggle(
                     'plan',
-                    'Plan Tomorrow',
+                    context.l10n.notifPlanTomorrow,
                     preferences.planTomorrow,
                     (v) => onChanged(preferences.copyWith(planTomorrow: v)),
                   ),
@@ -132,7 +133,7 @@ class NotificationSettingsSection extends StatelessWidget {
                 children: [
                   toggle(
                     'commitments',
-                    'Commitment Reminder',
+                    context.l10n.notifCommitmentReminder,
                     preferences.commitments,
                     (v) => onChanged(preferences.copyWith(commitments: v)),
                   ),
@@ -154,13 +155,11 @@ class NotificationSettingsSection extends StatelessWidget {
                 children: [
                   toggle(
                     'freedom',
-                    'Freedom Notifications',
+                    context.l10n.notifFreedom,
                     preferences.freedom,
                     (v) => onChanged(preferences.copyWith(freedom: v)),
                   ),
-                  const Text(
-                    'Uses Freedom Time when Freedom Control is enabled.',
-                  ),
+                  Text(context.l10n.notifFreedomHelp),
                 ],
               ),
             ),
@@ -173,14 +172,11 @@ class NotificationSettingsSection extends StatelessWidget {
                 children: [
                   toggle(
                     'focus',
-                    'Running Stopwatch',
+                    context.l10n.notifRunningStopwatch,
                     preferences.focus,
                     (v) => onChanged(preferences.copyWith(focus: v)),
                   ),
-                  const Text(
-                    'Shows a quiet notification with Pause while a stopwatch runs, '
-                    'and nudges you every 2 hours so it isn’t left on by mistake.',
-                  ),
+                  Text(context.l10n.notifRunningStopwatchHelp),
                 ],
               ),
             ),

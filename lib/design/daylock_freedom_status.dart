@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../services/freedom_service.dart';
@@ -24,7 +26,9 @@ class FreedomConditions extends StatelessWidget {
             satisfied
                 ? Icons.check_circle_rounded
                 : Icons.radio_button_unchecked_rounded,
-            semanticLabel: satisfied ? 'Satisfied' : 'Remaining',
+            semanticLabel: satisfied
+                ? context.l10n.conditionSatisfied
+                : context.l10n.conditionRemaining,
             size: 20,
             color: satisfied ? gold : scheme.outline,
           ),
@@ -42,21 +46,27 @@ class FreedomConditions extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         condition(
-          'Freedom Time · ${eligibility.settings.timeLabel}',
+          context.l10n.freedomTimeAt(eligibility.settings.timeLabel),
           eligibility.timeReached,
         ),
         condition(
           eligibility.hasEligibleCommitments
-              ? '${eligibility.completedCount} / ${eligibility.eligibleCount} eligible commitments complete'
-              : 'No eligible commitments — completion is required to earn Freedom.',
+              ? context.l10n.eligibleComplete(
+                  eligibility.completedCount,
+                  eligibility.eligibleCount,
+                )
+              : context.l10n.noEligibleRequired,
           eligibility.commitmentsCompleted,
         ),
-        condition('Tomorrow’s plan committed', eligibility.tomorrowCommitted),
+        condition(
+          context.l10n.tomorrowPlanCommittedCondition,
+          eligibility.tomorrowCommitted,
+        ),
         if (!eligibility.currentPlans)
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(
-              'Today’s plan does not match the current local date.',
+              context.l10n.planDateMismatch,
               style: theme.textTheme.bodySmall!.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
@@ -84,12 +94,12 @@ class DaylockFreedomStatus extends StatelessWidget {
         eligibility.commitmentsCompleted &&
         eligibility.tomorrowCommitted;
     final title = !enabled
-        ? 'Freedom Control is off'
+        ? context.l10n.freedomControlOff
         : eligibility.earned
-        ? 'Freedom earned'
+        ? context.l10n.freedomEarned
         : waiting
-        ? 'Waiting for Freedom Time'
-        : 'Freedom not yet earned';
+        ? context.l10n.waitingForFreedomTime
+        : context.l10n.freedomNotYetEarned;
     final sky = SceneColors.of(theme);
     return AnimatedContainer(
       key: const ValueKey('freedom-status'),
@@ -114,9 +124,9 @@ class DaylockFreedomStatus extends StatelessWidget {
             height: 132,
             ground: scheme.surfaceContainerLow,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
+              padding: const EdgeInsetsDirectional.fromSTEB(18, 16, 18, 0),
               child: FractionallySizedBox(
-                alignment: Alignment.topLeft,
+                alignment: AlignmentDirectional.topStart,
                 widthFactor: .68,
                 child: Text(
                   title,
@@ -131,7 +141,7 @@ class DaylockFreedomStatus extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 4, 18, 16),
+            padding: const EdgeInsetsDirectional.fromSTEB(18, 4, 18, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -139,7 +149,7 @@ class DaylockFreedomStatus extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Text(
-                      'Available at ${eligibility.settings.timeLabel}',
+                      context.l10n.availableAt(eligibility.settings.timeLabel),
                       style: theme.textTheme.bodyMedium!.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -149,13 +159,13 @@ class DaylockFreedomStatus extends StatelessWidget {
                 const SizedBox(height: DaylockSpace.sm),
                 if (!enabled)
                   Text(
-                    'Enable Freedom Control in Settings.',
+                    context.l10n.enableFreedomInSettings,
                     style: theme.textTheme.bodySmall!.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
                   ),
                 Text(
-                  'App restrictions are configured in Settings.',
+                  context.l10n.todayRestrictionsInSettings,
                   style: theme.textTheme.bodySmall!.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),

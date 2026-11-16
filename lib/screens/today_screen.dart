@@ -1,7 +1,10 @@
+import '../l10n/l10n.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:intl/intl.dart';
 
 import '../design/area_tones.dart';
 import '../design/daylock_freedom_status.dart';
@@ -18,34 +21,21 @@ import '../models/task.dart';
 import '../services/freedom_service.dart';
 import 'task_actions_sheet.dart';
 
-const _weekdays = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
-const _months = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
+/// "Monday 16 November", in the app's language ("lundi 16 novembre").
+String daylockDateLabel(DateTime date) {
+  ensureDateFormatting();
+  final locale = Intl.getCurrentLocale();
+  return (locale.startsWith('en')
+          ? DateFormat('EEEE d MMMM', locale)
+          : DateFormat.MMMMEEEEd(locale))
+      .format(date);
+}
 
-String daylockDateLabel(DateTime date) =>
-    '${_weekdays[date.weekday - 1]} ${date.day} ${_months[date.month - 1]}';
-
-String daylockWeekday(DateTime date) => _weekdays[date.weekday - 1];
+/// "Monday", in the app's language.
+String daylockWeekday(DateTime date) {
+  ensureDateFormatting();
+  return DateFormat.EEEE().format(date);
+}
 
 class TodayScreen extends StatefulWidget {
   final DailyPlan plan;
@@ -240,7 +230,7 @@ class TodayScreenState extends State<TodayScreen> {
     });
     SemanticsService.sendAnnouncement(
       View.of(context),
-      'Kept ${task.name}',
+      context.l10n.keptTaskAnnouncement(task.name),
       Directionality.of(context),
     );
   }
@@ -310,14 +300,14 @@ class TodayScreenState extends State<TodayScreen> {
                 progress: empty ? 0 : fraction,
                 height: earned ? 400 : 262,
                 horizontalPadding: padding,
-                title: 'Today',
+                title: context.l10n.today,
                 subtitle: daylockDateLabel(plan.date),
                 actions: [
                   if (onSettingsRequested != null)
                     DaylockSkyButton(
                       buttonKey: const ValueKey('open-settings'),
                       icon: Icons.settings_outlined,
-                      tooltip: 'Settings',
+                      tooltip: context.l10n.settingsTitle,
                       onPressed: onSettingsRequested,
                     ),
                 ],
@@ -344,8 +334,10 @@ class TodayScreenState extends State<TodayScreen> {
                       children: [
                         Text(
                           tomorrowLocked
-                              ? 'You kept your word and ${daylockWeekday(tomorrow.date)} is already committed. Enjoy it.'
-                              : 'You kept your word. Enjoy it.',
+                              ? context.l10n.todayEarnedTomorrowLocked(
+                                  daylockWeekday(tomorrow.date),
+                                )
+                              : context.l10n.todayEarned,
                           style: theme.textTheme.bodyLarge!.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -390,16 +382,21 @@ class TodayScreenState extends State<TodayScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       DaylockSectionHeader(
-                        title: 'Commitments',
-                        padding: EdgeInsets.fromLTRB(0, earned ? 4 : 24, 0, 10),
+                        title: context.l10n.commitments,
+                        padding: EdgeInsetsDirectional.fromSTEB(
+                          0,
+                          earned ? 4 : 24,
+                          0,
+                          10,
+                        ),
                       ),
                       DaylockGroup(
                         children: [
                           for (final task in visible)
                             Semantics(
                               customSemanticsActions: {
-                                const CustomSemanticsAction(
-                                  label: 'Task actions',
+                                CustomSemanticsAction(
+                                  label: context.l10n.taskActions,
                                 ): () =>
                                     _showActions(task),
                               },
@@ -426,8 +423,10 @@ class TodayScreenState extends State<TodayScreen> {
                             ),
                             label: Text(
                               _showAll
-                                  ? 'Show fewer commitments'
-                                  : 'Show all ${plan.tasks.length} commitments',
+                                  ? context.l10n.showFewerCommitments
+                                  : context.l10n.showAllCommitments(
+                                      plan.tasks.length,
+                                    ),
                             ),
                           ),
                         ),
@@ -435,7 +434,7 @@ class TodayScreenState extends State<TodayScreen> {
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: Text(
-                            '${summary.excusedCount} excused',
+                            context.l10n.excusedCount(summary.excusedCount),
                             key: const ValueKey('today-excused-count'),
                             style: theme.textTheme.bodySmall!.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
@@ -499,7 +498,7 @@ class _UndoBar extends StatelessWidget {
         shadowColor: Colors.black54,
         borderRadius: BorderRadius.circular(14),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 4, 4),
           child: Row(
             children: [
               Container(
@@ -518,7 +517,7 @@ class _UndoBar extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Kept: $name',
+                  context.l10n.keptName(name),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium!.copyWith(
@@ -530,7 +529,7 @@ class _UndoBar extends StatelessWidget {
               TextButton(
                 onPressed: onUndo,
                 style: TextButton.styleFrom(foregroundColor: action),
-                child: const Text('Undo'),
+                child: Text(context.l10n.undo),
               ),
             ],
           ),
@@ -540,15 +539,15 @@ class _UndoBar extends StatelessWidget {
   }
 }
 
-String _timedLabel(int milliseconds) {
+String _timedLabel(AppLocalizations l, int milliseconds) {
   final seconds = milliseconds ~/ 1000;
   final hours = seconds ~/ 3600;
   final minutes = seconds ~/ 60 % 60;
   return hours > 0
-      ? '${hours}h ${minutes}m'
+      ? l.timedHoursMinutes(hours, minutes)
       : minutes > 0
-      ? '${minutes}m ${seconds % 60}s'
-      : '${seconds}s';
+      ? l.timedMinutesSeconds(minutes, seconds % 60)
+      : l.timedSeconds(seconds);
 }
 
 class _ProgressHeadline extends StatelessWidget {
@@ -565,24 +564,29 @@ class _ProgressHeadline extends StatelessWidget {
     final sky = SceneColors.of(theme);
     final neutral = summary.isNeutral;
     final headline = neutral
-        ? 'No eligible commitments'
-        : '${summary.completedCount} of ${summary.eligibleCount} kept';
+        ? context.l10n.noEligibleCommitments
+        : context.l10n.keptOfEligible(
+            summary.completedCount,
+            summary.eligibleCount,
+          );
     final remaining = summary.remainingCount;
     final status = neutral
-        ? 'Excused commitments don’t count'
+        ? context.l10n.excusedDontCount
         : summary.isComplete
-        ? 'Day complete'
+        ? context.l10n.dayComplete
         : remaining == 1
-        ? '1 more and the sun is up'
-        : '$remaining more and the sun is up';
+        ? context.l10n.moreUntilSunUp(1)
+        : context.l10n.moreUntilSunUp(remaining);
     final timed = recordedMilliseconds > 0
-        ? ' · ${_timedLabel(recordedMilliseconds)} timed'
+        ? ' · ${context.l10n.timedSuffix(_timedLabel(context.l10n, recordedMilliseconds))}'
         : '';
     final fraction = summary.fraction;
     return Semantics(
       key: const ValueKey('daily-summary'),
       container: true,
-      label: neutral ? 'No eligible commitments' : 'Commitments complete',
+      label: neutral
+          ? context.l10n.noEligibleCommitments
+          : context.l10n.commitmentsComplete,
       value: '${((fraction ?? 0) * 100).round()}%',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -621,7 +625,7 @@ class _FreedomDetails extends StatelessWidget {
         FreedomConditions(eligibility: eligibility),
         const SizedBox(height: 6),
         Text(
-          'App restrictions are configured in Settings.',
+          context.l10n.todayRestrictionsInSettings,
           style: theme.textTheme.bodySmall!.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -642,11 +646,11 @@ class _EarnedHeadline extends StatelessWidget {
     final sky = SceneColors.of(theme);
     return Tooltip(
       key: const ValueKey('freedom-indicator'),
-      message: 'Freedom earned',
+      message: context.l10n.freedomEarned,
       excludeFromSemantics: true,
       child: Semantics(
         button: true,
-        hint: 'Show Freedom details',
+        hint: context.l10n.showFreedomDetails,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: onTap,
@@ -671,7 +675,9 @@ class _EarnedHeadline extends StatelessWidget {
                     Icon(Icons.lock_open_rounded, size: 16, color: sky.onSky),
                     const SizedBox(width: 6),
                     Text(
-                      'Apps unlocked at ${eligibility.settings.timeLabel}',
+                      context.l10n.appsUnlockedAt(
+                        eligibility.settings.timeLabel,
+                      ),
                       style: theme.textTheme.bodyMedium!.copyWith(
                         color: sky.onSky,
                       ),
@@ -681,7 +687,7 @@ class _EarnedHeadline extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'Freedom earned.',
+                context.l10n.freedomEarnedTitle,
                 style: theme.textTheme.displayLarge!.copyWith(
                   fontSize: 44,
                   color: sky.onSky,
@@ -715,29 +721,29 @@ class _FreedomStrip extends StatelessWidget {
     final enabled = eligibility.settings.enabled;
     final time = eligibility.settings.timeLabel;
     final tooltip = !enabled
-        ? 'Freedom Control is off'
+        ? context.l10n.freedomControlOff
         : eligibility.earned
-        ? 'Freedom earned'
-        : 'Freedom not yet earned';
+        ? context.l10n.freedomEarned
+        : context.l10n.freedomNotYetEarned;
     final String title, detail;
     if (!enabled) {
-      title = 'Freedom Control is off';
-      detail = 'Earn your apps back by keeping your word.';
+      title = context.l10n.freedomControlOff;
+      detail = context.l10n.freedomOffDetail;
     } else if (!eligibility.hasEligibleCommitments) {
-      title = 'Apps stay locked today';
-      detail = 'An empty day doesn’t earn Freedom. Commit a plan for tomorrow.';
+      title = context.l10n.appsStayLockedToday;
+      detail = context.l10n.emptyDayDetail;
     } else if (!eligibility.commitmentsCompleted) {
       final left = eligibility.eligibleCount - eligibility.completedCount;
-      title = 'Apps unlock at $time';
+      title = context.l10n.appsUnlockAt(time);
       detail = left == 1
-          ? 'Keep 1 more to earn it'
-          : 'Keep $left more to earn it';
+          ? context.l10n.keepMoreToEarn(1)
+          : context.l10n.keepMoreToEarn(left);
     } else if (!eligibility.tomorrowCommitted) {
-      title = 'Apps unlock at $time';
-      detail = 'Commit tomorrow’s plan to earn it';
+      title = context.l10n.appsUnlockAt(time);
+      detail = context.l10n.commitTomorrowToEarn;
     } else {
-      title = 'Waiting for Freedom Time';
-      detail = 'Everything’s kept. Apps unlock at $time';
+      title = context.l10n.waitingForFreedomTime;
+      detail = context.l10n.everythingKeptUnlockAt(time);
     }
     return Tooltip(
       key: const ValueKey('freedom-indicator'),
@@ -757,7 +763,7 @@ class _FreedomStrip extends StatelessWidget {
           InkWell(
             onTap: enabled ? onToggle : onTurnOn,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+              padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 10, 12),
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final compact =
@@ -772,7 +778,7 @@ class _FreedomStrip extends StatelessWidget {
                       backgroundColor: scheme.primary.withValues(alpha: .22),
                       foregroundColor: scheme.onSurface,
                     ),
-                    child: const Text('Turn on'),
+                    child: Text(context.l10n.turnOn),
                   );
                   final text = Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -816,8 +822,8 @@ class _FreedomStrip extends StatelessWidget {
                               ? Icons.expand_less_rounded
                               : Icons.expand_more_rounded,
                           semanticLabel: open
-                              ? 'Hide Freedom details'
-                              : 'Show Freedom details',
+                              ? context.l10n.hideFreedomDetails
+                              : context.l10n.showFreedomDetails,
                           color: scheme.onSurfaceVariant,
                         ),
                     ],
@@ -828,7 +834,7 @@ class _FreedomStrip extends StatelessWidget {
           ),
           if (enabled && open)
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+              padding: const EdgeInsetsDirectional.fromSTEB(14, 10, 14, 14),
               child: _FreedomDetails(eligibility: eligibility),
             ),
         ],
@@ -860,15 +866,15 @@ class _EmptyToday extends StatelessWidget {
         children: [
           Text(
             locked == null
-                ? 'A clear day.'
-                : 'All set for ${daylockWeekday(locked.date)}.',
+                ? context.l10n.aClearDay
+                : context.l10n.allSetFor(daylockWeekday(locked.date)),
             style: theme.textTheme.headlineLarge,
           ),
           const SizedBox(height: DaylockSpace.sm),
           Text(
             locked == null
-                ? 'No commitments for today. Plan tomorrow, and tomorrow’s sun is yours to raise.'
-                : 'Nothing planned today, and tomorrow is locked in. Rest is the plan.',
+                ? context.l10n.emptyTodayNoPlan
+                : context.l10n.emptyTodayLocked,
             style: theme.textTheme.bodyLarge!.copyWith(
               color: scheme.onSurfaceVariant,
             ),
@@ -885,19 +891,27 @@ class _EmptyToday extends StatelessWidget {
                     size: 36,
                   ),
                   title: Text(
-                    '${daylockWeekday(locked.date)}’s ${locked.tasks.length}',
+                    context.l10n.weekdayCommitmentCount(
+                      daylockWeekday(locked.date),
+                      locked.tasks.length,
+                    ),
                     style: theme.textTheme.titleLarge,
                   ),
                   trailing: onPlanRequested == null
                       ? null
                       : TextButton(
                           onPressed: onPlanRequested,
-                          child: const Text('View'),
+                          child: Text(context.l10n.view),
                         ),
                 ),
                 for (final task in locked.tasks.take(5))
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 16, 12),
+                    padding: const EdgeInsetsDirectional.fromSTEB(
+                      20,
+                      12,
+                      16,
+                      12,
+                    ),
                     child: Row(
                       children: [
                         Container(
@@ -930,7 +944,7 @@ class _EmptyToday extends StatelessWidget {
           ] else if (onPlanRequested != null) ...[
             const SizedBox(height: DaylockSpace.lg),
             DaylockAction(
-              label: 'Plan tomorrow',
+              label: context.l10n.planTomorrow,
               icon: Icons.arrow_forward_rounded,
               onPressed: onPlanRequested,
             ),

@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -58,19 +60,20 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   Timer? _timeout;
   final _scroll = ScrollController();
   String? _message;
-  static const _titles = [
-    'Take Back Control',
-    'Set Up App Blocking',
-    'Choose Your Distractions',
-    'Set Your First Commitment',
-    // Retired feature-tour pages; the tour now runs in the real app.
-    '',
-    '',
-    '',
-    '',
-    "You're Almost Ready!",
-    "You're All Set!",
-  ];
+  String _title(int step) {
+    final l = context.l10n;
+    return switch (step) {
+      0 => l.setupTitleWelcome,
+      1 => l.setupTitleBlocking,
+      2 => l.setupTitleApps,
+      3 => l.setupTitleCommitment,
+      OnboardingSteps.test => l.setupTitleTest,
+      OnboardingSteps.ready => l.setupTitleReady,
+      // Retired feature-tour pages; the tour now runs in the real app.
+      _ => '',
+    };
+  }
+
   @override
   void initState() {
     super.initState();
@@ -115,7 +118,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       _timeout?.cancel();
       _verified = true;
       _testing = false;
-      _message = 'Verified: Android displayed the Daylock lock screen.';
+      _message = context.l10n.setupVerified;
     }
     setState(() {});
   }
@@ -161,9 +164,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       return true;
     } catch (_) {
       if (mounted) {
-        setState(
-          () => _message = 'Could not save setup progress. Please retry.',
-        );
+        setState(() => _message = context.l10n.setupSaveProgressFailed);
       }
       return false;
     } finally {
@@ -181,7 +182,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         DateTime.now().millisecondsSinceEpoch,
       );
       _testedPackage = s.selectedPackages.first;
-      _message = 'Opening your selected app. Return to Daylock after checking the lock screen.';
+      _message = context.l10n.setupOpeningApp;
     });
     await widget.bridge.testRestrictedApp(_testedPackage!);
     if (!mounted) return;
@@ -190,9 +191,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       if (mounted && !_verified) {
         setState(() {
           _testing = false;
-          _message =
-              'Lock screen not confirmed. Check Accessibility is connected, then retry. '
-              'Android may return Home or restrict the lock-screen launch. Open Permissions & Diagnostics in Settings for the recorded result.';
+          _message = context.l10n.setupLockNotConfirmed;
         });
       }
     });
@@ -252,9 +251,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       if (mounted) setState(() => _powerReviewed = reviewed);
     } catch (_) {
       if (mounted) {
-        setState(
-          () => _message = 'Could not save your confirmation. Please retry.',
-        );
+        setState(() => _message = context.l10n.setupSaveConfirmationFailed);
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -345,41 +342,41 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       case 0:
         return [
           Text(
-            'Plan your day. Earn your freedom. Keep your commitments before your distracting apps unlock.',
+            context.l10n.setupWelcomeBody,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 22),
           for (final entry in [
-            (Icons.bedtime_outlined, 'Plan tomorrow'),
-            (Icons.lock_outline, 'Block distractions'),
-            (Icons.check_circle_outline, 'Keep your word'),
-            (Icons.lock_open, 'Unlock apps'),
+            (
+              Icons.bedtime_outlined,
+              context.l10n.planTomorrow,
+              context.l10n.setupWelcomePlan,
+            ),
+            (
+              Icons.lock_outline,
+              context.l10n.setupBlockDistractions,
+              context.l10n.setupWelcomeBlock,
+            ),
+            (
+              Icons.check_circle_outline,
+              context.l10n.setupKeepYourWord,
+              context.l10n.setupWelcomeKeep,
+            ),
+            (
+              Icons.lock_open,
+              context.l10n.setupUnlockApps,
+              context.l10n.setupWelcomeUnlock,
+            ),
           ])
-            _card(entry.$1, entry.$2, switch (entry.$2) {
-              'Plan tomorrow' =>
-                'Choose a few meaningful commitments the evening before.',
-              'Block distractions' => 'You choose which apps to restrict.',
-              'Keep your word' =>
-                'Keep today’s commitments, then lock in tomorrow’s plan.',
-              _ => 'Reach your Freedom Time and enjoy your earned break.',
-            }),
+            _card(entry.$1, entry.$2, entry.$3),
         ];
       case 1:
         return [
           if (s.xiaomiDevice)
             _card(
               Icons.battery_saver_outlined,
-              'Xiaomi / Poco: keep blocking active',
-              'HyperOS can pause Daylock in the background even while Accessibility shows enabled. '
-                  'A test inside Daylock may work while opening Instagram from Home does not.\n\n'
-                  'In this app’s App info:\n'
-                  '• Autostart: on\n'
-                  '• Battery saver (or Power): No restrictions\n'
-                  '• Other permissions → Display pop-up windows while running in the background: allow\n\n'
-                  'Swiping Daylock away in Recents or using “Clean” can still stop blocking. '
-                  'If that happens, Today shows a warning: turn Daylock off and on in Accessibility.\n\n'
-                  'Use the settings for this installed Daylock app; Daylock Dev and the Play version have separate settings. '
-                  'Daylock cannot read these Xiaomi choices. Confirm them yourself below, then test normal app openings too.',
+              context.l10n.setupXiaomiTitle,
+              context.l10n.setupXiaomiBody,
               action: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -387,7 +384,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     key: const ValueKey('setup-app-power'),
                     onPressed: widget.bridge.openAppSettings,
                     icon: const Icon(Icons.open_in_new),
-                    label: const Text('Open Daylock App info'),
+                    label: Text(context.l10n.setupOpenAppInfo),
                   ),
                   CheckboxListTile(
                     key: const ValueKey('setup-power-reviewed'),
@@ -396,12 +393,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     onChanged: _busy
                         ? null
                         : (value) => _reviewPower(value == true),
-                    title: const Text(
-                      'I changed these settings for this Daylock app',
-                    ),
-                    subtitle: const Text(
-                      'Your confirmation; not automatically verified.',
-                    ),
+                    title: Text(context.l10n.setupXiaomiConfirm),
+                    subtitle: Text(context.l10n.setupXiaomiConfirmNote),
                   ),
                 ],
               ),
@@ -410,23 +403,21 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Text(
-                'App blocking is optional. Without it, Daylock still plans your days and tracks your commitments. '
-                'You can turn it on later in Settings.',
+                context.l10n.setupBlockingOptional,
                 key: const ValueKey('setup-blocking-optional'),
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
             ),
           _card(
             Icons.accessibility_new,
-            'Accessibility access · optional',
+            context.l10n.setupAccessibilityTitle,
             !s.supported
-                ? 'Blocking is available on Android. You can still use the planner here.'
+                ? context.l10n.setupBlockingAndroidOnly
                 : s.enabled && s.connected
-                ? 'Enabled and connected. Daylock is ready to detect selected apps.'
+                ? context.l10n.setupAccessibilityConnected
                 : s.enabled
-                ? 'Enabled. Waiting for Android to connect the service. Tap Refresh after returning.'
-                : 'Daylock detects when a selected app opens and can show its lock screen or return Home. '
-                      'Screen contents are never read. Access is optional and can be revoked in Android Settings.',
+                ? context.l10n.setupAccessibilityWaiting
+                : context.l10n.setupAccessibilityExplain,
             checked: s.enabled && s.connected,
             action: !s.supported || (s.enabled && s.connected)
                 ? null
@@ -435,15 +426,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       context,
                       widget.bridge,
                     ),
-                    child: const Text('Enable Accessibility'),
+                    child: Text(context.l10n.setupEnableAccessibility),
                   ),
           ),
           _card(
             Icons.notifications_none,
-            'Notifications · optional',
+            context.l10n.setupNotificationsTitle,
             n.permission == NotificationPermission.allowed
-                ? 'Allowed. Local reminders and fallback restriction notices can appear.'
-                : 'Allow local reminders and a notice when Android cannot display the lock screen. You can continue without notifications.',
+                ? context.l10n.setupNotificationsAllowed
+                : context.l10n.setupNotificationsExplain,
             checked: n.permission == NotificationPermission.allowed,
             action:
                 n.permission == NotificationPermission.allowed ||
@@ -458,29 +449,20 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       }
                       await widget.notifications.refresh();
                     },
-                    child: const Text('Allow notifications'),
+                    child: Text(context.l10n.setupAllowNotifications),
                   ),
           ),
           TextButton(
             onPressed: () => widget.bridge.refresh(),
-            child: const Text('Refresh permission status'),
+            child: Text(context.l10n.setupRefreshPermissions),
           ),
-          const Text(
-            'On Xiaomi / HyperOS, Samsung and Pixel, settings names vary. '
-            'Choose this installed Daylock app’s service. If “Restricted settings” appears, '
-            'review App info → Allow restricted settings only for a build you trust. '
-            'If the service is enabled but disconnected, toggle it off and on once.',
-          ),
+          Text(context.l10n.setupAccessibilityOemHelp),
         ];
       case 2:
         return [
-          const Text(
-            'Choose apps you want to open more intentionally. Your selections stay on this device.',
-          ),
+          Text(context.l10n.setupChooseAppsBody),
           const SizedBox(height: 12),
-          const Text(
-            'Turning on app restrictions here also enables Freedom Control at your saved Freedom Time.',
-          ),
+          Text(context.l10n.setupRestrictionsEnableFreedom),
           if (s.supported)
             RestrictedAppsSection(
               bridge: widget.bridge,
@@ -491,24 +473,21 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 } catch (_) {
                   if (mounted) {
                     setState(
-                      () => _message =
-                          'Could not save blocking settings. Please retry.',
+                      () => _message = context.l10n.setupSaveBlockingFailed,
                     );
                   }
                 }
               },
             )
           else
-            const Text('Installed-app selection is available on Android.'),
+            Text(context.l10n.setupAppSelectionAndroidOnly),
         ];
       case 3:
         return [
           _card(
             Icons.flag_outlined,
-            'One small step for tomorrow',
-            'Today’s plan is already locked. Your first new commitment goes into tomorrow’s real plan. '
-                'Apps unlock when all eligible commitments are complete, Freedom Time is reached, and tomorrow’s plan is committed. '
-                'An empty day does not earn Freedom.',
+            context.l10n.setupOneSmallStep,
+            context.l10n.setupFirstCommitmentBody,
             checked: widget.hasGoal(),
             action: FilledButton.icon(
               onPressed: _busy
@@ -521,7 +500,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         if (mounted) {
                           setState(
                             () => _message =
-                                'Could not save your commitment. Please retry.',
+                                context.l10n.setupSaveCommitmentFailed,
                           );
                         }
                       } finally {
@@ -529,24 +508,19 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       }
                     },
               icon: const Icon(Icons.add),
-              label: const Text('Create a commitment'),
+              label: Text(context.l10n.setupCreateCommitment),
             ),
           ),
-          if (widget.hasGoal())
-            const Text(
-              'Your plan already contains a commitment. You can continue without creating another.',
-            ),
+          if (widget.hasGoal()) Text(context.l10n.setupAlreadyHasCommitment),
         ];
       case OnboardingSteps.test:
         return [
           _card(
             Icons.verified_outlined,
-            'Try your real app restriction',
+            context.l10n.setupTestTitle,
             !s.supported
-                ? 'Blocking tests require the Android app.'
-                : 'Open a selected app and look for Daylock’s lock screen. Return here to see the result. '
-                      'Also open it normally from Home after leaving Daylock in the background: this test confirms only one opening. '
-                      'This uses your real Freedom conditions and never completes a goal for you.',
+                ? context.l10n.setupTestAndroidOnly
+                : context.l10n.setupTestBody,
             checked: _verified,
             action: !s.supported
                 ? null
@@ -560,7 +534,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         ? _test
                         : null,
                     icon: const Icon(Icons.play_arrow),
-                    label: Text(_testing ? 'Checking…' : 'Test a selected app'),
+                    label: Text(
+                      _testing
+                          ? context.l10n.setupChecking
+                          : context.l10n.setupTestSelectedApp,
+                    ),
                   ),
           ),
           if (s.supported &&
@@ -573,54 +551,47 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 } catch (_) {
                   if (mounted) {
                     setState(
-                      () => _message =
-                          'Could not save blocking settings. Please retry.',
+                      () => _message = context.l10n.setupSaveBlockingFailed,
                     );
                   }
                 }
               },
-              child: const Text('Enable Freedom Control and app restrictions'),
+              child: Text(context.l10n.setupEnableFreedomAndRestrictions),
             ),
           if (s.supported && s.freedomState != 'notEarned')
             Text(
-              'Current Freedom: ${InstagramDetectionStatus.freedomLabel(s.freedomState)}. '
-              'The real test needs Freedom Control on and Freedom not yet earned. '
-              'You can leave setup and return from Settings when those conditions apply.',
+              context.l10n.setupTestNeedsFreedom(
+                context.l10n.freedomState(s.freedomState),
+              ),
             ),
           if (!_permissionReady)
-            const Text(
-              'Accessibility is not connected. Go back to permission setup.',
-            ),
-          if (!_powerReady)
-            const Text(
-              'Go back to Set Up App Blocking and confirm the Xiaomi battery setting so blocking keeps working.',
-            ),
+            Text(context.l10n.setupAccessibilityNotConnected),
+          if (!_powerReady) Text(context.l10n.setupConfirmXiaomi),
           if (s.error != null) Text(s.error!),
           TextButton(
             onPressed: () => widget.bridge.refresh(),
-            child: const Text('Refresh and retry'),
+            child: Text(context.l10n.setupRefreshRetry),
           ),
         ];
       default:
         return [
           _card(
             Icons.auto_awesome,
-            'Make room for what matters',
-            'Your preferences and commitment are saved. Start with Today, plan tomorrow, and watch your Journey grow.',
+            context.l10n.setupReadyTitle,
+            context.l10n.setupReadyBody,
             checked: true,
           ),
           if (widget.onTourRequested != null)
             _card(
               Icons.explore_outlined,
-              'Take a quick tour',
-              'We’ll walk through the real Today, Plan and Journey screens and point out what each part does. '
-                  'It takes about a minute, and you can skip it any time.',
+              context.l10n.setupTourTitle,
+              context.l10n.setupTourBody,
             ),
           if (s.supported && !_blockingSetUp)
             _card(
               Icons.lock_open_outlined,
-              'App blocking is off',
-              'Daylock won’t restrict any apps. If you want it later, open Settings and turn on app restrictions.',
+              context.l10n.setupBlockingOff,
+              context.l10n.setupBlockingOffBody,
             ),
           if (widget.onTourRequested != null)
             Center(
@@ -629,7 +600,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 onPressed: _busy || !_canContinue
                     ? null
                     : () => _finish(tour: false),
-                child: const Text('Skip the tour'),
+                child: Text(context.l10n.setupSkipTour),
               ),
             ),
         ];
@@ -657,18 +628,18 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           final controls = SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              padding: const EdgeInsetsDirectional.fromSTEB(12, 8, 12, 0),
               child: Row(
                 children: [
                   if (_step > 0)
                     DaylockSkyButton(
-                      tooltip: 'Previous step',
+                      tooltip: context.l10n.previousStep,
                       icon: Icons.arrow_back_rounded,
                       onPressed: _busy ? null : () => _move(_previousStep),
                     ),
                   const Spacer(),
                   DaylockSkyButton(
-                    tooltip: 'Save & leave',
+                    tooltip: context.l10n.saveAndLeave,
                     icon: Icons.close_rounded,
                     onPressed: _busy ? null : widget.onExit,
                   ),
@@ -713,12 +684,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                     child: SafeArea(
                                       bottom: false,
                                       child: Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                          12,
-                                          8,
-                                          12,
-                                          0,
-                                        ),
+                                        padding:
+                                            const EdgeInsetsDirectional.fromSTEB(
+                                              12,
+                                              8,
+                                              12,
+                                              0,
+                                            ),
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
@@ -726,14 +698,17 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                             const SizedBox(height: 48),
                                             Padding(
                                               padding:
-                                                  const EdgeInsets.fromLTRB(
+                                                  const EdgeInsetsDirectional.fromSTEB(
                                                     12,
                                                     4,
                                                     12,
                                                     0,
                                                   ),
                                               child: Text(
-                                                'Step ${_position + 1} of ${_sequence.length}',
+                                                context.l10n.stepNOfM(
+                                                  _position + 1,
+                                                  _sequence.length,
+                                                ),
                                                 style: theme
                                                     .textTheme
                                                     .labelLarge!
@@ -779,7 +754,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                 },
                                 child: Padding(
                                   key: ValueKey(_step),
-                                  padding: const EdgeInsets.fromLTRB(
+                                  padding: const EdgeInsetsDirectional.fromSTEB(
                                     24,
                                     4,
                                     24,
@@ -792,7 +767,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                       Semantics(
                                         header: true,
                                         child: Text(
-                                          _titles[_step],
+                                          _title(_step),
                                           style: theme.textTheme.headlineLarge,
                                         ),
                                       ),
@@ -819,7 +794,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       SafeArea(
                         top: false,
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                          padding: const EdgeInsetsDirectional.fromSTEB(
+                            24,
+                            8,
+                            24,
+                            16,
+                          ),
                           child: SizedBox(
                             width: double.infinity,
                             child: FilledButton(
@@ -831,19 +811,21 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                     )
                                   : () => _move(_nextStep),
                               child: Text(switch (_step) {
-                                0 => 'Get Started',
+                                0 => context.l10n.getStarted,
                                 1
                                     when !_blockingSetUp &&
                                         widget.bridge.status.value.supported =>
-                                  'Continue without blocking',
+                                  context.l10n.continueWithoutBlocking,
                                 OnboardingSteps.test when !_verified =>
-                                  'Skip test for now',
-                                OnboardingSteps.test => 'Finish Setup',
+                                  context.l10n.skipTestForNow,
+                                OnboardingSteps.test =>
+                                  context.l10n.finishSetup,
                                 OnboardingSteps.ready
                                     when widget.onTourRequested != null =>
-                                  'Take the tour',
-                                OnboardingSteps.ready => 'Go to Daylock',
-                                _ => 'Continue',
+                                  context.l10n.takeTheTour,
+                                OnboardingSteps.ready =>
+                                  context.l10n.goToDaylock,
+                                _ => context.l10n.continueLabel,
                               }),
                             ),
                           ),

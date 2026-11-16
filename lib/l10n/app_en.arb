@@ -1,0 +1,1455 @@
+{
+  "@@locale": "en",
+  "appTitle": "Daylock",
+  "appearanceDark": "Dark",
+  "appearanceLight": "Light",
+  "appearanceSystem": "System",
+  "colourViolet": "Violet",
+  "colourOcean": "Ocean",
+  "colourForest": "Forest",
+  "colourEmber": "Ember",
+  "colourRose": "Rose",
+  "colourMono": "Mono",
+  "illustrationCelebration": "Celebration",
+  "illustrationDriving": "Driving",
+  "illustrationAward": "Award",
+  "illustrationCooking": "Cooking",
+  "illustrationTravel": "Travel",
+  "illustrationFitness": "Fitness",
+  "illustrationLearning": "Learning",
+  "illustrationHealth": "Health",
+  "illustrationWork": "Work",
+  "illustrationHome": "Home",
+  "illustrationPeople": "People",
+  "illustrationCreativity": "Creativity",
+  "illustrationSunrise": "Sunrise",
+  "outcomeIncomplete": "Incomplete",
+  "outcomeCompleted": "Completed",
+  "outcomeExcused": "Excused",
+  "sourceLocal": "Local",
+  "sourceGoogle": "Google Calendar",
+  "sourceMicrosoftPersonal": "Microsoft Personal",
+  "sourceMicrosoftWorkSchool": "Microsoft Work/School",
+  "freedomStateEarned": "Earned",
+  "freedomStateNotEarned": "Not earned",
+  "freedomStateControlOff": "Control off",
+  "freedomStateUnknown": "Unknown",
+  "listSeparator": ", ",
+  "repeatDaily": "Daily",
+  "repeatEveryDays": "{count, plural, =1{Every day} other{Every {count} days}}",
+  "@repeatEveryDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "repeatWeekdays": "Weekdays",
+  "repeatWeekends": "Weekends",
+  "eventContinuesAllDay": "Continues all day",
+  "eventEarlier": "Earlier",
+  "eventNextDay": "Next day",
+  "eventUntil": "Until {time}",
+  "@eventUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "eventAllDay": "All day",
+  "durationMinutes": "{minutes} min",
+  "@durationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "durationUnderMinute": "<1 min",
+  "durationHours": "{hours} hr",
+  "@durationHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHoursMinutes": "{hours} hr {minutes} min",
+  "@durationHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsFreedomControl": "Freedom Control",
+  "settingsPlanningRoutines": "Planning & Routines",
+  "settingsAppearance": "Appearance",
+  "settingsNotifications": "Notifications",
+  "settingsAbout": "About",
+  "settingsRestrictedApps": "Restricted Apps",
+  "settingsPermissionsDiagnostics": "Permissions & Diagnostics",
+  "settingsManageRoutines": "Manage routines",
+  "routineCount": "{count, plural, =1{1 routine} other{{count} routines}}",
+  "@routineCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsRoutinesIntro": "Plan your next steps with recurring commitments.",
+  "settingsNotificationsUnavailable": "Notification controls are unavailable on this device.",
+  "keepYourWord": "Keep your word.",
+  "settingsAboutCommitments": "Commitments, optional stopwatches and progress in the areas that matter.",
+  "settingsRestrictedIntro": "Choose which supported Android apps to restrict until Freedom is earned.",
+  "settingsRestrictionsAndroidOnly": "App restrictions are available on Android.",
+  "settingsDiagnosticsAndroidOnly": "Accessibility diagnostics are available on Android.",
+  "freedomTime": "Freedom Time",
+  "settingsRestrictionNeedsAttention": "App restriction status needs attention",
+  "settingsSelectedSwitchOn": "{count} selected, switch on",
+  "@settingsSelectedSwitchOn": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsSelectedSwitchOff": "{count} selected, switch off",
+  "@settingsSelectedSwitchOff": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "accessibility": "Accessibility",
+  "statusUnavailable": "Status unavailable",
+  "availableOnAndroid": "Available on Android",
+  "serviceConnected": "Service connected",
+  "waitingForConnection": "Waiting for connection",
+  "serviceDisabled": "Service disabled",
+  "settingsChooseInstalledApps": "Choose installed Android apps",
+  "settingsFreedomSubtitle": "Restricted apps, Freedom Time and permissions",
+  "on": "On",
+  "off": "Off",
+  "settingsPlanningSubtitle": "Recurring commitments and planning",
+  "settingsAppearanceSubtitle": "Theme, colours and Areas",
+  "settingsNotificationsSubtitle": "Reminders and alerts",
+  "settingsTitle": "Settings",
+  "settingsRunSetup": "Run Setup Tutorial",
+  "settingsRunSetupSubtitle": "Permissions, distractions and your first commitment",
+  "settingsTakeTour": "Take the App Tour",
+  "settingsTakeTourSubtitle": "A guided look at Today, Plan and Journey",
+  "settingsAboutSubtitle": "App information",
+  "tagline": "Plan your day. Earn your freedom.",
+  "freedomStatusUnavailable": "Freedom status unavailable",
+  "freedomControlOff": "Freedom Control is off",
+  "appearanceFollowsDevice": "Follows your device appearance.",
+  "appearanceFixed": "{mode} appearance, in any device mode.",
+  "@appearanceFixed": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "appearanceColourTheme": "COLOUR THEME",
+  "appearanceLivePreview": "LIVE PREVIEW",
+  "manageAreas": "Manage Areas",
+  "activeAreas": "{count, plural, =1{1 active Area} other{{count} active Areas}}",
+  "@activeAreas": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "appearancePreviewLabel": "Appearance preview. Example commitment styling.",
+  "today": "Today",
+  "appearancePreviewComplete": "1 / 2 complete",
+  "appearancePreviewProgress": "Example progress",
+  "appearancePreviewRecorded": "23:00 recorded",
+  "keptTaskAnnouncement": "Kept {name}",
+  "@keptTaskAnnouncement": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "todayEarnedTomorrowLocked": "You kept your word and {weekday} is already committed. Enjoy it.",
+  "@todayEarnedTomorrowLocked": {
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      }
+    }
+  },
+  "todayEarned": "You kept your word. Enjoy it.",
+  "commitments": "Commitments",
+  "taskActions": "Task actions",
+  "showFewerCommitments": "Show fewer commitments",
+  "showAllCommitments": "Show all {count} commitments",
+  "@showAllCommitments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "excusedCount": "{count} excused",
+  "@excusedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "keptName": "Kept: {name}",
+  "@keptName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "undo": "Undo",
+  "timedHoursMinutes": "{hours}h {minutes}m",
+  "@timedHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "timedMinutesSeconds": "{minutes}m {seconds}s",
+  "@timedMinutesSeconds": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "timedSeconds": "{seconds}s",
+  "@timedSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "noEligibleCommitments": "No eligible commitments",
+  "keptOfEligible": "{kept} of {total} kept",
+  "@keptOfEligible": {
+    "placeholders": {
+      "kept": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "excusedDontCount": "Excused commitments don’t count",
+  "dayComplete": "Day complete",
+  "moreUntilSunUp": "{count} more and the sun is up",
+  "@moreUntilSunUp": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timedSuffix": "{duration} timed",
+  "@timedSuffix": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "commitmentsComplete": "Commitments complete",
+  "todayRestrictionsInSettings": "App restrictions are configured in Settings.",
+  "freedomEarned": "Freedom earned",
+  "showFreedomDetails": "Show Freedom details",
+  "appsUnlockedAt": "Apps unlocked at {time}",
+  "@appsUnlockedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "freedomEarnedTitle": "Freedom earned.",
+  "freedomNotYetEarned": "Freedom not yet earned",
+  "freedomOffDetail": "Earn your apps back by keeping your word.",
+  "appsStayLockedToday": "Apps stay locked today",
+  "emptyDayDetail": "An empty day doesn’t earn Freedom. Commit a plan for tomorrow.",
+  "appsUnlockAt": "Apps unlock at {time}",
+  "@appsUnlockAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "keepMoreToEarn": "Keep {count} more to earn it",
+  "@keepMoreToEarn": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commitTomorrowToEarn": "Commit tomorrow’s plan to earn it",
+  "waitingForFreedomTime": "Waiting for Freedom Time",
+  "everythingKeptUnlockAt": "Everything’s kept. Apps unlock at {time}",
+  "@everythingKeptUnlockAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "turnOn": "Turn on",
+  "hideFreedomDetails": "Hide Freedom details",
+  "aClearDay": "A clear day.",
+  "allSetFor": "All set for {weekday}.",
+  "@allSetFor": {
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      }
+    }
+  },
+  "emptyTodayNoPlan": "No commitments for today. Plan tomorrow, and tomorrow’s sun is yours to raise.",
+  "emptyTodayLocked": "Nothing planned today, and tomorrow is locked in. Rest is the plan.",
+  "weekdayCommitmentCount": "{weekday}’s {count}",
+  "@weekdayCommitmentCount": {
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "view": "View",
+  "planTomorrow": "Plan tomorrow",
+  "repeatNever": "Never",
+  "repeatCustom": "Custom…",
+  "repeat": "Repeat",
+  "repeatClose": "Close repeat options",
+  "repeatDaysOfWeek": "Days of week",
+  "repeatEveryNDays": "Every N days",
+  "repeatEvery": "Every",
+  "repeatFewerDays": "Fewer days",
+  "repeatMoreDays": "More days",
+  "repeatPickOneDay": "Pick at least one day.",
+  "repeatOnlyThisDay": "Only this day. It won’t repeat.",
+  "repeatNext": "Next: {dates}",
+  "@repeatNext": {
+    "placeholders": {
+      "dates": {
+        "type": "String"
+      }
+    }
+  },
+  "done": "Done",
+  "editCommitment": "Edit commitment",
+  "saveChanges": "Save changes",
+  "removeCommitmentTitle": "Remove commitment?",
+  "removeFromDraft": "Remove {name} from tomorrow’s draft?",
+  "@removeFromDraft": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cancel": "Cancel",
+  "remove": "Remove",
+  "areaFor": "Area for {name}",
+  "@areaFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "lockInWeekdayQuestion": "Lock in {weekday}?",
+  "@lockInWeekdayQuestion": {
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      }
+    }
+  },
+  "lockInConfirmOne": "This locks your commitment for {weekday}. You won’t be able to add or change it.",
+  "@lockInConfirmOne": {
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      }
+    }
+  },
+  "lockInConfirmMany": "This locks your {count} commitments for {weekday}. You won’t be able to add or change them.",
+  "@lockInConfirmMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "weekday": {
+        "type": "String"
+      }
+    }
+  },
+  "keepPlanning": "Keep planning",
+  "lockItIn": "Lock it in",
+  "plan": "Plan",
+  "tomorrowDate": "Tomorrow · {date}",
+  "@tomorrowDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "committed": "Committed",
+  "draft": "Draft",
+  "schedule": "Schedule",
+  "noScheduledEventsTomorrow": "No scheduled events for tomorrow.",
+  "scheduledEvents": "{count, plural, =1{1 scheduled event} other{{count} scheduled events}}",
+  "@scheduledEvents": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commitmentsCount": "Commitments · {count}",
+  "@commitmentsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "add": "Add",
+  "addACommitment": "Add a commitment",
+  "noCommitmentsPlanned": "No commitments planned yet.",
+  "tomorrowIsLocked": "Tomorrow is locked.",
+  "addOneSmallStep": "Add one small step for tomorrow.",
+  "lockInWeekday": "Lock in {weekday}",
+  "@lockInWeekday": {
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      }
+    }
+  },
+  "addOneToLockIn": "Add at least one commitment to lock in {weekday}.",
+  "@addOneToLockIn": {
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      }
+    }
+  },
+  "locksThisCommitment": "Locks this commitment. You can’t change it after.",
+  "locksTheseCommitments": "Locks these {count}. You can’t change them after.",
+  "@locksTheseCommitments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "archivedArea": "{name} (archived)",
+  "@archivedArea": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "actionsFor": "Actions for {name}",
+  "@actionsFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "removeCommitment": "Remove commitment",
+  "tomorrowPlanCommitted": "Tomorrow's plan is committed.",
+  "yourCommitmentsLocked": "Your commitments are locked.",
+  "nextTomorrow": "next: tomorrow",
+  "nextDate": "next: {date}",
+  "@nextDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "rotationSummary": "{count} steps · up next: {name}",
+  "@rotationSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteRoutineTitle": "Delete routine?",
+  "deleteRoutineBody": "Stop repeating {name}? Commitments already in your plans and history stay.",
+  "@deleteRoutineBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "delete": "Delete",
+  "routines": "Routines",
+  "routinesIntro": "Routines add themselves to tomorrow’s plan on the days they’re due. Remove one from a plan to skip just that day. A rotation with several steps moves on only after a step stays in your plan.",
+  "createRoutineOrRotation": "Create routine or rotation",
+  "noRoutinesYet": "No routines yet.",
+  "edit": "Edit",
+  "newRoutineStep": "New routine step",
+  "editRoutineStep": "Edit routine step",
+  "addStep": "Add step",
+  "saveStep": "Save step",
+  "createRoutine": "Create routine",
+  "editRoutine": "Edit routine",
+  "routineName": "Routine name",
+  "routineRotationHelp": "A rotation: each due day adds the next step, in this order. A step you remove comes back next time.",
+  "routineSingleHelp": "Each due day adds this to tomorrow’s plan automatically. Add more steps to make a rotation.",
+  "editStepN": "Edit step {number}",
+  "@editStepN": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "moveStepUp": "Move step {number} up",
+  "@moveStepUp": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "moveStepDown": "Move step {number} down",
+  "@moveStepDown": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "removeStepN": "Remove step {number}",
+  "@removeStepN": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "addCommitment": "Add commitment",
+  "addRotationStep": "Add rotation step",
+  "saveRoutine": "Save routine",
+  "newCommitment": "New commitment",
+  "partOfRotation": "Part of a rotation. Change it in Routines.",
+  "commitmentHint": "One small, specific step",
+  "closeEditor": "Close editor",
+  "commitmentName": "Commitment name",
+  "statusKept": "Kept",
+  "statusNotKeptYet": "Not kept yet",
+  "durationRecorded": "{duration} recorded",
+  "@durationRecorded": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "excuseReason": "Excuse reason",
+  "markCompleted": "Mark completed",
+  "excuseTask": "Excuse task",
+  "resetToIncomplete": "Reset to incomplete",
+  "excuseCommitment": "Excuse commitment",
+  "excusePrompt": "What outside circumstance prevented you from completing it?",
+  "reason": "Reason",
+  "enterShortReason": "Enter a short reason.",
+  "shortenReason": "Please shorten this reason.",
+  "durationMinutesSeconds": "{minutes} min {seconds} s",
+  "@durationMinutesSeconds": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "loadFailed": "Could not load your saved commitments.",
+  "loadingDay": "Getting your day ready.",
+  "retry": "Retry",
+  "loadingCommitments": "Loading commitments",
+  "journey": "Journey",
+  "dayStreakLabel": "{count, plural, =1{1 day streak} other{{count} day streak}}",
+  "@dayStreakLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dayStreakWord": "{count, plural, =1{day streak} other{day streak}}",
+  "@dayStreakWord": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "streakStartHint": "Keep all of today to start one",
+  "streakLongestYet": "Your longest yet",
+  "streakLongest": "{count, plural, =1{Longest: 1 day} other{Longest: {count} days}}",
+  "@streakLongest": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "totalKept": "kept",
+  "totalFocused": "focused",
+  "shortMinutes": "{minutes}m",
+  "@shortMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "shortHours": "{hours}h",
+  "@shortHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "achievements": "Achievements",
+  "seeAll": "See all {count}",
+  "@seeAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addAchievement": "Add achievement",
+  "last5Weeks": "Last 5 weeks",
+  "dailyHistory": "Daily history",
+  "yourAreas": "Your Areas",
+  "manage": "Manage",
+  "pastChapters": "Past Chapters",
+  "areasArchived": "Areas you’ve archived",
+  "achievementSemantics": "Achievement: {title}, {date}",
+  "@achievementSemantics": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "areaUnavailable": "Area unavailable",
+  "keepAMoment": "Keep a moment that matters.",
+  "addAnAchievement": "Add an achievement",
+  "achievementExamples": "A driving licence, a first 10k, a finished chapter.",
+  "last5WeeksKept": "{count, plural, =1{Last 5 weeks: 1 day fully kept} other{Last 5 weeks: {count} days fully kept}}",
+  "@last5WeeksKept": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "legendAllKept": "All kept",
+  "legendSomeKept": "Some kept",
+  "legendMissed": "Missed",
+  "keptThisWeek": "{count} this week",
+  "@keptThisWeek": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "areaKeptThisWeek": "{area}: {count} kept this week",
+  "@areaKeptThisWeek": {
+    "placeholders": {
+      "area": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "last30Days": "Last 30 days",
+  "allTime": "All time",
+  "completedCommitments": "{count, plural, =1{1 completed commitment} other{{count} completed commitments}}",
+  "@completedCommitments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recordedTime": "{duration} recorded time",
+  "@recordedTime": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "stopwatchExplainer": "Stopwatch time records actual effort, including incomplete commitments.",
+  "activityOverTime": "ACTIVITY OVER TIME",
+  "trackedTime": "Tracked time",
+  "achievementsPlace": "A place for the moments you want to remember.",
+  "recordedCommitments": "Recorded commitments",
+  "recordsCount": "{count, plural, =1{1 record} other{{count} records}}",
+  "@recordsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recordsEmpty": "Your recorded commitments will appear here.",
+  "recordedTimeEmpty": "Recorded time will appear here.",
+  "completedEmpty": "Completed commitments will appear here.",
+  "activityDetails": "Activity details",
+  "activityRange": "{from} to {through}: {value}",
+  "@activityRange": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "through": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "activityDescriptionTime": "Last 30 days, recorded time. {days}",
+  "@activityDescriptionTime": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "activityDescriptionCompleted": "Last 30 days, completed commitments. {days}",
+  "@activityDescriptionCompleted": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "thirtyDaysTime": "30 days · time",
+  "thirtyDaysCompleted": "30 days · completed",
+  "completedCount": "{count} completed",
+  "@completedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "openSpace": "Open space",
+  "openArea": "Open Area",
+  "latestAchievement": "Latest achievement",
+  "pastChaptersIntro": "Parts of your life, kept here to revisit.",
+  "pastChaptersEmpty": "Archived Areas will stay here, along with their history.",
+  "savePendingBeforeStopwatch": "Save your pending changes before changing a stopwatch.",
+  "couldNotSaveAppearance": "Could not save appearance settings.",
+  "couldNotSaveSetup": "Could not save setup. Please retry from Settings.",
+  "tomorrowAlreadyCommitted": "Tomorrow’s plan is already committed. Existing commitments are kept. Add another after the next day starts.",
+  "firstCommitmentHeading": "Your first commitment · tomorrow",
+  "pausedTask": "Paused {name}.",
+  "@pausedTask": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "removedForWeekday": "Removed for {weekday}.",
+  "@removedForWeekday": {
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      }
+    }
+  },
+  "stopRepeating": "Stop repeating",
+  "stoppedRepeating": "Stopped repeating.",
+  "achievementsIntro": "Things you’re proud of: a driving licence, a first 10k, a finished chapter.",
+  "achievement": "Achievement",
+  "achievementRemoved": "This achievement has been removed.",
+  "deleteAchievementTitle": "Delete achievement?",
+  "deleteAchievementBody": "Remove “{title}”? Your commitments and Areas will stay as they are.",
+  "@deleteAchievementBody": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "keepAchievement": "Keep achievement",
+  "couldNotSaveChanges": "Could not save your changes.",
+  "tourDayTitle": "This is your day",
+  "tourDayBody": "The sun climbs as you keep today’s commitments. Keep them all and it’s fully risen.",
+  "tourCommitmentsTitle": "Today’s commitments",
+  "tourCommitmentsBody": "Tap the circle to keep one. Tap the row to run a stopwatch, or excuse it with a reason if something really came up.",
+  "tourFreedomTitle": "Freedom",
+  "tourFreedomBody": "Apps you restrict open at Freedom Time, once today is kept and tomorrow is locked in. Tap here any time to see what’s left.",
+  "tourPlanTitle": "Plan tomorrow",
+  "tourPlanBody": "Each evening, plan tomorrow while today is still fresh. Pick a few things you’ll really do.",
+  "tourAddTitle": "Add and repeat",
+  "tourAddBody": "Add a commitment and give it an Area. Turn on Repeat for habits, and they fill themselves in on their days.",
+  "tourLockTitle": "Lock it in",
+  "tourLockBody": "When tomorrow looks right, lock it in. After that it can’t change. That’s what makes it a commitment.",
+  "tourJourneyTitle": "Your Journey",
+  "tourJourneyBody": "Every kept day counts here: your streak, the effort you put in, and the achievements you’re proud of.",
+  "tourAreasTitle": "Areas",
+  "tourAreasBody": "Each Area tracks one part of your life, like Body, Mind or Career. Add, rename or archive them here. Further down, open one to see its history.",
+  "tourSettingsTitle": "Settings",
+  "tourSettingsBody": "Freedom Time, app blocking, routines, reminders and colours live here. You can replay this tour from Settings too.",
+  "stepOf": "{current} of {total}",
+  "@stepOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "skipTour": "Skip tour",
+  "back": "Back",
+  "next": "Next",
+  "tourStepSemantics": "App tour, step {current} of {total}",
+  "@tourStepSemantics": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "setupTourBody": "We’ll walk through the real Today, Plan and Journey screens and point out what each part does. It takes about a minute, and you can skip it any time.",
+  "setupTestBody": "Open a selected app and look for Daylock’s lock screen. Return here to see the result. Also open it normally from Home after leaving Daylock in the background: this test confirms only one opening. This uses your real Freedom conditions and never completes a goal for you.",
+  "setupFirstCommitmentBody": "Today’s plan is already locked. Your first new commitment goes into tomorrow’s real plan. Apps unlock when all eligible commitments are complete, Freedom Time is reached, and tomorrow’s plan is committed. An empty day does not earn Freedom.",
+  "setupAccessibilityOemHelp": "On Xiaomi / HyperOS, Samsung and Pixel, settings names vary. Choose this installed Daylock app’s service. If “Restricted settings” appears, review App info → Allow restricted settings only for a build you trust. If the service is enabled but disconnected, toggle it off and on once.",
+  "setupAccessibilityExplain": "Daylock detects when a selected app opens and can show its lock screen or return Home. Screen contents are never read. Access is optional and can be revoked in Android Settings.",
+  "setupBlockingOptional": "App blocking is optional. Without it, Daylock still plans your days and tracks your commitments. You can turn it on later in Settings.",
+  "setupXiaomiBody": "HyperOS can pause Daylock in the background even while Accessibility shows enabled. A test inside Daylock may work while opening Instagram from Home does not.\n\nIn this app’s App info:\n• Autostart: on\n• Battery saver (or Power): No restrictions\n• Other permissions → Display pop-up windows while running in the background: allow\n\nSwiping Daylock away in Recents or using “Clean” can still stop blocking. If that happens, Today shows a warning: turn Daylock off and on in Accessibility.\n\nUse the settings for this installed Daylock app; Daylock Dev and the Play version have separate settings. Daylock cannot read these Xiaomi choices. Confirm them yourself below, then test normal app openings too.",
+  "setupLockNotConfirmed": "Lock screen not confirmed. Check Accessibility is connected, then retry. Android may return Home or restrict the lock-screen launch. Open Permissions & Diagnostics in Settings for the recorded result.",
+  "setupVerified": "Verified: Android displayed the Daylock lock screen.",
+  "setupSaveProgressFailed": "Could not save setup progress. Please retry.",
+  "setupOpeningApp": "Opening your selected app. Return to Daylock after checking the lock screen.",
+  "setupSaveConfirmationFailed": "Could not save your confirmation. Please retry.",
+  "setupWelcomeBody": "Plan your day. Earn your freedom. Keep your commitments before your distracting apps unlock.",
+  "setupWelcomePlan": "Choose a few meaningful commitments the evening before.",
+  "setupBlockDistractions": "Block distractions",
+  "setupWelcomeBlock": "You choose which apps to restrict.",
+  "setupKeepYourWord": "Keep your word",
+  "setupWelcomeKeep": "Keep today’s commitments, then lock in tomorrow’s plan.",
+  "setupUnlockApps": "Unlock apps",
+  "setupWelcomeUnlock": "Reach your Freedom Time and enjoy your earned break.",
+  "setupXiaomiTitle": "Xiaomi / Poco: keep blocking active",
+  "setupOpenAppInfo": "Open Daylock App info",
+  "setupXiaomiConfirm": "I changed these settings for this Daylock app",
+  "setupXiaomiConfirmNote": "Your confirmation; not automatically verified.",
+  "setupAccessibilityTitle": "Accessibility access · optional",
+  "setupBlockingAndroidOnly": "Blocking is available on Android. You can still use the planner here.",
+  "setupAccessibilityConnected": "Enabled and connected. Daylock is ready to detect selected apps.",
+  "setupAccessibilityWaiting": "Enabled. Waiting for Android to connect the service. Tap Refresh after returning.",
+  "setupEnableAccessibility": "Enable Accessibility",
+  "setupNotificationsTitle": "Notifications · optional",
+  "setupNotificationsAllowed": "Allowed. Local reminders and fallback restriction notices can appear.",
+  "setupNotificationsExplain": "Allow local reminders and a notice when Android cannot display the lock screen. You can continue without notifications.",
+  "setupAllowNotifications": "Allow notifications",
+  "setupRefreshPermissions": "Refresh permission status",
+  "setupChooseAppsBody": "Choose apps you want to open more intentionally. Your selections stay on this device.",
+  "setupRestrictionsEnableFreedom": "Turning on app restrictions here also enables Freedom Control at your saved Freedom Time.",
+  "setupSaveBlockingFailed": "Could not save blocking settings. Please retry.",
+  "setupAppSelectionAndroidOnly": "Installed-app selection is available on Android.",
+  "setupOneSmallStep": "One small step for tomorrow",
+  "setupSaveCommitmentFailed": "Could not save your commitment. Please retry.",
+  "setupCreateCommitment": "Create a commitment",
+  "setupAlreadyHasCommitment": "Your plan already contains a commitment. You can continue without creating another.",
+  "setupTestTitle": "Try your real app restriction",
+  "setupTestAndroidOnly": "Blocking tests require the Android app.",
+  "setupChecking": "Checking…",
+  "setupTestSelectedApp": "Test a selected app",
+  "setupEnableFreedomAndRestrictions": "Enable Freedom Control and app restrictions",
+  "setupTestNeedsFreedom": "Current Freedom: {state}. The real test needs Freedom Control on and Freedom not yet earned. You can leave setup and return from Settings when those conditions apply.",
+  "@setupTestNeedsFreedom": {
+    "placeholders": {
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "setupAccessibilityNotConnected": "Accessibility is not connected. Go back to permission setup.",
+  "setupConfirmXiaomi": "Go back to Set Up App Blocking and confirm the Xiaomi battery setting so blocking keeps working.",
+  "setupRefreshRetry": "Refresh and retry",
+  "setupReadyTitle": "Make room for what matters",
+  "setupReadyBody": "Your preferences and commitment are saved. Start with Today, plan tomorrow, and watch your Journey grow.",
+  "setupTourTitle": "Take a quick tour",
+  "setupBlockingOff": "App blocking is off",
+  "setupBlockingOffBody": "Daylock won’t restrict any apps. If you want it later, open Settings and turn on app restrictions.",
+  "setupSkipTour": "Skip the tour",
+  "previousStep": "Previous step",
+  "saveAndLeave": "Save & leave",
+  "stepNOfM": "Step {current} of {total}",
+  "@stepNOfM": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "getStarted": "Get Started",
+  "continueWithoutBlocking": "Continue without blocking",
+  "skipTestForNow": "Skip test for now",
+  "finishSetup": "Finish Setup",
+  "takeTheTour": "Take the tour",
+  "goToDaylock": "Go to Daylock",
+  "continueLabel": "Continue",
+  "setupTitleWelcome": "Take Back Control",
+  "setupTitleBlocking": "Set Up App Blocking",
+  "setupTitleApps": "Choose Your Distractions",
+  "setupTitleCommitment": "Set Your First Commitment",
+  "setupTitleTest": "You're Almost Ready!",
+  "setupTitleReady": "You're All Set!",
+  "diagLockUnconfirmed": "Lock screen: not confirmed; a fallback notification may be used.",
+  "diagLockFailedException": "Lock screen: Android rejected or failed the launch request.",
+  "diagLockShown": "Lock screen: visible and confirmed.",
+  "diagLockRequestedUnconfirmed": "Lock screen: request returned; visibility is not confirmed yet.",
+  "diagLockAttempted": "Lock screen: launch requested.",
+  "diagHomeRejected": "Home action: Android rejected the request.",
+  "diagHomeAccepted": "Home action: Android accepted the request.",
+  "diagHomeAttempted": "Home action: requested.",
+  "diagRestrictionOther": "Last restriction state could not be verified.",
+  "diagRestrictionSkippedLaunchThrottled": "Restriction skipped: a lock-screen attempt is already in progress.",
+  "diagRestrictionSkippedFreedomDisabled": "Restriction skipped: Freedom Control is off.",
+  "diagRestrictionSkippedFreedomEarned": "Restriction skipped: Freedom is earned.",
+  "diagRestrictionSkippedStateChanged": "Restriction skipped: Freedom state changed while opening the app.",
+  "diagRestrictionRetryingStateChanged": "Freedom state changed during enforcement; checking it once more.",
+  "diagRestrictionSkippedLockAlreadyVisible": "Restriction skipped: a Daylock lock screen was already visible.",
+  "diagRestrictionSkippedServiceInactive": "Restriction skipped: the Accessibility service was no longer active.",
+  "diagRestrictionSkippedDeviceNotInteractive": "Restriction skipped: the device was locked or not interactive.",
+  "diagRestrictionSkippedSelectionUnavailable": "Restriction skipped: the selected app could not be verified.",
+  "diagRestrictionSkippedAccessibilityDisabled": "Restriction skipped: Accessibility is no longer enabled.",
+  "diagRestrictionSkippedForegroundChangedBeforeNavigation": "Restriction skipped: the foreground app changed before enforcement.",
+  "diagRestrictionHomeFailed": "Last attempt: Android rejected Home navigation. Restriction could not be applied.",
+  "diagRestrictionLockLaunchUnconfirmed": "Last attempt: lock screen was not confirmed. Android may restrict background launches.",
+  "diagRestrictionHomeOnly": "Last attempt: Home requested; lock screen was not confirmed.",
+  "diagRestrictionLockFallbackUnavailable": "Last attempt: lock screen not confirmed. Allow notifications and the App restriction notices channel in Android settings for fallback notices.",
+  "diagRestrictionLockFallbackPosted": "Last attempt: lock screen not confirmed; app restriction notification posted. Android controls its delivery.",
+  "diagRestrictionLockLaunchRequested": "Last attempt: lock screen requested; display not yet confirmed.",
+  "diagRestrictionStateUnknown": "Last attempt: selected apps allowed while Freedom state was unavailable.",
+  "diagRestrictionLockShown": "Last restriction attempt: Daylock lock screen shown.",
+  "diagRestrictionRecoveryShown": "Last attempt: recovery screen shown. Open Daylock to refresh plans or disable blocking.",
+  "diagRestrictionRestrictionRecovery": "Restriction needs Daylock to refresh Freedom state.",
+  "diagRestrictionRestrictionTriggered": "Restriction triggered: starting the Daylock lock flow.",
+  "diagRestrictionEligibilityUnknown": "Eligibility could not be confirmed; blocking is paused safely.",
+  "diagRestrictionEligibilityDisabled": "Eligibility evaluated: Freedom Control is off; the app is allowed.",
+  "diagRestrictionEligibilityEarned": "Eligibility evaluated: Freedom is earned; the app is allowed.",
+  "diagRestrictionEligibilityNotEarned": "Eligibility evaluated: Freedom is not earned.",
+  "diagRestrictionDetectedSelectedApp": "Selected app detected. Checking Freedom and restriction eligibility.",
+  "diagRestrictionTestRequested": "Test requested: waiting for a fresh selected-app detection.",
+  "diagRestrictionSkippedEventDelayed": "Android delivered the app-opening event too late. On Xiaomi / HyperOS, review Daylock’s App info → Power → No restrictions, then test opening a selected app from Home.",
+  "diagRestrictionNone": "No restriction attempt yet.",
+  "diagEnableBlockingBody": "When Freedom Control is on and Freedom is not earned, Daylock uses Accessibility to leave a selected app and show its own lock screen. Installed-app lists and selections stay on this device. It does not read screen content or collect browsing history. Only the latest selected-app detection and restriction result stay on this device. Other window package names are compared only to cancel a pending action if you switch apps; they are not retained. You can turn blocking off here or revoke Accessibility access at any time.\n\nFreedom inputs stay valid for their calendar date without reopening Daylock. If current state is missing or invalid, Daylock offers a recovery screen with Open Daylock and Disable Blocking; subsequent openings are allowed while recovery is needed. This is a voluntary restriction, not a tamper-proof or parental-control system.",
+  "diagPermissionBody": "Daylock uses Android Accessibility to detect when a selected app opens, including while Daylock is in the background. It saves only the latest selected-app detection, Freedom status and restriction result on this device; nothing is sent to a server. Installed-app lists and selections stay on this device. It does not read screen content or collect browsing history. With the separate app restrictions switch enabled, it can return Home and show a branded Daylock lock screen when Freedom is not earned. Window package changes are compared only to cancel actions if you switch apps; other app names are not retained. It does not draw overlays or restrict unselected apps.\n\nYou choose whether to enable “Daylock app restrictions” in Android Accessibility Settings. You can disable it there at any time.",
+  "diagPermissionTitle": "App restriction permission",
+  "diagAgreeOpenSettings": "Agree and open Settings",
+  "diagEnableBlockingTitle": "Enable app restrictions?",
+  "diagEnableBlocking": "Enable blocking",
+  "diagAppRestrictionsLabel": "APP RESTRICTIONS",
+  "diagAppRestrictionsIntro": "Accessibility detects selected apps opening in the background. Optional blocking shows a Daylock lock screen or returns Home until Freedom is earned. If the screen cannot appear, a notification explains the block when Android permits it.",
+  "diagAppRestrictions": "App restrictions",
+  "diagSeparateFromFreedom": "Separate from Freedom Control. Off by default.",
+  "diagStatusUnavailable": "App restriction status unavailable",
+  "diagRestrictionsOff": "App restrictions: off",
+  "diagWaitingForAccessibility": "App restrictions: waiting for Accessibility access",
+  "diagAllowedFreedomOff": "Selected apps allowed — Freedom Control is off",
+  "diagAllowedFreedomEarned": "Selected apps allowed — Freedom earned",
+  "diagBlockingPaused": "Blocking paused — open Daylock to refresh Freedom state",
+  "diagRestrictionsReady": "App restrictions ready — launch and navigation depend on Android",
+  "diagServiceStatusUnavailable": "Service status unavailable",
+  "diagAndroidOnly": "Native detection is available on Android only.",
+  "diagServiceDisabled": "Accessibility service: disabled",
+  "diagServiceConnected": "Accessibility service: enabled and connected",
+  "diagServiceWaiting": "Accessibility service: enabled — waiting for Android to connect",
+  "diagBlockingSaveFailed": "The blocking choice could not be saved. Disabling takes effect now, but may not survive a restart. Revoke Accessibility access if necessary.",
+  "diagNoDetectionYet": "No selected app has been detected yet.",
+  "diagLastDetection": "Last restricted-app detection: {when}",
+  "@diagLastDetection": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "diagFreedomAtDetection": "Freedom at that detection: {state}",
+  "@diagFreedomAtDetection": {
+    "placeholders": {
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "diagCurrentFreedom": "Current native Freedom state: {state}",
+  "@diagCurrentFreedom": {
+    "placeholders": {
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "diagFocusNeedsRefresh": "An active Focus session needs Daylock to reconcile its timer. Native detection does not mark it complete.",
+  "diagStateUnavailable": "Current dated state is unavailable. Open Daylock to reconcile plans or turn blocking off. Valid current-day inputs do not expire after five minutes.",
+  "diagRolloverReconciled": "New day: using the saved plan for this date. Open Daylock to archive history and prepare the following day.",
+  "diagNoEligible": "No eligible commitments. Empty or all-excused days do not earn Freedom.",
+  "diagDetectionSaveFailed": "The latest detection could not be persisted and may not survive a restart.",
+  "diagTurnBlockingOff": "Turn blocking off",
+  "diagSettingsPath": "Android Settings → Accessibility → Downloaded/Installed apps → Daylock app restrictions. Turn the service on manually. Names vary by phone.",
+  "diagRestrictedSettings": "If Android 15 shows “Restricted settings”, inspect Daylock’s App info for “Allow restricted settings” and confirm only for this development build you trust.",
+  "diagAvailableAndroidOnly": "Available on Android only",
+  "diagServiceEnabledShort": "Accessibility service: enabled",
+  "diagServiceDisconnected": "Service disconnected",
+  "diagRestrictionsOn": "App restrictions: on",
+  "selectedAppsCount": "{count, plural, =1{1 selected app} other{{count} selected apps}}",
+  "@selectedAppsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "diagNativeFreedom": "Native Freedom: {state}",
+  "@diagNativeFreedom": {
+    "placeholders": {
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "diagTechnicalDetails": "Technical details & setup",
+  "diagLastPackage": "Last restricted package: {package}",
+  "@diagLastPackage": {
+    "placeholders": {
+      "package": {
+        "type": "String"
+      }
+    }
+  },
+  "openAccessibilitySettings": "Open Accessibility Settings",
+  "refreshStatus": "Refresh status",
+  "appsLoadFailed": "Could not load installed apps. Your saved selections have not been replaced.",
+  "appsPausedAttention": "Restrictions paused: status needs attention.",
+  "appsRestrictionsOff": "App restrictions are off. Your selections are saved.",
+  "appsNoneSelected": "No apps selected. Nothing is restricted.",
+  "appsWaitingAccessibility": "Waiting for Accessibility access. Selected apps are not restricted.",
+  "appsFreedomOff": "Freedom Control is off. Selected apps are accessible.",
+  "appsFreedomEarned": "Freedom earned. Selected apps are accessible.",
+  "appsNeedsRefresh": "Freedom status needs a refresh. Recovery is available; repeated openings are allowed.",
+  "appsRestricted": "Selected apps are restricted until Freedom is earned.",
+  "selectedCountLabel": "{count} SELECTED",
+  "@selectedCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "refreshApps": "Refresh apps",
+  "appsMasterControl": "Master control for all selected apps.",
+  "appsMasterSaveFailed": "The master setting could not be saved. Turning it off applies now, but may not survive a restart.",
+  "appsChooseBelow": "Choose apps below. Freedom Control and app restrictions are separate. System recovery apps are excluded.",
+  "appsRemoved": "{count, plural, =1{1 unavailable or reinstalled app removed from selection. Select it again if needed.} other{{count} unavailable or reinstalled apps removed from selection. Select them again if needed.}}",
+  "@appsRemoved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "appsNoneSelectedYet": "No apps selected yet. Choose the apps you want to restrict.",
+  "searchApps": "Search apps",
+  "appsSelectionRequiresAndroid": "Installed-app selection requires Android.",
+  "retryAppDiscovery": "Retry app discovery",
+  "appsNoneFound": "No supported launchable apps were found in this Android profile.",
+  "appsNoMatches": "No matching apps.",
+  "appIconUnavailable": "App icon unavailable",
+  "savingSelection": "Saving selection…",
+  "appsSelectionsStay": "Selections stay on this device. New or reinstalled apps must be selected explicitly.",
+  "notifRunningStopwatchHelp": "Shows a quiet notification with Pause while a stopwatch runs, and nudges you every 2 hours so it isn’t left on by mistake.",
+  "notifBlockedInSystem": "Blocked in Android system settings",
+  "notifLabel": "NOTIFICATIONS",
+  "notifPermissionAllowed": "System permission: allowed",
+  "notifPermissionDenied": "System permission: not allowed",
+  "notifNeedsAttention": "Notification setup needs attention",
+  "notifChecking": "Checking system permission…",
+  "notifUnavailable": "Scheduled notifications unavailable",
+  "notifPermissionHelp": "Permission help",
+  "notifOpenSettings": "Open notification settings",
+  "notifPlanTomorrow": "Plan Tomorrow",
+  "notifCommitmentReminder": "Commitment Reminder",
+  "notifFreedom": "Freedom Notifications",
+  "notifFreedomHelp": "Uses Freedom Time when Freedom Control is enabled.",
+  "notifRunningStopwatch": "Running Stopwatch",
+  "healthXiaomiTip": "To stop it happening again on Xiaomi / Poco: in Daylock’s App info allow Autostart, set Battery saver to No restrictions, allow pop-ups while running in the background, and avoid swiping Daylock away in Recents.",
+  "healthOffBody": "Accessibility access for Daylock is off, so your selected apps open freely. Turn it on to bring the lock back.",
+  "healthStoppedBody": "Android stopped Daylock in the background, so your selected apps open freely. In Accessibility, turn Daylock off and on again.",
+  "healthStoppedTitle": "App blocking has stopped",
+  "openAccessibility": "Open Accessibility",
+  "openAppInfo": "Open App info",
+  "conditionSatisfied": "Satisfied",
+  "conditionRemaining": "Remaining",
+  "freedomTimeAt": "Freedom Time · {time}",
+  "@freedomTimeAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "eligibleComplete": "{kept} / {total} eligible commitments complete",
+  "@eligibleComplete": {
+    "placeholders": {
+      "kept": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "noEligibleRequired": "No eligible commitments — completion is required to earn Freedom.",
+  "tomorrowPlanCommittedCondition": "Tomorrow’s plan committed",
+  "planDateMismatch": "Today’s plan does not match the current local date.",
+  "availableAt": "Available at {time}",
+  "@availableAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "enableFreedomInSettings": "Enable Freedom Control in Settings.",
+  "pauseStopwatch": "Pause stopwatch",
+  "resumeStopwatch": "Resume stopwatch",
+  "startStopwatch": "Start stopwatch",
+  "keptLower": "kept",
+  "keepTask": "Keep {name}",
+  "@keepTask": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recordedTimeLabel": "Recorded time",
+  "calendarDayExcusedNeutral": "No eligible commitments, {count} excused, neutral",
+  "@calendarDayExcusedNeutral": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarDayNeutral": "No commitments, neutral",
+  "calendarDayUnrecorded": "No recorded commitments, neutral",
+  "calendarDayProgress": "{kept} of {total} eligible commitments complete, {percent} percent, {excused} excused",
+  "@calendarDayProgress": {
+    "placeholders": {
+      "kept": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "percent": {
+        "type": "int"
+      },
+      "excused": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarTodaySuffix": ", Today",
+  "calendarDayValue": "{description}, {count} scheduled events",
+  "@calendarDayValue": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "heatNeutral": "Neutral: no eligible commitments, missing history or future date",
+  "heatZero": "Recorded commitments: 0 percent complete",
+  "heatLow": "More than 0 to 25 percent complete",
+  "heatMedium": "More than 25 to 50 percent complete",
+  "heatHigh": "More than 50 to less than 100 percent complete",
+  "heatComplete": "100 percent complete",
+  "heatLess": "Less",
+  "heatMore": "More",
+  "calTodayReadOnly": "Today commitments, read-only. Manage commitments in Today.",
+  "calHistoryReadOnly": "Commitment history, read-only",
+  "calTodayLabel": "TODAY’S COMMITMENTS",
+  "calHistoryLabel": "COMMITMENT HISTORY",
+  "calNoHistory": "No commitment history recorded.",
+  "calNoCommitmentsToday": "No commitments for today.",
+  "calNeutralDay": "No commitments recorded. Neutral day.",
+  "calCompletionLabel": "Commitment completion for selected date",
+  "calRecordedTime": "Recorded time: {duration}",
+  "@calRecordedTime": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "calCommitmentOutcome": "Commitment · {outcome}",
+  "@calCommitmentOutcome": {
+    "placeholders": {
+      "outcome": {
+        "type": "String"
+      }
+    }
+  },
+  "calReason": "Reason: {reason}",
+  "@calReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "calReadOnlyCached": "Read-only cached event",
+  "editNamed": "Edit {name}",
+  "@editNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteNamed": "Delete {name}",
+  "@deleteNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteEventTitle": "Delete event?",
+  "deleteEventBody": "Delete “{title}” from your schedule?",
+  "@deleteEventBody": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "calReadOnlyCachedShort": "Read-only · cached event",
+  "close": "Close",
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month",
+  "calendar": "Calendar",
+  "calendarAccounts": "Calendar accounts",
+  "addEvent": "Add event",
+  "scheduleLabel": "SCHEDULE",
+  "noEventsScheduled": "No events scheduled.",
+  "eventTimeFormat": "Use HH:mm (00:00–23:59).",
+  "eventEndAfterStart": "End must be after start.",
+  "readOnlyEvent": "Read-only event",
+  "externalEventsReadOnly": "External events can only be changed in their calendar.",
+  "editEvent": "Edit event",
+  "title": "Title",
+  "enterTitle": "Enter a title.",
+  "startTimeOptional": "Start time (optional)",
+  "endTimeOptional": "End time (optional)",
+  "notesOptional": "Notes (optional)",
+  "saveEvent": "Save event",
+  "accountUpdateFailed": "Could not update this account. Cached events are still available. Try again or reconnect.",
+  "disconnectAccountTitle": "Disconnect account?",
+  "disconnectAccountBody": "Remove {name} and its cached events from Daylock? Your external calendar will stay unchanged.",
+  "@disconnectAccountBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "disconnect": "Disconnect",
+  "externalCalendarsReadOnly": "External calendars are read-only. Cached events are available offline.",
+  "providersDisabled": "Account sign-in is not available for the disabled providers in this version.",
+  "connectProvider": "Connect {provider}",
+  "@connectProvider": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "noConnectedAccounts": "No connected accounts.",
+  "syncNow": "Sync now",
+  "reconnect": "Reconnect",
+  "notSyncedYet": "Not synced yet",
+  "lastSynced": "Last synced {when}",
+  "@lastSynced": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "syncToLoad": "Sync to load this account’s calendars.",
+  "chooseMonth": "Choose month",
+  "previousYear": "Previous year",
+  "year": "Year",
+  "enterYear": "Enter a year from 1 to 9999.",
+  "nextYear": "Next year",
+  "showMonth": "Show month",
+  "commitment": "Commitment",
+  "repeatsLabel": "Repeats {rule}",
+  "@repeatsLabel": {
+    "placeholders": {
+      "rule": {
+        "type": "String"
+      }
+    }
+  },
+  "areas": "Areas",
+  "areasIntro": "Give your commitments a home. Your default Area is used whenever no other Area is selected.",
+  "createArea": "Create Area",
+  "archived": "Archived",
+  "defaultAlwaysAvailable": "Default · Always available",
+  "restore": "Restore",
+  "archive": "Archive",
+  "archivingExplainer": "Archiving keeps existing commitments and history linked. New commitments use active Areas only.",
+  "editArea": "Edit Area",
+  "areaName": "Area name",
+  "icon": "Icon",
+  "colour": "Colour",
+  "saveArea": "Save Area",
+  "areaIconLife": "Life",
+  "areaColourLavender": "Lavender",
+  "areaIconHealth": "Health",
+  "areaIconWork": "Work",
+  "areaIconLearning": "Learning",
+  "areaIconHome": "Home",
+  "areaIconPeople": "People",
+  "areaIconCreative": "Creative",
+  "areaIconFitness": "Fitness",
+  "areaColourBlue": "Blue",
+  "areaColourTeal": "Teal",
+  "areaColourGreen": "Green",
+  "areaColourAmber": "Amber",
+  "areaColourRose": "Rose",
+  "newAchievement": "New achievement",
+  "editAchievement": "Edit achievement",
+  "achievementPrompt": "What are you proud of?",
+  "achievementHint": "Passed my driving test",
+  "achievementNotes": "A few words (optional)",
+  "linkToArea": "Link to an Area",
+  "optional": "Optional",
+  "previousAreaUnavailable": "The previous Area is unavailable. Choose an Area or remove the link.",
+  "saveAchievement": "Save achievement",
+  "illustrationLabel": "Illustration: {name}",
+  "@illustrationLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "illustrationAutomaticLabel": "Illustration: Automatic · {name}",
+  "@illustrationAutomaticLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "illustrationHelp": "Choose a look, or let the title and Area suggest one.",
+  "automatic": "Automatic",
+  "area": "Area",
+  "notifExplainAndroid": "Android reminders may be delayed by battery saving or Do Not Disturb. App preferences below are separate from system permission.",
+  "notifExplainError": "Notifications could not be updated. Reopen Daylock to retry.",
+  "notifExplainDefault": "Scheduled notifications are available on Android.",
+  "notifExplainWebSupported": "This browser supports notifications, but scheduled reminders are unavailable here. Safari, closed tabs and installed PWAs cannot deliver these reminders without a push service. Use Daylock on Android for scheduled notifications.",
+  "notifExplainWebUnsupported": "This browser cannot deliver Daylock notifications. Scheduled reminders are available in the Android app; web/PWA controls are disabled.",
+  "detectionReadFailed": "Could not read native detection status. Refresh or open Android Settings manually.",
+  "calFailAuthMicrosoft": "Microsoft calendar access needs renewed permission. Reconnect this account. Your organisation may require administrator approval. Cached events are still available.",
+  "calFailAuthGoogle": "Google calendar permission has expired or was removed. Reconnect this account. Cached events are still available.",
+  "calFailConfigMicrosoft": "Microsoft sign-in is not configured correctly. Check the Entra client ID, native redirect URI and supported account types.",
+  "calFailConfigGoogle": "Google sign-in is not configured correctly. Check the OAuth client ID, Android package and signing certificate.",
+  "calFailUnavailableMicrosoft": "Microsoft Calendar is unavailable. Check your connection and try again. Work accounts need an accessible Exchange mailbox. Cached events are still available.",
+  "calFailUnavailableGoogle": "Google Calendar is unavailable. Check your connection and try syncing again. Cached events are still available.",
+  "calFailResponseMicrosoft": "Microsoft returned an incomplete or unsupported calendar response. Cached events are still available. Try again later.",
+  "calFailResponseGoogle": "Google returned an incomplete or unsupported calendar response. Cached events are still available. Try again later.",
+  "calFailAdminConsent": "Your organisation requires administrator approval or restricts this sign-in. Contact your IT administrator. Cached events are still available.",
+  "calFailAccountMismatch": "Select the same Microsoft account and organisation when reconnecting. Existing accounts and cached events have been kept.",
+  "channelPlan": "Plan Tomorrow",
+  "channelCommitments": "Commitment reminders",
+  "channelFreedom": "Freedom",
+  "channelFocus": "Running stopwatch",
+  "selectionLoadFailed": "Could not load or save restricted apps. Restrictions are paused. Refresh to retry.",
+  "selectionSaveFailed": "App selection could not be saved. Restrictions are paused. Refresh to retry."
+}

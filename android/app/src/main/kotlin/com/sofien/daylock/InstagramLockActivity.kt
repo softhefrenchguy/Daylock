@@ -199,20 +199,20 @@ class InstagramLockActivity : Activity() {
         val skyInk = if (useDark) Color.parseColor("#F7F3FF") else ink
         val skyMuted = if (useDark) Color.parseColor("#DCD3F2") else muted
         text("DAYLOCK", 13f, skyMuted, displayBold, 2, headerText)
-        text("$appName is locked", 15f, skyInk, null, 0, headerText)
+        text(getString(R.string.lock_app_locked, appName), 15f, skyInk, null, 0, headerText)
 
-        text(if (blocked) "Not yet." else if (earned) "Freedom earned." else if (freedom.state == "unknown") "Refresh Freedom status." else "Restriction paused.",
+        text(if (blocked) getString(R.string.lock_not_yet) else if (earned) getString(R.string.lock_freedom_earned) else if (freedom.state == "unknown") getString(R.string.lock_refresh_status) else getString(R.string.lock_paused),
             44f, ink, display, 4)
         text(when {
-            blocked -> "Keep your word first."
-            earned -> "Your Freedom conditions are satisfied."
-            freedom.state == "disabled" -> "Freedom Control is off."
-            freedom.state == "unknown" -> "Open Daylock to reconcile your plans."
-            else -> "App restrictions are paused or this app is no longer selected."
+            blocked -> getString(R.string.lock_keep_word)
+            earned -> getString(R.string.lock_conditions_satisfied)
+            freedom.state == "disabled" -> getString(R.string.lock_freedom_off)
+            freedom.state == "unknown" -> getString(R.string.lock_reconcile)
+            else -> getString(R.string.lock_not_selected)
         }, 18f, muted, spacing = 6)
-        text(if (blocked) "$appName opens again once Freedom is earned."
-            else if (freedom.state == "unknown") "$appName is available while recovery is needed."
-            else "$appName is available.", 15f, muted, spacing = 22)
+        text(if (blocked) getString(R.string.lock_opens_again, appName)
+            else if (freedom.state == "unknown") getString(R.string.lock_available_recovery, appName)
+            else getString(R.string.lock_available, appName), 15f, muted, spacing = 22)
 
         val card = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(18), dp(18), dp(18), dp(8))
@@ -220,7 +220,7 @@ class InstagramLockActivity : Activity() {
             if (!useDark) elevation = dp(2).toFloat()
         }
         body.addView(card, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(20) })
-        text("Freedom", 20f, ink, displayBold, 12, card)
+        text(getString(R.string.lock_freedom), 20f, ink, displayBold, 12, card)
         fun condition(value: String, ready: Boolean?) {
             val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
             row.addView(TextView(this).apply {
@@ -232,20 +232,20 @@ class InstagramLockActivity : Activity() {
                     shape = GradientDrawable.OVAL
                     if (ready == true) setColor(gold) else { setColor(Color.TRANSPARENT); setStroke(dp(2), tint(muted, cardColor, .3f)) }
                 }
-                contentDescription = when (ready) { true -> "Satisfied"; false -> "Remaining"; null -> "Unknown" }
+                contentDescription = when (ready) { true -> getString(R.string.lock_satisfied); false -> getString(R.string.lock_remaining); null -> getString(R.string.lock_unknown) }
             }, LinearLayout.LayoutParams(dp(22), dp(22)).apply { rightMargin = dp(12) })
             row.addView(TextView(this).apply { this.text = value; textSize = 15f; setTextColor(ink) }, LinearLayout.LayoutParams(0, -2, 1f))
             card.addView(row, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
         }
         val timeLabel = conditions?.let { String.format(java.util.Locale.ROOT, "%02d:%02d", it.hour, it.minute) }
-        condition("Freedom Time reached${timeLabel?.let { " · $it" } ?: " · refresh needed"}", conditions?.timeReached)
-        condition(if (conditions == null) "Eligible commitments completed · refresh needed"
-            else if (conditions.eligibleCount == 0) "No eligible commitments"
-            else "Eligible commitments completed · ${conditions.completedCount} / ${conditions.eligibleCount}", conditions?.commitmentsCompleted)
-        condition("Tomorrow’s plan committed", conditions?.tomorrowCommitted)
-        if (conditions?.eligibleCount == 0) text("Empty or all-excused days do not automatically earn Freedom.", 13f, muted, parent = card)
-        if (freedom.reason == "rollover_unplanned") text("A new day has started with no plan yet. Open Daylock to plan today.", 13f, muted)
-        if (freedom.reason == "rollover_reconciled") text("A new local day has started. Open Daylock to archive history and prepare the following day.", 13f, muted)
+        condition(if (timeLabel != null) getString(R.string.lock_time_reached, timeLabel) else getString(R.string.lock_time_refresh), conditions?.timeReached)
+        condition(if (conditions == null) getString(R.string.lock_eligible_refresh)
+            else if (conditions.eligibleCount == 0) getString(R.string.lock_no_eligible)
+            else getString(R.string.lock_eligible_count, conditions.completedCount, conditions.eligibleCount), conditions?.commitmentsCompleted)
+        condition(getString(R.string.lock_tomorrow_committed), conditions?.tomorrowCommitted)
+        if (conditions?.eligibleCount == 0) text(getString(R.string.lock_empty_day), 13f, muted, parent = card)
+        if (freedom.reason == "rollover_unplanned") text(getString(R.string.lock_new_day_unplanned), 13f, muted)
+        if (freedom.reason == "rollover_reconciled") text(getString(R.string.lock_new_day), 13f, muted)
         fun button(label: String, primary: Boolean, parent: LinearLayout = body, action: () -> Unit): Button {
             val view = Button(this).apply {
                 this.text = label; textSize = 16f; isAllCaps = false
@@ -262,33 +262,33 @@ class InstagramLockActivity : Activity() {
             parent.addView(view, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(10) })
             return view
         }
-        button("Return to Daylock", true) {
+        button(getString(R.string.lock_return_daylock), true) {
             startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
             finish()
         }
         val secondary = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; visibility = if (actionsExpanded) View.VISIBLE else View.GONE }
         lateinit var expand: Button
-        expand = button(if (actionsExpanded) "Other actions \u2303" else "Other actions \u2304", false) {
+        expand = button(if (actionsExpanded) getString(R.string.lock_other_actions) + " \u2303" else getString(R.string.lock_other_actions) + " \u2304", false) {
             actionsExpanded = !actionsExpanded
             secondary.visibility = if (actionsExpanded) View.VISIBLE else View.GONE
-            expand.text = if (actionsExpanded) "Other actions \u2303" else "Other actions \u2304"
+            expand.text = if (actionsExpanded) getString(R.string.lock_other_actions) + " \u2303" else getString(R.string.lock_other_actions) + " \u2304"
         }
         body.addView(secondary)
-        text("Return Home, disable blocking or change Accessibility access.", 13f, muted, spacing = 10)
-        button("Return to Home", false, secondary) { goHome() }
-        if (DetectionRuntime.blockingEnabled) button("Disable app restrictions", false, secondary) {
+        text(getString(R.string.lock_other_hint), 13f, muted, spacing = 10)
+        button(getString(R.string.lock_return_home), false, secondary) { goHome() }
+        if (DetectionRuntime.blockingEnabled) button(getString(R.string.lock_disable), false, secondary) {
             DetectionRuntime.stateRevision.incrementAndGet()
             DetectionRuntime.worker.execute {
                 val saved = DetectionRuntime.changeBlocking(false)
                 DetectionRuntime.emit()
                 main.post {
-                    if (!saved) android.widget.Toast.makeText(this, "Blocking disabled for this session. Revoke Accessibility if saving keeps failing.", android.widget.Toast.LENGTH_LONG).show()
+                    if (!saved) android.widget.Toast.makeText(this, getString(R.string.lock_disable_failed), android.widget.Toast.LENGTH_LONG).show()
                     goHome()
                 }
             }
         }
-        button("Accessibility Settings", false, secondary) { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); finish() }
-        text("You remain in control. Disable blocking or revoke Accessibility access at any time.", 13f, muted, parent = secondary)
+        button(getString(R.string.lock_accessibility_settings), false, secondary) { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); finish() }
+        text(getString(R.string.lock_in_control), 13f, muted, parent = secondary)
         setContentView(scroll)
         var acknowledged = false
         val drawnAttempt = attempt

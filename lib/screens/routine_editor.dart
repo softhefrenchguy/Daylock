@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../design/daylock_theme.dart';
@@ -75,8 +77,12 @@ class _RoutineEditorState extends State<RoutineEditor> {
           canCreate: () => mounted && !_submitted,
           initialTask: old?.toTask(),
           areas: widget.areas,
-          heading: old == null ? 'New routine step' : 'Edit routine step',
-          submitLabel: old == null ? 'Add step' : 'Save step',
+          heading: old == null
+              ? sheetContext.l10n.newRoutineStep
+              : sheetContext.l10n.editRoutineStep,
+          submitLabel: old == null
+              ? sheetContext.l10n.addStep
+              : sheetContext.l10n.saveStep,
         ),
       ),
     );
@@ -120,7 +126,11 @@ class _RoutineEditorState extends State<RoutineEditor> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: Text(widget.routine == null ? 'Create routine' : 'Edit routine'),
+      title: Text(
+        widget.routine == null
+            ? context.l10n.createRoutine
+            : context.l10n.editRoutine,
+      ),
     ),
     body: SafeArea(
       child: ListView(
@@ -130,7 +140,7 @@ class _RoutineEditorState extends State<RoutineEditor> {
             key: const ValueKey('routine-name'),
             controller: _name,
             onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(labelText: 'Routine name'),
+            decoration: InputDecoration(labelText: context.l10n.routineName),
           ),
           const SizedBox(height: 8),
           ListTile(
@@ -140,12 +150,12 @@ class _RoutineEditorState extends State<RoutineEditor> {
               Icons.repeat_rounded,
               color: Theme.of(context).colorScheme.primary,
             ),
-            title: const Text('Repeat'),
+            title: Text(context.l10n.repeat),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _schedule.label,
+                  context.l10n.repeatLabel(_schedule),
                   key: const ValueKey('routine-schedule-label'),
                   style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                     color: Theme.of(context).colorScheme.primary,
@@ -153,7 +163,9 @@ class _RoutineEditorState extends State<RoutineEditor> {
                   ),
                 ),
                 Text(
-                  'Next: ${_schedule.upcoming(_from).map(repeatDateLabel).join(' · ')}',
+                  context.l10n.repeatNext(
+                    _schedule.upcoming(_from).map(repeatDateLabel).join(' · '),
+                  ),
                 ),
               ],
             ),
@@ -163,8 +175,8 @@ class _RoutineEditorState extends State<RoutineEditor> {
           const SizedBox(height: 8),
           Text(
             _steps.length > 1
-                ? 'A rotation: each due day adds the next step, in this order. A step you remove comes back next time.'
-                : 'Each due day adds this to tomorrow’s plan automatically. Add more steps to make a rotation.',
+                ? context.l10n.routineRotationHelp
+                : context.l10n.routineSingleHelp,
           ),
           const SizedBox(height: 16),
           for (var index = 0; index < _steps.length; index++)
@@ -182,24 +194,24 @@ class _RoutineEditorState extends State<RoutineEditor> {
                 Wrap(
                   children: [
                     IconButton(
-                      tooltip: 'Edit step ${index + 1}',
+                      tooltip: context.l10n.editStepN(index + 1),
                       onPressed: () => _addStep(index),
                       icon: const Icon(Icons.edit_outlined),
                     ),
                     IconButton(
-                      tooltip: 'Move step ${index + 1} up',
+                      tooltip: context.l10n.moveStepUp(index + 1),
                       onPressed: index == 0 ? null : () => _move(index, -1),
                       icon: const Icon(Icons.arrow_upward),
                     ),
                     IconButton(
-                      tooltip: 'Move step ${index + 1} down',
+                      tooltip: context.l10n.moveStepDown(index + 1),
                       onPressed: index == _steps.length - 1
                           ? null
                           : () => _move(index, 1),
                       icon: const Icon(Icons.arrow_downward),
                     ),
                     IconButton(
-                      tooltip: 'Remove step ${index + 1}',
+                      tooltip: context.l10n.removeStepN(index + 1),
                       onPressed: () => setState(() => _steps.removeAt(index)),
                       icon: const Icon(Icons.delete_outline),
                     ),
@@ -213,7 +225,9 @@ class _RoutineEditorState extends State<RoutineEditor> {
             onPressed: () => _addStep(),
             icon: const Icon(Icons.add),
             label: Text(
-              _steps.isEmpty ? 'Add commitment' : 'Add rotation step',
+              _steps.isEmpty
+                  ? context.l10n.addCommitment
+                  : context.l10n.addRotationStep,
             ),
           ),
           const SizedBox(height: 16),
@@ -222,7 +236,7 @@ class _RoutineEditorState extends State<RoutineEditor> {
             onPressed: _name.text.trim().isEmpty || _steps.isEmpty
                 ? null
                 : _save,
-            child: const Text('Save routine'),
+            child: Text(context.l10n.saveRoutine),
           ),
         ],
       ),

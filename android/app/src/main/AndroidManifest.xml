@@ -6,6 +6,8 @@
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:label="${appLabel}"
+        android:localeConfig="@xml/locales_config"
+        android:supportsRtl="true"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

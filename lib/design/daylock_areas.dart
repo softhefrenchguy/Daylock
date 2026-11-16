@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../models/area.dart';
@@ -44,7 +46,7 @@ class AreaBadge extends StatelessWidget {
       const SizedBox(width: 8),
       Flexible(
         child: Text(
-          '${area.name}${area.isArchived ? ' (archived)' : ''}',
+          area.isArchived ? context.l10n.archivedArea(area.name) : area.name,
           style: textStyle ?? Theme.of(context).textTheme.bodyMedium,
         ),
       ),
@@ -68,7 +70,7 @@ class AreaSelector extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(
-        'Area',
+        context.l10n.area,
         key: const ValueKey('select-area'),
         style: Theme.of(context).textTheme.labelLarge!
             .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -115,7 +117,12 @@ class AreaChoices extends StatelessWidget {
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(minHeight: 44),
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 8, 16, 8),
+                        padding: const EdgeInsetsDirectional.fromSTEB(
+                          12,
+                          8,
+                          16,
+                          8,
+                        ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [

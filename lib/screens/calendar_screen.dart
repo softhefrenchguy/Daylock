@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../design/daylock_calendar.dart';
@@ -107,16 +109,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
       context: context,
       builder: (context) => AlertDialog(
         scrollable: true,
-        title: const Text('Delete event?'),
-        content: Text('Delete “${event.title}” from your schedule?'),
+        title: Text(context.l10n.deleteEventTitle),
+        content: Text(context.l10n.deleteEventBody(event.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -176,11 +178,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(event.timeLabelForDate(_selectedDate)),
+              Text(context.l10n.eventTime(event, _selectedDate)),
               Text(
-                widget.calendarCache?.sourceLabel(event) ?? event.source.label,
+                widget.calendarCache?.sourceLabel(event) ??
+                    context.l10n.eventSource(event.source),
               ),
-              const Text('Read-only · cached event'),
+              Text(context.l10n.calReadOnlyCachedShort),
               if (event.notes != null) Text(event.notes!),
               if (event.meetingUrl != null)
                 SelectableText(event.meetingUrl.toString()),
@@ -190,7 +193,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: Text(context.l10n.close),
           ),
         ],
       ),
@@ -214,7 +217,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          tooltip: 'Previous month',
+          tooltip: context.l10n.previousMonth,
           icon: const Icon(Icons.chevron_left_rounded),
           onPressed: _selectedDate.year == 1 && _selectedDate.month == 1
               ? null
@@ -223,11 +226,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
         Flexible(
           child: TextButton(
             onPressed: () => setState(() => _selectedDate = current),
-            child: const Text('Today'),
+            child: Text(context.l10n.today),
           ),
         ),
         IconButton(
-          tooltip: 'Next month',
+          tooltip: context.l10n.nextMonth,
           icon: const Icon(Icons.chevron_right_rounded),
           onPressed: _selectedDate.year == 9999 && _selectedDate.month == 12
               ? null
@@ -238,7 +241,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return SafeArea(
       child: SingleChildScrollView(
         key: const ValueKey('calendar-scroll'),
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+        padding: const EdgeInsetsDirectional.fromSTEB(20, 24, 20, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -247,7 +250,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    'Calendar',
+                    context.l10n.calendar,
                     style: theme.textTheme.headlineLarge!.copyWith(
                       fontSize: 40,
                       letterSpacing: -1.2,
@@ -257,12 +260,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 if (widget.calendarService != null)
                   Semantics(
                     key: const ValueKey('calendar-accounts'),
-                    label: 'Calendar accounts',
+                    label: context.l10n.calendarAccounts,
                     button: true,
                     onTap: _manageAccounts,
                     excludeSemantics: true,
                     child: IconButton(
-                      tooltip: 'Calendar accounts',
+                      tooltip: context.l10n.calendarAccounts,
                       onPressed: _manageAccounts,
                       icon: const Icon(
                         Icons.manage_accounts_outlined,
@@ -280,7 +283,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   onPressed: _chooseMonth,
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
-                    alignment: Alignment.centerLeft,
+                    alignment: AlignmentDirectional.centerStart,
                     foregroundColor: theme.colorScheme.onSurface,
                   ),
                   child: Row(
@@ -307,7 +310,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       title,
-                      Align(alignment: Alignment.centerRight, child: controls),
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: controls,
+                      ),
                     ],
                   );
                 }
@@ -364,17 +370,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   key: const ValueKey('calendar-add-event'),
                   onPressed: () => _editEvent(),
                   icon: const Icon(Icons.add, size: DaylockSpace.icon),
-                  label: const Text('Add event'),
+                  label: Text(context.l10n.addEvent),
                 );
                 if (MediaQuery.textScalerOf(context).scale(15) > 24) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [const DaylockLabel('SCHEDULE'), action],
+                    children: [
+                      DaylockLabel(context.l10n.scheduleLabel),
+                      action,
+                    ],
                   );
                 }
                 return Row(
                   children: [
-                    const Expanded(child: DaylockLabel('SCHEDULE')),
+                    Expanded(child: DaylockLabel(context.l10n.scheduleLabel)),
                     Flexible(child: action),
                   ],
                 );
@@ -382,7 +391,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
             const SizedBox(height: 4),
             if (events.isEmpty)
-              Text('No events scheduled.', style: theme.textTheme.bodyMedium)
+              Text(
+                context.l10n.noEventsScheduled,
+                style: theme.textTheme.bodyMedium,
+              )
             else
               for (final event in events)
                 DaylockCalendarEventRow(

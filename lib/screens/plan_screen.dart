@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../design/area_tones.dart';
@@ -140,8 +142,8 @@ class _PlanScreenState extends State<PlanScreen> {
           child: CommitmentEditor(
             initialTask: task,
             areas: widget.areas,
-            heading: 'Edit commitment',
-            submitLabel: 'Save changes',
+            heading: sheetContext.l10n.editCommitment,
+            submitLabel: sheetContext.l10n.saveChanges,
             canCreate: () => _editable(plan) && plan.tasks.contains(task),
             repeatFrom: widget.onRepeatChanged == null ? null : plan.date,
             initialRepeat: routine?.schedule,
@@ -175,12 +177,12 @@ class _PlanScreenState extends State<PlanScreen> {
       builder: (dialogContext) {
         _activeModal = ModalRoute.of(dialogContext);
         return AlertDialog(
-          title: const Text('Remove commitment?'),
-          content: Text('Remove ${task.name} from tomorrow\u2019s draft?'),
+          title: Text(dialogContext.l10n.removeCommitmentTitle),
+          content: Text(dialogContext.l10n.removeFromDraft(task.name)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
+              child: Text(dialogContext.l10n.cancel),
             ),
             FilledButton(
               key: const ValueKey('confirm-remove-commitment'),
@@ -189,7 +191,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   Navigator.pop(dialogContext, true);
                 }
               },
-              child: const Text('Remove'),
+              child: Text(dialogContext.l10n.remove),
             ),
           ],
         );
@@ -221,7 +223,7 @@ class _PlanScreenState extends State<PlanScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Area for ${task.name}',
+                  sheetContext.l10n.areaFor(task.name),
                   style: Theme.of(sheetContext).textTheme.titleLarge,
                 ),
                 AreaChoices(
@@ -256,11 +258,16 @@ class _PlanScreenState extends State<PlanScreen> {
         _activeModal = ModalRoute.of(dialogContext);
         return AlertDialog(
           scrollable: true,
-          title: Text('Lock in ${daylockWeekday(plan.date)}?'),
+          title: Text(
+            dialogContext.l10n.lockInWeekdayQuestion(daylockWeekday(plan.date)),
+          ),
           content: Text(
             plan.tasks.length == 1
-                ? 'This locks your commitment for ${daylockWeekday(plan.date)}. You won\u2019t be able to add or change it.'
-                : 'This locks your ${plan.tasks.length} commitments for ${daylockWeekday(plan.date)}. You won\u2019t be able to add or change them.',
+                ? dialogContext.l10n.lockInConfirmOne(daylockWeekday(plan.date))
+                : dialogContext.l10n.lockInConfirmMany(
+                    plan.tasks.length,
+                    daylockWeekday(plan.date),
+                  ),
           ),
           actions: [
             TextButton(
@@ -270,7 +277,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   Navigator.of(dialogContext).pop(false);
                 }
               },
-              child: const Text('Keep planning'),
+              child: Text(dialogContext.l10n.keepPlanning),
             ),
             FilledButton(
               key: const ValueKey('confirm-commit'),
@@ -281,7 +288,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   Navigator.of(dialogContext).pop(true);
                 }
               },
-              child: const Text('Lock it in'),
+              child: Text(dialogContext.l10n.lockItIn),
             ),
           ],
         );
@@ -334,8 +341,10 @@ class _PlanScreenState extends State<PlanScreen> {
                       mood: SceneMood.night,
                       height: 196,
                       horizontalPadding: padding,
-                      title: 'Plan',
-                      subtitle: 'Tomorrow · ${daylockDateLabel(plan.date)}',
+                      title: context.l10n.plan,
+                      subtitle: context.l10n.tomorrowDate(
+                        daylockDateLabel(plan.date),
+                      ),
                       belowTitle: Padding(
                         padding: const EdgeInsets.only(top: 10),
                         child: Container(
@@ -350,7 +359,9 @@ class _PlanScreenState extends State<PlanScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Text(
-                            plan.isCommitted ? 'Committed' : 'Draft',
+                            plan.isCommitted
+                                ? context.l10n.committed
+                                : context.l10n.draft,
                             style: theme.textTheme.labelLarge!.copyWith(
                               color: sky.onSky,
                               fontSize: 13,
@@ -373,13 +384,15 @@ class _PlanScreenState extends State<PlanScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Semantics(
-                              label: 'Schedule',
+                              label: context.l10n.schedule,
                               child: Text(
                                 scheduled.isEmpty
-                                    ? 'No scheduled events for tomorrow.'
+                                    ? context.l10n.noScheduledEventsTomorrow
                                     : scheduled.length == 1
-                                    ? '1 scheduled event'
-                                    : '${scheduled.length} scheduled events',
+                                    ? context.l10n.scheduledEvents(1)
+                                    : context.l10n.scheduledEvents(
+                                        scheduled.length,
+                                      ),
                                 style: theme.textTheme.bodyMedium!.copyWith(
                                   color: colors.onSurfaceVariant,
                                 ),
@@ -411,18 +424,23 @@ class _PlanScreenState extends State<PlanScreen> {
                   boxed(
                     DaylockSectionHeader(
                       title: plan.tasks.isEmpty
-                          ? 'Commitments'
-                          : 'Commitments \u00b7 ${plan.tasks.length}',
-                      padding: const EdgeInsets.fromLTRB(0, 22, 0, 10),
+                          ? context.l10n.commitments
+                          : context.l10n.commitmentsCount(plan.tasks.length),
+                      padding: const EdgeInsetsDirectional.fromSTEB(
+                        0,
+                        22,
+                        0,
+                        10,
+                      ),
                       // Always in the same place, however long the plan is.
                       action: editable
                           ? TextButton.icon(
                               key: const ValueKey('open-commitment-editor'),
                               onPressed: _addCommitment,
                               icon: const Icon(Icons.add_rounded, size: 20),
-                              label: const Text(
-                                'Add',
-                                semanticsLabel: 'Add a commitment',
+                              label: Text(
+                                context.l10n.add,
+                                semanticsLabel: context.l10n.addACommitment,
                               ),
                             )
                           : null,
@@ -438,19 +456,24 @@ class _PlanScreenState extends State<PlanScreen> {
                         child = _planRow(context, plan, index);
                       } else if (plan.tasks.isEmpty) {
                         child = Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                          padding: const EdgeInsetsDirectional.fromSTEB(
+                            20,
+                            20,
+                            20,
+                            16,
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'No commitments planned yet.',
+                                context.l10n.noCommitmentsPlanned,
                                 style: theme.textTheme.titleLarge,
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 plan.isCommitted
-                                    ? 'Tomorrow is locked.'
-                                    : 'Add one small step for tomorrow.',
+                                    ? context.l10n.tomorrowIsLocked
+                                    : context.l10n.addOneSmallStep,
                                 style: theme.textTheme.bodyMedium!.copyWith(
                                   color: colors.onSurfaceVariant,
                                 ),
@@ -485,7 +508,12 @@ class _PlanScreenState extends State<PlanScreen> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 640),
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(padding, 10, padding, 14),
+                      padding: EdgeInsetsDirectional.fromSTEB(
+                        padding,
+                        10,
+                        padding,
+                        14,
+                      ),
                       child: plan.isCommitted
                           ? const _CommittedPlan()
                           : Column(
@@ -493,7 +521,7 @@ class _PlanScreenState extends State<PlanScreen> {
                               children: [
                                 DaylockAction(
                                   key: const ValueKey('commit-tomorrow'),
-                                  label: 'Lock in $weekday',
+                                  label: context.l10n.lockInWeekday(weekday),
                                   icon: Icons.lock_outline_rounded,
                                   onPressed: plan.tasks.isEmpty
                                       ? null
@@ -502,10 +530,12 @@ class _PlanScreenState extends State<PlanScreen> {
                                 const SizedBox(height: 8),
                                 Text(
                                   plan.tasks.isEmpty
-                                      ? 'Add at least one commitment to lock in $weekday.'
+                                      ? context.l10n.addOneToLockIn(weekday)
                                       : plan.tasks.length == 1
-                                      ? 'Locks this commitment. You can’t change it after.'
-                                      : 'Locks these ${plan.tasks.length}. You can’t change them after.',
+                                      ? context.l10n.locksThisCommitment
+                                      : context.l10n.locksTheseCommitments(
+                                          plan.tasks.length,
+                                        ),
                                   textAlign: TextAlign.center,
                                   style: theme.textTheme.bodySmall!.copyWith(
                                     color: colors.onSurfaceVariant,
@@ -575,7 +605,9 @@ class _PlanScreenState extends State<PlanScreen> {
     );
     final areaName = selectedArea == null
         ? null
-        : '${selectedArea.name}${selectedArea.isArchived ? ' (archived)' : ''}';
+        : selectedArea.isArchived
+        ? context.l10n.archivedArea(selectedArea.name)
+        : selectedArea.name;
     final areaStyle = theme.textTheme.bodySmall!.copyWith(
       fontSize: 13,
       fontWeight: FontWeight.w500,
@@ -583,7 +615,7 @@ class _PlanScreenState extends State<PlanScreen> {
     );
     return Padding(
       key: ValueKey('plan-task-$index'),
-      padding: const EdgeInsets.fromLTRB(14, 4, 4, 4),
+      padding: const EdgeInsetsDirectional.fromSTEB(14, 4, 4, 4),
       child: Row(
         children: [
           ExcludeSemantics(
@@ -611,7 +643,10 @@ class _PlanScreenState extends State<PlanScreen> {
               task: task,
               area: selectedArea,
               showIcon: false,
-              repeatLabel: widget.routines.byId(task.routineId)?.schedule.label,
+              repeatLabel: switch (widget.routines.byId(task.routineId)) {
+                final routine? => context.l10n.repeatLabel(routine.schedule),
+                null => null,
+              },
               areaAction: areaName == null
                   ? null
                   : !plan.isCommitted && widget.onTaskAreaChanged != null
@@ -621,7 +656,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
                         minimumSize: const Size(48, 32),
-                        alignment: Alignment.centerLeft,
+                        alignment: AlignmentDirectional.centerStart,
                         visualDensity: VisualDensity.compact,
                       ),
                       child: Text(areaName, style: areaStyle),
@@ -633,7 +668,7 @@ class _PlanScreenState extends State<PlanScreen> {
               (widget.onTaskEdited != null || widget.onTaskRemoved != null))
             PopupMenuButton<String>(
               key: ValueKey('plan-task-actions-$index'),
-              tooltip: 'Actions for ${task.name}',
+              tooltip: context.l10n.actionsFor(task.name),
               icon: Icon(
                 Icons.more_vert_rounded,
                 color: colors.onSurfaceVariant,
@@ -644,14 +679,14 @@ class _PlanScreenState extends State<PlanScreen> {
               },
               itemBuilder: (_) => [
                 if (widget.onTaskEdited != null)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'edit',
-                    child: Text('Edit commitment'),
+                    child: Text(context.l10n.editCommitment),
                   ),
                 if (widget.onTaskRemoved != null)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'remove',
-                    child: Text('Remove commitment'),
+                    child: Text(context.l10n.removeCommitment),
                   ),
               ],
             ),
@@ -685,13 +720,13 @@ class _CommittedPlan extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Tomorrow's plan is committed.",
+                      context.l10n.tomorrowPlanCommitted,
                       style: theme.textTheme.titleMedium!.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     Text(
-                      'Your commitments are locked.',
+                      context.l10n.yourCommitmentsLocked,
                       style: theme.textTheme.bodyMedium!.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),

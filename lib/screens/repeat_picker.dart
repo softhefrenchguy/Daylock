@@ -1,27 +1,20 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../design/daylock_theme.dart';
 import '../models/routine.dart';
 
-const _shortDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const _shortMonths = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-/// Compact date for repeat previews, e.g. "Wed 18 Nov".
-String repeatDateLabel(DateTime date) =>
-    '${_shortDays[date.weekday - 1]} ${date.day} ${_shortMonths[date.month - 1]}';
+/// Compact date for repeat previews, e.g. "Wed 18 Nov" ("mer. 18 nov.").
+String repeatDateLabel(DateTime date) {
+  ensureDateFormatting();
+  final locale = Intl.getCurrentLocale();
+  return (locale.startsWith('en')
+          ? DateFormat('EEE d MMM', locale)
+          : DateFormat.MMMEd(locale))
+      .format(date);
+}
 
 /// The picker's answer. A null [schedule] means "Never".
 class RepeatChoice {
@@ -64,16 +57,6 @@ class RepeatPicker extends StatefulWidget {
 }
 
 class _RepeatPickerState extends State<RepeatPicker> {
-  static const _letters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  static const _names = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ];
   late _Preset _preset;
   RepeatKind _customKind = RepeatKind.weekly;
   Set<int> _days = {};
@@ -134,11 +117,11 @@ class _RepeatPickerState extends State<RepeatPicker> {
   }
 
   String _presetLabel(_Preset preset) => switch (preset) {
-    _Preset.never => 'Never',
-    _Preset.daily => 'Daily',
-    _Preset.weekdays => 'Weekdays',
-    _Preset.everyOther => 'Every 2 days',
-    _Preset.custom => 'Custom…',
+    _Preset.never => context.l10n.repeatNever,
+    _Preset.daily => context.l10n.repeatDaily,
+    _Preset.weekdays => context.l10n.repeatWeekdays,
+    _Preset.everyOther => context.l10n.repeatEveryDays(2),
+    _Preset.custom => context.l10n.repeatCustom,
   };
 
   @override
@@ -150,7 +133,7 @@ class _RepeatPickerState extends State<RepeatPicker> {
     return SafeArea(
       top: false,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
+        padding: const EdgeInsetsDirectional.fromSTEB(
           DaylockSpace.lg,
           0,
           DaylockSpace.lg,
@@ -163,10 +146,13 @@ class _RepeatPickerState extends State<RepeatPicker> {
             Row(
               children: [
                 Expanded(
-                  child: Text('Repeat', style: theme.textTheme.headlineMedium),
+                  child: Text(
+                    context.l10n.repeat,
+                    style: theme.textTheme.headlineMedium,
+                  ),
                 ),
                 IconButton(
-                  tooltip: 'Close repeat options',
+                  tooltip: context.l10n.repeatClose,
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close_rounded),
                 ),
@@ -191,14 +177,14 @@ class _RepeatPickerState extends State<RepeatPicker> {
               const SizedBox(height: DaylockSpace.md),
               SegmentedButton<RepeatKind>(
                 key: const ValueKey('repeat-custom-kind'),
-                segments: const [
+                segments: [
                   ButtonSegment(
                     value: RepeatKind.weekly,
-                    label: Text('Days of week'),
+                    label: Text(context.l10n.repeatDaysOfWeek),
                   ),
                   ButtonSegment(
                     value: RepeatKind.interval,
-                    label: Text('Every N days'),
+                    label: Text(context.l10n.repeatEveryNDays),
                   ),
                 ],
                 selected: {_customKind},
@@ -214,13 +200,14 @@ class _RepeatPickerState extends State<RepeatPicker> {
                   children: [
                     for (var day = 1; day <= 7; day++)
                       Semantics(
-                        label: _names[day - 1],
+                        label: context.l10n.weekdayLong(day),
                         excludeSemantics: true,
                         selected: _days.contains(day),
                         button: true,
                         child: _DayToggle(
                           key: ValueKey('repeat-day-$day'),
-                          letter: _letters[day - 1],
+                          letter: DateFormat.EEEEE(context.l10n.localeName)
+                              .format(DateTime(2024, 1, day)),
                           selected: _days.contains(day),
                           onTap: () => setState(() {
                             if (!_days.remove(day)) _days.add(day);
@@ -235,10 +222,13 @@ class _RepeatPickerState extends State<RepeatPicker> {
                   spacing: DaylockSpace.sm,
                   runSpacing: DaylockSpace.sm,
                   children: [
-                    Text('Every', style: theme.textTheme.titleMedium),
+                    Text(
+                      context.l10n.repeatEvery,
+                      style: theme.textTheme.titleMedium,
+                    ),
                     IconButton.outlined(
                       key: const ValueKey('repeat-every-less'),
-                      tooltip: 'Fewer days',
+                      tooltip: context.l10n.repeatFewerDays,
                       onPressed: _every > 2
                           ? () => setState(() => _every--)
                           : null,
@@ -255,7 +245,7 @@ class _RepeatPickerState extends State<RepeatPicker> {
                     ),
                     IconButton.outlined(
                       key: const ValueKey('repeat-every-more'),
-                      tooltip: 'More days',
+                      tooltip: context.l10n.repeatMoreDays,
                       onPressed: _every < RoutineSchedule.maxInterval
                           ? () => setState(() => _every++)
                           : null,
@@ -271,10 +261,12 @@ class _RepeatPickerState extends State<RepeatPicker> {
               child: Text(
                 key: const ValueKey('repeat-preview'),
                 !_valid
-                    ? 'Pick at least one day.'
+                    ? context.l10n.repeatPickOneDay
                     : schedule == null
-                    ? 'Only this day. It won’t repeat.'
-                    : 'Next: ${next.map(repeatDateLabel).join(' · ')}',
+                    ? context.l10n.repeatOnlyThisDay
+                    : context.l10n.repeatNext(
+                        next.map(repeatDateLabel).join(' · '),
+                      ),
                 style: theme.textTheme.bodyMedium!.copyWith(
                   color: _valid ? colors.onSurfaceVariant : colors.error,
                 ),
@@ -286,7 +278,7 @@ class _RepeatPickerState extends State<RepeatPicker> {
               onPressed: _valid
                   ? () => Navigator.of(context).pop(RepeatChoice(_result))
                   : null,
-              child: const Text('Done'),
+              child: Text(context.l10n.done),
             ),
           ],
         ),

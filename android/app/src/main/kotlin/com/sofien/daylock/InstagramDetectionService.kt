@@ -195,7 +195,7 @@ class InstagramDetectionService : AccessibilityService() {
                         val elapsed = SystemClock.elapsedRealtime()
                         if (elapsed - lastRecoveryNoticeMs >= 30_000) {
                             lastRecoveryNoticeMs = elapsed
-                            Toast.makeText(this, "Daylock: blocking paused. Open Daylock to refresh Freedom status.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this, getString(R.string.toast_blocking_paused), Toast.LENGTH_LONG).show()
                         }
                     }
                     InstagramRestriction.BLOCK -> {

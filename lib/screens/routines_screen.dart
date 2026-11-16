@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 import 'package:flutter/material.dart';
 
 import '../design/daylock_theme.dart';
@@ -38,16 +40,18 @@ class RoutinesScreen extends StatelessWidget {
     return DateTime(now.year, now.month, now.day + 1);
   }
 
-  String _summary(Routine routine) {
+  String _summary(BuildContext context, Routine routine) {
     final next = routine.schedule.nextDue(_from);
     final when = [
-      routine.schedule.label,
+      context.l10n.repeatLabel(routine.schedule),
       if (next != null)
-        next == _from ? 'next: tomorrow' : 'next: ${repeatDateLabel(next)}',
+        next == _from
+            ? context.l10n.nextTomorrow
+            : context.l10n.nextDate(repeatDateLabel(next)),
     ].join(' · ');
     if (!routine.isRotation) return when;
     return '$when\n'
-        '${routine.steps.length} steps · up next: ${routine.nextStep.name}';
+        '${context.l10n.rotationSummary(routine.steps.length, routine.nextStep.name)}';
   }
 
   Future<void> _delete(BuildContext context, Routine routine) async {
@@ -55,18 +59,16 @@ class RoutinesScreen extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         scrollable: true,
-        title: const Text('Delete routine?'),
-        content: Text(
-          'Stop repeating ${routine.name}? Commitments already in your plans and history stay.',
-        ),
+        title: Text(context.l10n.deleteRoutineTitle),
+        content: Text(context.l10n.deleteRoutineBody(routine.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -76,23 +78,21 @@ class RoutinesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Routines')),
+    appBar: AppBar(title: Text(context.l10n.routines)),
     body: SafeArea(
       child: ListView(
         padding: const EdgeInsets.all(DaylockSpace.lg),
         children: [
-          const Text(
-            'Routines add themselves to tomorrow’s plan on the days they’re due. Remove one from a plan to skip just that day. A rotation with several steps moves on only after a step stays in your plan.',
-          ),
+          Text(context.l10n.routinesIntro),
           const SizedBox(height: 16),
           OutlinedButton.icon(
             key: const ValueKey('create-routine'),
             onPressed: () => _edit(context),
             icon: const Icon(Icons.add),
-            label: const Text('Create routine or rotation'),
+            label: Text(context.l10n.createRoutineOrRotation),
           ),
           const SizedBox(height: 16),
-          if (book.routines.isEmpty) const Text('No routines yet.'),
+          if (book.routines.isEmpty) Text(context.l10n.noRoutinesYet),
           for (final routine in book.routines) ...[
             ListTile(
               key: ValueKey('routine-${routine.id}'),
@@ -102,7 +102,7 @@ class RoutinesScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               leading: const Icon(Icons.repeat_rounded),
-              subtitle: Text(_summary(routine)),
+              subtitle: Text(_summary(context, routine)),
               onTap: () => _edit(context, routine),
             ),
             Wrap(
@@ -110,12 +110,12 @@ class RoutinesScreen extends StatelessWidget {
               children: [
                 TextButton(
                   onPressed: () => _edit(context, routine),
-                  child: const Text('Edit'),
+                  child: Text(context.l10n.edit),
                 ),
                 TextButton(
                   key: ValueKey('delete-routine-${routine.id}'),
                   onPressed: () => _delete(context, routine),
-                  child: const Text('Delete'),
+                  child: Text(context.l10n.delete),
                 ),
               ],
             ),
