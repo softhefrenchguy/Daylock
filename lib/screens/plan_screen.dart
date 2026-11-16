@@ -657,7 +657,8 @@ class _PlanScreenState extends State<PlanScreen> {
                         padding: EdgeInsets.zero,
                         minimumSize: const Size(48, 32),
                         alignment: AlignmentDirectional.centerStart,
-                        visualDensity: VisualDensity.compact,
+                        // Looks compact, but keeps a 48dp touch target.
+                        tapTargetSize: MaterialTapTargetSize.padded,
                       ),
                       child: Text(areaName, style: areaStyle),
                     )

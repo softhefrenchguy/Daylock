@@ -370,9 +370,9 @@ class _AppTourOverlayState extends State<AppTourOverlay>
               // Swallow every touch outside the bubble.
               Positioned.fill(
                 child: BlockSemantics(
-                  child: GestureDetector(
+                  // Absorbs touches without offering TalkBack a button.
+                  child: Listener(
                     behavior: HitTestBehavior.opaque,
-                    onTap: () {},
                     child: AnimatedBuilder(
                       animation: _hole,
                       builder: (context, _) => CustomPaint(
