@@ -67,6 +67,16 @@
     <string name="break_cancel">Finalement non</string>
     <string name="break_note">Une pause par jour. Elle est gardée dans votre Parcours avec votre motif.</string>
     <string name="break_started">%1$s est ouvert pendant 15 minutes.</string>
+    <string name="widget_label">Daylock aujourd’hui</string>
+    <string name="widget_description">Le lever du soleil et les engagements du jour. Touchez-en un pour le tenir.</string>
+    <string name="widget_title">Aujourd’hui</string>
+    <string name="widget_kept">%1$d sur %2$d tenus</string>
+    <string name="widget_empty">Rien de prévu aujourd’hui. Ouvrez Daylock pour planifier.</string>
+    <string name="widget_all_kept">Tout est tenu. Le soleil est levé.</string>
+    <string name="widget_unlock">Applis débloquées à %1$s</string>
+    <string name="widget_more">+%1$d de plus dans Daylock</string>
+    <string name="widget_keep_row">Tenir %1$s</string>
+    <string name="widget_kept_row">Tenu : %1$s</string>
     <plurals name="reminder_commitments_body">
         <item quantity="one">Il vous reste %1$d engagement à tenir aujourd’hui.</item>
         <item quantity="other">Il vous reste %1$d engagements à tenir aujourd’hui.</item>

@@ -67,6 +67,16 @@
     <string name="break_cancel">Mejor no</string>
     <string name="break_note">Un descanso al día. Se guarda en tu Camino con tu motivo.</string>
     <string name="break_started">%1$s está abierta durante 15 minutos.</string>
+    <string name="widget_label">Daylock hoy</string>
+    <string name="widget_description">El amanecer y los compromisos de hoy. Toca uno para cumplirlo.</string>
+    <string name="widget_title">Hoy</string>
+    <string name="widget_kept">%1$d de %2$d cumplidos</string>
+    <string name="widget_empty">Nada planeado para hoy. Abre Daylock para planificar.</string>
+    <string name="widget_all_kept">Todo cumplido. Ya salió el sol.</string>
+    <string name="widget_unlock">Las apps se desbloquean a las %1$s</string>
+    <string name="widget_more">+%1$d más en Daylock</string>
+    <string name="widget_keep_row">Cumplir %1$s</string>
+    <string name="widget_kept_row">Cumplido: %1$s</string>
     <plurals name="reminder_commitments_body">
         <item quantity="one">Te queda %1$d compromiso por completar hoy.</item>
         <item quantity="other">Te quedan %1$d compromisos por completar hoy.</item>

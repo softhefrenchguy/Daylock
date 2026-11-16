@@ -67,6 +67,16 @@
     <string name="break_cancel">لا داعي</string>
     <string name="break_note">استراحة واحدة في اليوم، تُحفظ في مسيرتك مع السبب.</string>
     <string name="break_started">%1$s مفتوح لمدة 15 دقيقة.</string>
+    <string name="widget_label">Daylock اليوم</string>
+    <string name="widget_description">شروق اليوم والتزاماته. انقر التزامًا لإنجازه.</string>
+    <string name="widget_title">اليوم</string>
+    <string name="widget_kept">%1$d من %2$d منجزة</string>
+    <string name="widget_empty">لا شيء مخطط لليوم. افتح Daylock للتخطيط.</string>
+    <string name="widget_all_kept">أُنجز كل شيء. أشرقت الشمس.</string>
+    <string name="widget_unlock">تُفتح التطبيقات الساعة %1$s</string>
+    <string name="widget_more">+%1$d أخرى في Daylock</string>
+    <string name="widget_keep_row">إنجاز %1$s</string>
+    <string name="widget_kept_row">تم: %1$s</string>
     <plurals name="reminder_commitments_body">
         <item quantity="zero">لا التزامات متبقية اليوم.</item>
         <item quantity="one">بقي التزام واحد لتنجزه اليوم.</item>

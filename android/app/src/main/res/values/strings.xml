@@ -67,6 +67,16 @@
     <string name="break_cancel">Never mind</string>
     <string name="break_note">One break a day. It’s saved in your Journey with your reason.</string>
     <string name="break_started">%1$s is open for 15 minutes.</string>
+    <string name="widget_label">Daylock today</string>
+    <string name="widget_description">Today’s sunrise and commitments. Tap one to keep it.</string>
+    <string name="widget_title">Today</string>
+    <string name="widget_kept">%1$d of %2$d kept</string>
+    <string name="widget_empty">Nothing planned for today. Open Daylock to plan.</string>
+    <string name="widget_all_kept">All kept. The sun is up.</string>
+    <string name="widget_unlock">Apps unlock at %1$s</string>
+    <string name="widget_more">+%1$d more in Daylock</string>
+    <string name="widget_keep_row">Keep %1$s</string>
+    <string name="widget_kept_row">Kept: %1$s</string>
     <plurals name="reminder_commitments_body">
         <item quantity="one">You have %1$d commitment left to complete today.</item>
         <item quantity="other">You have %1$d commitments left to complete today.</item>

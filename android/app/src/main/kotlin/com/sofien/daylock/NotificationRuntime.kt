@@ -66,12 +66,20 @@ object NotificationRuntime {
         cancelAlarm(context)
         clearNotifications(context)
         repository(context).invalidate()
+        runCatching { DaylockWidget.updateAll(context) }
     }
+
+    /** The mirrored plans and whether they are valid, for the home screen widget. */
+    fun mirror(context: Context): Pair<ReminderSnapshot?, Boolean> = runCatching {
+        val record = repository(context).load()
+        record.snapshot to record.valid
+    }.getOrDefault(null to false)
     fun publish(context: Context, raw: String) {
         repository(context).publish(ReminderCodec.snapshot(JSONObject(raw)), System.currentTimeMillis())
         refresh(context)
     }
     fun refresh(context: Context) {
+        runCatching { DaylockWidget.updateAll(context) }
         cancelAlarm(context)
         val repo = repository(context)
         var record = repo.load()

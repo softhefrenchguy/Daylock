@@ -45,6 +45,9 @@ class NotificationTarget {
     this.action,
   });
   bool get pausesStopwatch => action == 'pause';
+
+  /// From the home screen widget: keep this commitment.
+  bool get keepsTask => action == 'keep';
   factory NotificationTarget.fromJson(Map<String, dynamic> json) =>
       NotificationTarget(
         json['screen'] == 'plan' ? 'plan' : 'today',
